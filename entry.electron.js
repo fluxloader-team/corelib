@@ -12,13 +12,14 @@ class BlockDefinition {
 }
 
 class TechDefinition {
-	constructor({id, name, description, unlocks, parent}) {
+	constructor({id, name, description, cost, unlocks, parent}) {
 		this.id = id;
 		this.idNumber = -1;
 		this.name = name ?? id;
+		if (cost) this.cost = cost; // I found out cost is technically optional
 		this.description = description ?? name;
 		this.unlocks = unlocks ?? {};
-		if (parent) this.parent = parent;
+		this.parent = parent ?? "Refining1"; // tried, you can not have a top level tech above Refining1, probably because of parenting and how it shows? Probably could if you made it by default unlocked but for now yeah just this
 	}
 }
 
@@ -36,29 +37,29 @@ class CoreLib {
 	techDefinitions = [];
 	itemDefinitions = [];
 	newTechnologyArray = [];
+	baseTechIds = [];
 
 	constructor() {
 		// do read file stuff when tom exposes it, but Im doing this for now, when making it find "$f=" for start of minified tech definitions
 
 		// ripped from the raw bundle
-		let baseTechs = `[{id:w.Refining1,name:"Refining 1",description:"Unlocks Shakers that can separate Gold and Slag from Wet Sand. Build diagonally and drop Wet Sand on it.",cost:20,unlocks:{structures:[d.ShakerRight]},children:[{id:w.Logistics1,name:"Logistics 1",description:"Unlocks Conveyor Belts and Launchers.",cost:50,unlocks:{structures:[d.ConveyorRight,d.LauncherUp]},children:[{id:w.Guns1,name:"Guns 1",description:"Unlocks Gun. Damage type: ⛏️",cost:500,unlocks:{items:[l.Gun]},children:[{id:w.Filters1,name:"Filters 1",description:"Unlocks Filters that work like conveyor belts but can allow certain elements to pass through.",cost:100,unlocks:{structures:[d.FilterRight]},children:[{id:w.Pipes1,name:"Pipes 1",description:"Unlocks Pipes, Pumps and Liquid Vents.",cost:2e3,unlocks:{structures:[d.Pipe,d.Pump,d.LiquidVent],items:[l.PipeRemover]},children:[{id:w.Filters2,name:"Filters 2",cost:1e3,unavailable:!0}]}]},{id:w.Refining2,name:"Refining 2",description:"Unlocks Kinetic Slag Press to further process Burnt Slag into more Gold.",cost:1e3,unlocks:{structures:[d.VelocitySoaker]},children:[{id:w.Guns2,name:"Guns 2",description:"Unlocks Rocket Launcher. Damage type: 💥",cost:3e3,unlocks:{items:[l.RocketLauncher]},children:[{id:w.Guns3,name:"Guns 3",cost:1e4,unavailable:!0}]},{id:w.Refining3,name:"Refining 3",description:"Unlocks Planter Boxes.",cost:2e3,unlocks:{structures:[d.Grower]},children:[{id:w.Refining4,name:"Refining 4",description:"Unlocks Flux Emanator to create Fluxite from Voidbloom.",cost:4e3,unlocks:{structures:[d.GloomEmitter]},children:[{id:w.Refining5,name:"Refining 5",cost:7e3,unavailable:!0}]}]}]},{id:w.Tools1,name:"Tools 1",description:"Unlocks Flamethrower to burn Slag, melt Ice and vaporize Water into Steam that rises and becomes rain.",cost:250,unlocks:{items:[l.Flamethrower]},children:[{id:w.Tools2,name:"Tools 2",description:"Unlocks Vacuum to move piles of sand.",cost:500,unlocks:{items:[l.Vacuum]},children:[{id:w.Tools3,name:"Tools 3",description:"Unlocks Cryoblaster to freeze water and solidify lava.",cost:1500,unlocks:{items:[l.Cryoblaster]},children:[{id:w.Tools4,name:"Tools 4",description:"Unlocks Grappling Hook to move around.",cost:3500,unlocks:{items:[l.GrapplingHook]}}]}]},{id:w.Lights1,name:"Lights 1",description:"Unlocks wall-mounted Lights.",cost:750,unlocks:{structures:[d.Light]},children:[{id:w.Drones1,name:"Drones 1",description:"Unlocks drones: Digger and Hauler.",cost:3e3,unlocks:{items:[l.Bouncer,l.Hauler]},children:[{id:w.Drones2,name:"Drones 2",cost:5e3,unavailable:!0}]}]}]}]}]}]}]`;
+		let baseTechsString = `[{id:w.Refining1,name:"Refining 1",description:"Unlocks Shakers that can separate Gold and Slag from Wet Sand. Build diagonally and drop Wet Sand on it.",cost:20,unlocks:{structures:[d.ShakerRight]},children:[{id:w.Logistics1,name:"Logistics 1",description:"Unlocks Conveyor Belts and Launchers.",cost:50,unlocks:{structures:[d.ConveyorRight,d.LauncherUp]},children:[{id:w.Guns1,name:"Guns 1",description:"Unlocks Gun. Damage type: ⛏️",cost:500,unlocks:{items:[l.Gun]},children:[{id:w.Filters1,name:"Filters 1",description:"Unlocks Filters that work like conveyor belts but can allow certain elements to pass through.",cost:100,unlocks:{structures:[d.FilterRight]},children:[{id:w.Pipes1,name:"Pipes 1",description:"Unlocks Pipes, Pumps and Liquid Vents.",cost:2e3,unlocks:{structures:[d.Pipe,d.Pump,d.LiquidVent],items:[l.PipeRemover]},children:[{id:w.Filters2,name:"Filters 2",cost:1e3,unavailable:!0}]}]},{id:w.Refining2,name:"Refining 2",description:"Unlocks Kinetic Slag Press to further process Burnt Slag into more Gold.",cost:1e3,unlocks:{structures:[d.VelocitySoaker]},children:[{id:w.Guns2,name:"Guns 2",description:"Unlocks Rocket Launcher. Damage type: 💥",cost:3e3,unlocks:{items:[l.RocketLauncher]},children:[{id:w.Guns3,name:"Guns 3",cost:1e4,unavailable:!0}]},{id:w.Refining3,name:"Refining 3",description:"Unlocks Planter Boxes.",cost:2e3,unlocks:{structures:[d.Grower]},children:[{id:w.Refining4,name:"Refining 4",description:"Unlocks Flux Emanator to create Fluxite from Voidbloom.",cost:4e3,unlocks:{structures:[d.GloomEmitter]},children:[{id:w.Refining5,name:"Refining 5",cost:7e3,unavailable:!0}]}]}]},{id:w.Tools1,name:"Tools 1",description:"Unlocks Flamethrower to burn Slag, melt Ice and vaporize Water into Steam that rises and becomes rain.",cost:250,unlocks:{items:[l.Flamethrower]},children:[{id:w.Tools2,name:"Tools 2",description:"Unlocks Vacuum to move piles of sand.",cost:500,unlocks:{items:[l.Vacuum]},children:[{id:w.Tools3,name:"Tools 3",description:"Unlocks Cryoblaster to freeze water and solidify lava.",cost:1500,unlocks:{items:[l.Cryoblaster]},children:[{id:w.Tools4,name:"Tools 4",description:"Unlocks Grappling Hook to move around.",cost:3500,unlocks:{items:[l.GrapplingHook]}}]}]},{id:w.Lights1,name:"Lights 1",description:"Unlocks wall-mounted Lights.",cost:750,unlocks:{structures:[d.Light]},children:[{id:w.Drones1,name:"Drones 1",description:"Unlocks drones: Digger and Hauler.",cost:3e3,unlocks:{items:[l.Bouncer,l.Hauler]},children:[{id:w.Drones2,name:"Drones 2",cost:5e3,unavailable:!0}]}]}]}]}]}]}]`;
 		
 		// we do some hacky stuff to make the ids and unlocks parsable as a string, and then do some more hacky stuff when parsing into the bundle
-		let techEnumerators = ['w', 'l', 'd']
-		for (let enumerator of techEnumerators) {
-			let regex = new RegExp(`${enumerator}\\.([a-zA-Z0-9]+)`, "g");
-			baseTechs = baseTechs.replace(regex, `"${enumerator}.$1"`);
-		}
+		
+		baseTechsString = baseTechsString.replace(new RegExp(`w\\.([a-zA-Z0-9]+)`, "g"), `"$1"`);
+		baseTechsString = baseTechsString.replace(new RegExp(`d\\.([a-zA-Z0-9]+)`, "g"), `"d.$1"`);
+		baseTechsString = baseTechsString.replace(new RegExp(`l\\.([a-zA-Z0-9]+)`, "g"), `"l.$1"`);
+		const baseTechs = eval(baseTechsString);
 
-		function registerBaseTech(tech, parent) {
+		const registerBaseTech = (tech, parent) => {
+			this.baseTechIds.push(tech.id);
 			this.techDefinitions.push(tech);
 			for (const childTech of tech.children ?? []) {
-				registerBaseTech(childTech, tech);
+				registerBaseTech(childTech, tech.id);
 			}
 			tech.children = [];
-			if (parent) {
-				tech.parent = parent;
-			}
+			tech.parent = parent;
 		}
 		for (const tech of baseTechs) {
 			registerBaseTech(tech);
@@ -66,7 +67,7 @@ class CoreLib {
 	}
 
 	addTech(tech) {
-		log("info", "corelib", `Adding Tech "${tech.id}' with parent "${tech.parent}"`)
+		log("info", "corelib", `Adding Tech "${tech.id}"`)
 
 		for (const existingTech of this.techDefinitions) {
 			if (existingTech.id === tech.id) {
@@ -76,7 +77,6 @@ class CoreLib {
 		}
 
 		// parse techs so they can be made to strings
-		tech.id = `w.${tech.id}`;
 		let structures = tech.unlocks?.structures ?? [];
 			if (structures) {
 				structures = structures.map(structure => `d.${structure}`);
@@ -85,7 +85,7 @@ class CoreLib {
 			if (items) {
 				items = items.map(item => `l.${item}`);
 			}
-
+		
 		this.techDefinitions.push(tech);
 	}
 
@@ -207,7 +207,6 @@ class CoreLib {
 		let techIdString = "";
 
 		for (const tech of this.techDefinitions) {
-			techIdString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
 			tech.children ??= [];
 			if (!tech.parent) {
 				this.newTechnologyArray.push(tech);
@@ -224,13 +223,20 @@ class CoreLib {
 			}
 		}
 
-		let techDefinitionString = this.newTechnologyArray.toString();
-
-		let techEnumerators = ['w', 'l', 'd']
-		for (let enumerator of techEnumerators) {
-			let regex = new RegExp(`"${enumerator}\\.([a-zA-Z0-9]+)"`, "g");
-			baseTechs = baseTechs.replace(regex, `${enumerator}.$1`);
+		for (const tech of this.techDefinitions) {
+			log("info", "corelib", `Adding Technology "${tech.id}" with id ${tech.idNumber}`);
+			if (!this.baseTechIds.includes(tech))
+			techIdString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
+			tech.id = `w.${tech.id}`;
+			//delete tech.parent;
+			delete tech.idNumber;
 		}
+
+		let techDefinitionString = JSON.stringify(this.newTechnologyArray);
+
+		techDefinitionString = techDefinitionString.replace(new RegExp(`"w\\.([a-zA-Z0-9]+)"`, "g"), `w.$1`);
+		techDefinitionString = techDefinitionString.replace(new RegExp(`"d\\.([a-zA-Z0-9]+)"`, "g"), `d.$1`);
+		techDefinitionString = techDefinitionString.replace(new RegExp(`"l\\.([a-zA-Z0-9]+)"`, "g"), `l.$1`);
 
 
 		// Add technology ids
@@ -242,15 +248,15 @@ class CoreLib {
 		// Add technologies
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techDefinitions", {
 			type: "regex",
-			from: /\$f=function\(\).*?\},Y/,
-			to: `$f=function(){return${techDefinitionString}},Y`,
+			pattern: /\$f=function\(\).*?\},Y/,
+			replace: `$f=function(){return${techDefinitionString}},Y`,
 		})
 	}
 }
 
 globalThis.BlockDefinition = BlockDefinition;
-globalThis.techDefinition = techDefinition;
+globalThis.TechDefinition = TechDefinition;
 globalThis.corelib = new CoreLib();
 
 fluxloaderAPI.events.on("fl:all-mods-loaded", () => globalThis.corelib.loadPatches());
-includeVMScript("js/example/entry.electron.js")
+includeVMScript("example/entry.electron.js")

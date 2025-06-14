@@ -281,7 +281,7 @@ ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,
 jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
 Ml,Al};
 globalThis.rawAPI.variable = {Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu};
-globalThis.rawAPI.named.function = {clearCell: (x, y) => {ud(fluxloaderAPI.gameWorld.state, {x, y})},
+globalThis.rawAPI.named.function = {clearCell: (x, y) => {ud(fluxloaderAPI.gameWorld.state, y ? {x, y} : {x: x.x, y: x.y})},
 setCell: (x, y, element) => {Od(fluxloaderAPI.gameWorld.state, x, y, element)},
 makePixel: (x, y, element) => {return Fh(element, x, y, undefined)},
 multiplyVector: (vector, mutliplier) => {return yc(vector, mutliplier)}

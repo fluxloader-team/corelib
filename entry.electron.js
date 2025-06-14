@@ -7,7 +7,12 @@ class BlockDefinition {
 		this.description = description;
 		this.shape = shape;
 		this.angles = angles;
-		this.image = path.join(fluxloaderAPI.getModsPath(), this.sourceMod, imagePath + ".png").replace(/\\/g, "/");
+		// a placeholder for the image path if they don't provide one, I know I don't need the braces but I feel like somebody could get confused if I didn't
+		if (imagePath) {
+			this.image = path.join(fluxloaderAPI.getModsPath(), this.sourceMod, imagePath + ".png").replace(/\\/g, "/");
+		} else {
+			this.image = path.join(fluxloaderAPI.getModsPath(), "corelib", "noimage.png").replace(/\\/g, "/");
+		}
 	}
 }
 

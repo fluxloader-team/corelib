@@ -260,7 +260,7 @@ class CoreLib {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:rawAPIReferences", {
 			type: "replace",
 			from: `e.fps;function Af`,
-			to: `globalThis.rawAPI ??= {named: {variable: {}, function: {}}, variable: {}, function: {}};
+			to: `
 globalThis.rawAPI.function = {kf,Cf,Ef,Tf,_f,Sf,wf,bf,xf,vf,gf,
 df,hf,cf,uf,lf,af,of,sf,rf,nf,tf,
 ef,Jd,Qd,Zd,Kd,qd,Yd,$d,Xd,Wd,Hd,
@@ -284,7 +284,7 @@ globalThis.rawAPI.variable = {Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu
 globalThis.rawAPI.named.function = {clearCell: (x, y) => {ud(fluxloaderAPI.gameWorld.state, y ? {x, y} : {x: x.x, y: x.y})},
 setCell: (x, y, element) => {Od(fluxloaderAPI.gameWorld.state, x, y, element)},
 makePixel: (x, y, element) => {return Fh(element, x, y, undefined)},
-multiplyVector: (vector, mutliplier) => {return yc(vector, mutliplier)}
+multiplyVector: (vector, mutliplier) => {return yc(vector, mutliplier)},
 checkCellsEqual: (element1, element2) => {return Kd(element1, element2)},
 checkClearOfDynamic: (x, y) => {tf(fluxloaderAPI.gameWorld.state, x, y)},
 GetStaticCell: (x, y) => {return sf(fluxloaderAPI.gameWorld.state, x, y)},

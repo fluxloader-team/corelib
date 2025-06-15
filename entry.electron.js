@@ -38,18 +38,24 @@ class CoreLib {
 
 		// Generate the strings for the patches
 		let blockTypeString = "";
+		let blockTypeStringX = "";
 		let inventoryString = "";
 		let blockShapesString = "";
 		let placementString = "";
+		let placementStringX = "";
+		let placementStringY = "";
 		let imageString = "";
 		let loadTextureString = "";
 		let drawTextureString = "";
 
 		for (const block of this.blockDefinitions) {
-			blockTypeString += `,V[V.${block.id}=${block.idNumber++}]="${block.id}"`;
+			blockTypeString += `,V[V.${block.id}=${block.idNumber}]="${block.id}"`;
+			blockTypeStringX += `,e[e.${block.id}=${block.idNumber}]="${block.id}"`;
 			inventoryString += `,d.${block.id}`;
 			blockShapesString += `,"${block.id}":[${block.shape}]`;
 			placementString += `,Vh[d.${block.id}]={shape:ud["${block.id}"],variants:[{id:d.${block.id},angles:${block.angles}}],name:"${block.name}",description:"${block.description}"}`;
+			placementStringX += `,n[l.ev.${block.id}]={shape:u["${block.id}"],variants:[{id:l.ev.${block.id},angles:${block.angles}}],name:"${block.name}",description:"${block.description}"}`;
+			placementStringY += `,a[o.ev.${block.id}]={shape:l["${block.id}"],variants:[{id:o.ev.${block.id},angles:${block.angles}}],name:"${block.name}",description:"${block.description}"}`;
 			imageString += `,Rf[d.${block.id}]={imageName:"${block.image}",isAbsolute:true}`;
 			loadTextureString += `,sm("${block.image}")`;
 			drawTextureString += `d.${block.id},`;
@@ -63,6 +69,19 @@ class CoreLib {
 			type: "replace",
 			from: `V[V.GloomEmitter=27]="GloomEmitter"`,
 			to: `~${blockTypeString}`,
+			token: `~`,
+		});
+		
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:blockTypes336", {
+			type: "replace",
+			from: `e[e.GloomEmitter=27]="GloomEmitter"`,
+			to: `~${blockTypeStringX}`,
+			token: `~`,
+		});
+		fluxloaderAPI.setPatch("js/546.bundle.js", "corelib:blockTypes546", {
+			type: "replace",
+			from: `e[e.GloomEmitter=27]="GloomEmitter"`,
+			to: `~${blockTypeStringX}`,
 			token: `~`,
 		});
         
@@ -79,11 +98,29 @@ class CoreLib {
 			to: `~${blockShapesString}`,
 			token: `~`,
 		});
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:blockShapes515", {
+			type: "replace",
+			from: `"grower":[[12,12,12,12],[0,0,0,0],[0,0,0,0],[0,0,0,0]]`,
+			to: `~${blockShapesString}`,
+			token: `~`,
+		});
 		// Add blocks and placement
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockPlacements", {
 			type: "replace",
 			from: `Vh[d.FoundationAngledRight]={shape:ud["foundation-triangle-right"]}`,
 			to: `~${placementString}`,
+			token: `~`,
+		});
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:blockPlacements336", {
+			type: "replace",
+			from: `n[l.ev.FoundationAngledRight]={shape:u["foundation-triangle-right"]}`,
+			to: `~${placementStringX}`,
+			token: `~`,
+		});
+		fluxloaderAPI.setPatch("js/546.bundle.js", "corelib:blockPlacements546", {
+			type: "replace",
+			from: `a[o.ev.FoundationAngledRight]={shape:l["foundation-triangle-right"]}`,
+			to: `~${placementStringY}`,
 			token: `~`,
 		});
 		// Add images

@@ -199,37 +199,25 @@ class ItemsModule {
 }
 */
 
-class BlockDefinition {
-	constructor({ sourceMod, id, name, description, shape, angles, imagePath }) {
-		this.sourceMod = sourceMod;
-		this.id = id;
-		this.idNumber = -1;
-		this.name = name;
-		this.description = description;
-		this.shape = shape;
-		this.angles = angles;
-		if (imagePath) this.image = path.join(fluxloaderAPI.getModsPath(), this.sourceMod, imagePath + ".png").replace(/\\/g, "/");
-		else this.image = path.join(fluxloaderAPI.getModsPath(), "corelib", "noimage.png").replace(/\\/g, "/");
-	}
-}
-
 class BlocksModule {
 	blockDefinitions = [];
-	nextBlockID = 99;
+	blockIDNumber = 99;
 
-	register(block) {
-		log("debug", "corelib", `Registering block "${block.id}" from "${block.sourceMod}"`);
-
+	register({ sourceMod, id, name, description, shape, angles, imagePath }) {
 		for (const existingBlock of this.blockDefinitions) {
-			if (existingBlock.id === block.id) {
-				log("error", "corelib", `Block with id "${block.id}" already exists!`);
+			if (existingBlock.id === id) {
+				log("error", "corelib", `Block with id "${id}" already exists!`);
 				return;
 			}
 		}
 
-		block.idNumber = this.nextBlockID++;
+		const idNumber = this.blockIDNumber++;
+		 
+		let fullImagePath;
+		if (imagePath) fullImagePath = path.join(fluxloaderAPI.getModsPath(), sourceMod, imagePath + ".png").replace(/\\/g, "/");
+		else fullImagePath = path.join(fluxloaderAPI.getModsPath(), "corelib", "noimage.png").replace(/\\/g, "/");
 
-		this.blockDefinitions.push(block);
+		this.blockDefinitions.push({ sourceMod, id, idNumber, name, description, shape, angles, fullImagePath });
 	}
 
 	applyPatches() {
@@ -270,14 +258,14 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.image}",isAbsolute:true}`),
+			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}`),
 			token: `~`,
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockLoadTextures", {
 			type: "replace",
 			from: `sm("frame_block")`,
-			to: `~` + reduceBlocks((b) => `,sm("${b.image}")`),
+			to: `~` + reduceBlocks((b) => `,sm("${b.fullImagePath}")`),
 			token: `~`,
 		});
 
@@ -302,14 +290,12 @@ class CoreLib {
 
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
-
-		this.applyExposePatches();
+		this.applyCorePatches();
 		this.blocks.applyPatches();
-
 		log("debug", "corelib", "Finished loading patches");
 	}
 
-	applyExposePatches() {
+	applyCorePatches() {
 		log("debug", "corelib", "Loading expose patches");
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:absoluteImages", {
@@ -357,7 +343,6 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 	}
 }
 
-globalThis.BlockDefinition = BlockDefinition;
 globalThis.corelib = new CoreLib();
 
 fluxloaderAPI.events.on("fl:all-mods-loaded", () => globalThis.corelib.applyPatches());

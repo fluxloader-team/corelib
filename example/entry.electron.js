@@ -1,14 +1,12 @@
-corelib.blocks.register(
-	new BlockDefinition({
-		sourceMod: "corelib",
-		id: "wedge",
-		name: "Wedge Block",
-		description: "A simple yet versatile wedge block",
-		shape: "[10,0,0,0],[3,10,0,0],[3,3,0,0],[3,0,0,0]",
-		angles: "[-180,180]",
-		imagePath: "example/wedge"
-	})
-);
+corelib.blocks.register({
+	sourceMod: "corelib",
+	id: "wedge",
+	name: "Wedge Block",
+	description: "A simple yet versatile wedge block",
+	shape: "[10,0,0,0],[3,10,0,0],[3,3,0,0],[3,0,0,0]",
+	angles: "[-180,180]",
+	imagePath: "example/wedge",
+});
 
 /*
 corelib.tech.register(new TechDefinition({id: "testTech1",

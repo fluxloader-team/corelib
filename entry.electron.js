@@ -386,6 +386,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 
 globalThis.BlockDefinition = BlockDefinition;
 globalThis.TechDefinition = TechDefinition;
+globalThis.itemDefinition = itemDefinition;
 globalThis.corelib = new CoreLib();
 
 fluxloaderAPI.events.on("fl:all-mods-loaded", () => globalThis.corelib.loadPatches());

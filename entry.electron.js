@@ -1,5 +1,13 @@
+/*	NOTES
+
+dont try to use items, I am working on them and htis is the basic setup, they will very much prolly not work but this is the base I'm building off of
+tech should work
+scripts will be added to blocks api after stblade merges and I get a new thing for that
+
+*/
+
 class BlockDefinition {
-	constructor(sourceMod, id, name, description, shape, angles, imagePath) {
+	constructor({sourceMod, id, name, description, shape, angles, imagePath}) {
 		this.sourceMod = sourceMod;
 		this.id = id;
 		this.idNumber = -1;
@@ -25,6 +33,17 @@ class TechDefinition {
 		this.description = description ?? name;
 		this.unlocks = unlocks ?? {};
 		this.parent = parent ?? "Refining1"; // tried, you can not have a top level tech above Refining1, probably because of parenting and how it shows? Probably could if you made it by default unlocked but for now yeah just this
+	}
+}
+
+class itemDefinition {
+	constructor({id, type, name, description}) {
+		this.id = id;
+		this.idNumber = -1;
+		// used types are weapon and tool, there is consumable but gotta figure out how supported that is
+		this.type = type ?? "tool";
+		this.name = name ?? id;
+		this.description = description ?? name;
 	}
 }
 
@@ -104,6 +123,14 @@ class CoreLib {
 			}
 		}
 
+		let itemTypes = ["Tool", "Weapon", "Consumable"]
+		if (!itemTypes.includes(item.type)) {
+			log("error", "corelib", `Item type "${item.type}" is not recongized. Supported types are: "${itemTypes.join(`", "`)}"`);
+			return;
+		} else if (item.type === "Consumable") {
+			log("warn", "corelib", `Item type "${item.type}" is not fully supported yet, you should use "Tool" or "Weapon" instead.`);
+		}
+
 		this.itemDefinitions.push(item);
 	}
 
@@ -122,6 +149,17 @@ class CoreLib {
 
 	async loadPatches() {
 		log("info", "corelib", "Loading patches");
+
+		this.loadBlockPatches();
+		this.loadTechPatches();
+		this.loadItemPatches();
+		this.loadRawAPIPatches();
+
+		log("info", "corelib", "Finished loading patches");
+	}
+
+	loadBlockPatches() {
+		log("info", "corelib", "Loading block patches");
 
 		// Assign id numbers to each block
 		let initialBlockID = 99;
@@ -204,6 +242,49 @@ class CoreLib {
 			from: `om("img/"`,
 			to: `om(e.endsWith(".png") ? e : "img/"`,
 		});
+	}
+
+	loadItemPatches() {
+		log("info", "corelib", "Loading item patches");
+		
+		let initialItemId = 25;
+		
+		for (let item of this.itemDefinitions) item.idNumber = initialItemId++;
+
+		let itemIdString = "";
+		let itemDefinitionString = "";
+
+		for (const item of this.itemDefinitions) {
+			itemIdString += `,H[H.${item.id}=${item.idNumber}]="${item.id}"`;
+			itemDefinitionString += `DF[l.${item.id}]= function() {
+				return {
+					id: l.${item.id},
+					itemType: a.${item.type},
+					name: "${item.name}",
+					description: "${item.description}",
+				}
+			}
+			`;
+		}
+
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:itemIds", {
+			type: "replace",
+			from: `H[H.Cryoblaster=15]="Cryoblaster",`,
+			to: `~${itemIdString}`,
+			token: "~"
+		})
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:itemDefinitions", {
+			type: "replace",
+			from: "Df[l.Cryoblaster]=wf,",
+			to: `~${itemDefinitionString}`,
+			token: "~"
+		})
+	}
+
+	loadTechPatches() {
+		log("info", "corelib", "Loading technology patches");
 
 		let initialTechId = 38;
 
@@ -257,8 +338,10 @@ class CoreLib {
 			pattern: /\$f=function\(\).*?\},Y/,
 			replace: `$f=function(){return${techDefinitionString}},Y`,
 		})
+	}
 
-		// do raw api patches
+	loadRawAPIPatches() {
+		log("info", "corelib", "Loading raw API patches");
 
 		// we just do multiline because the bundle can handle that and it's easier to read and type
 		// if anybody wants, I can give you the file where I transcribed this so you can finish the rest of the raw api references cus I gave up after the first 100 or so
@@ -298,7 +381,6 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
 		})
-	
 	}
 }
 

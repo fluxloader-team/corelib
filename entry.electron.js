@@ -89,8 +89,7 @@ class CoreLib {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
 			from: `d.Foundation,d.Collector`,
-			to: `d.Foundation${inventoryString},d.Collector`,
-			token: `~`,
+			to: `d.Foundation${inventoryString},d.Collector`
 		});
 		// Add block shapes
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockShapes", {

@@ -3,7 +3,7 @@ class BlocksModule {
 	blockDefinitions = [];
 	nextIDNumber = 99;
 
-	register({ sourceMod, id, name, description, shape, angles, imagePath, variants = [] }) {
+	register({ sourceMod, id, name, description, shape, angles, imagePath }) {
 		//log("info", "corelib", `Attempting to register Block with id "${sourceMod}|${id}|${name}|${angles}"`);
 		// Ensure block ids are unique
 		for (const existingBlock of this.blockDefinitions) {
@@ -18,7 +18,7 @@ class BlocksModule {
 
 		// Resolve image paths to each mods folder
 		let fullImagePath = this._getFullImagePath(sourceMod, id, imagePath);
-		this.blockDefinitions.push({ sourceMod, id, idNumber, name, description, shape, angles, variants, fullImagePath });
+		this.blockDefinitions.push({ sourceMod, id, idNumber, name, description, shape, angles, variants:[], fullImagePath });
 	}
 
 	addVariant({ parentId, suffix, shape, angles, imagePath }) {
@@ -92,7 +92,7 @@ class BlocksModule {
 			token: `~`,
 		}));
 
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Vh", "d", "ud"], "js/336.bundle.js": ["n", "l.ev", "u"], "js/546.bundle.js": ["a", "o.ev", "l"] }, "corelib:blockTypes", (v1, v2, v3) => ({
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Vh", "d", "ud"], "js/336.bundle.js": ["n", "l.ev", "u"], "js/546.bundle.js": ["a", "o.ev", "l"] }, "corelib:blockTypeDefinitions", (v1, v2, v3) => ({
 			type: "replace",
 			from: `${v1}[${v2}.FoundationAngledRight]={shape:${v3}["foundation-triangle-right"]}`,
 			to: `~` + reduceBlocks((b) => `,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:${b.angles}}` + reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:${v.angles}}`) + `],name:"${b.name}",description:"${b.description}"}` + reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`)),

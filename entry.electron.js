@@ -3,7 +3,6 @@ includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
 
 class CoreLib {
-	blocks = null;
 
 	constructor() {
 		this.blocks = new BlocksModule();

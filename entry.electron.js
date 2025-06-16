@@ -1,7 +1,7 @@
 class TechModule {
 	techDefinitions = [];
-	baseTechIds = [];
-	nextTechIdNumber = 38;
+	baseTechIDs = [];
+	nextIdNumber = 38;
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -16,7 +16,7 @@ class TechModule {
 
 		// Recursively register tech from the base techs
 		const registerBaseTech = (tech, parent) => {
-			this.baseTechIds.push(tech.id);
+			this.baseTechIDs.push(tech.id);
 			this.techDefinitions.push(tech);
 			for (const childTech of tech.children ?? []) {
 				registerBaseTech(childTech, tech.id);
@@ -41,7 +41,7 @@ class TechModule {
 		}
 
 		// Assign it the next tech id
-		const idNumber = this.nextTechIdNumber++;
+		const idNumber = this.nextIdNumber++;
 
 		// The root tech must atleast be Refining1
 		if (!parent) parent = "Refining1";
@@ -71,10 +71,10 @@ class TechModule {
 			}
 		}
 
-		let techIdString = "";
+		let techIDString = "";
 		for (const tech of this.techDefinitions) {
 			log("debug", "corelib", `Adding Technology "${tech.id}" with id ${tech.idNumber}`);
-			if (!this.baseTechIds.includes(tech)) techIdString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
+			if (!this.baseTechIDs.includes(tech)) techIDString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
 			tech.id = `w.${tech.id}`;
 			// delete tech.parent;
 			delete tech.idNumber;
@@ -86,10 +86,10 @@ class TechModule {
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"d\\.([a-zA-Z0-9]+)"`, "g"), `d.$1`);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"l\\.([a-zA-Z0-9]+)"`, "g"), `l.$1`);
 
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techIds", {
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techIDs", {
 			type: "replace",
 			from: 'B[B.Guns3=28]="Guns3"',
-			to: `~${techIdString}`,
+			to: `~${techIDString}`,
 			token: `~`,
 		});
 
@@ -103,7 +103,7 @@ class TechModule {
 
 class ItemsModule {
 	itemDefinitions = [];
-	nextIdNumber = 25;
+	nextIDNumber = 25;
 
 	register({ id, type, name, description }) {
 		log("debug", "corelib", `Adding Item "${id}"`);
@@ -117,7 +117,7 @@ class ItemsModule {
 		}
 
 		// Assign it the next item id number
-		const idNumber = this.nextIdNumber++;
+		const idNumber = this.nextIDNumber++;
 
 		// Ensure item type is valid
 		let validTypes = ["Tool", "Weapon", "Consumable"];
@@ -135,10 +135,10 @@ class ItemsModule {
 	applyPatches() {
 		log("debug", "corelib", "Loading item patches");
 
-		let itemIdString = "";
+		let itemIDString = "";
 		let itemDefinitionString = "";
 		for (const item of this.itemDefinitions) {
-			itemIdString += `,H[H.${item.id}=${item.idNumber}]="${item.id}"`;
+			itemIDString += `,H[H.${item.id}=${item.idNumber}]="${item.id}"`;
 			itemDefinitionString += `DF[l.${item.id}]= function() {
 				return {
 					id: l.${item.id},
@@ -150,10 +150,10 @@ class ItemsModule {
 			`;
 		}
 
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:itemIds", {
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:itemIDs", {
 			type: "replace",
 			from: `H[H.Cryoblaster=15]="Cryoblaster",`,
-			to: `~${itemIdString}`,
+			to: `~${itemIDString}`,
 			token: "~",
 		});
 
@@ -168,7 +168,7 @@ class ItemsModule {
 
 class BlocksModule {
 	blockDefinitions = [];
-	nextIdNumber = 99;
+	nextIDNumber = 99;
 
 	register({ sourceMod, id, name, description, shape, angles, imagePath }) {
 		// Ensure block ids are unique
@@ -180,7 +180,7 @@ class BlocksModule {
 		}
 
 		// Assign it the next block id number
-		const idNumber = this.nextIdNumber++;
+		const idNumber = this.nextIDNumber++;
 
 		// Resolve image paths to each mods folder
 		let fullImagePath;

@@ -10,7 +10,7 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.blocks = corelib.exposed.d;
 	corelib.simulation.internal.createParticle = corelib.exposed.Fh;
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
-	corelib.simulation.internal.setElement = corelib.exposed.Od;
+	corelib.simulation.internal.setCell = corelib.exposed.Od;
 });
 
 corelib.simulation = {
@@ -19,7 +19,7 @@ corelib.simulation = {
 		const particleType = corelib.simulation.internal.particles[type];
 		if (particleType === undefined) log("error", "corelib", `Particle type ${type} does not exist!`);
 		const particle = corelib.simulation.internal.createParticle(particleType, x, y, data);
-		corelib.simulation.internal.setElement(fluxloaderAPI.gameInstance.state, x, y, particle);
+		corelib.simulation.internal.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 	},
 	spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
 		const particleType = corelib.simulation.internal.particles[type];
@@ -29,7 +29,7 @@ corelib.simulation = {
 			element: innerParticle,
 			velocity: { x: vx, y: vy },
 		});
-		corelib.simulation.internal.setElement(fluxloaderAPI.gameInstance.state, x, y, outerParticle);
+		corelib.simulation.internal.setCell(fluxloaderAPI.gameInstance.state, x, y, outerParticle);
 	},
 	spawnBlock: (x, y, type) => {
 		const blockType = corelib.simulation.internal.blocks[type];

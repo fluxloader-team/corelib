@@ -1,4 +1,4 @@
-globalThis.corelib = { exposed: {} };
+await import("./shared.game.worker.js");
 
 fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
 
@@ -41,64 +41,51 @@ corelib.simulation = {
 	},
 };
 
-// worker event types we want
-const eventTypes = {
-	//3: "SetCell",
-	4: "Blast",
-	5: "Dig",
-	7: "AddStructure",
-	10: "SwapElement",
-	13: "Ignite",
-	19: "Burn",
-	20: "Explode",
-	32: "SetPixel",
-	38: "SpawnWorldItem"
+corelib.utils = {
+	getBlockNameByType: (type) => {
+		return (corelib.simulation.internal.blocks[type] != undefined) ? corelib.simulation.internal.blocks[type] : null;
+	},
+	getParticleNameByType: (type) => {
+		return (corelib.simulation.internal.particles[type] != undefined) ? corelib.simulation.internal.particles[type] : null;
+	},
+	getSolidNameByType: (type) => {
+		return (corelib.simulation.internal.solids[type] != undefined) ? corelib.simulation.internal.solids[type] : null;
+	},
 };
 
+
+
 // register the events
-for (var key in eventTypes) {
-	fluxloaderAPI.events.registerEvent(`cl:worker${eventTypes[key]}`);
+for (var eventType in corelib.events.eventTypes) {
+	fluxloaderAPI.events.registerEvent(`cl:worker-${eventType}`);
 }
 
-// Listen for Worker Events
-fluxloaderAPI.listenWorkerMessage("corelib:workerEvent", (_data) => {
-
-	let data = JSON.parse(_data);
-	let event = {
-		type: null,
-		x: -1,
-		y: -1,
-	};
-
-	// only if this event type is wanted
-	if (eventTypes[data[0]] && eventTypes[data[0]] !== null) {
-
-		event.type = eventTypes[data[0]];
-
-		event.x = (data[1] && data[1]["x"]) ? data[1]["x"] : -1;
-		event.y = (data[1] && data[1]["y"]) ? data[1]["y"] : -1;
-
-		switch (data[0]) {
-			case 3: // SetCell
-			break;
-			case 4: // Blast
-			break;
-			case 5: // Dig
-			break;
-			case 7: // AddStructure
-			event.StructureId = (data[1]["type"]) ? data[1]["type"] : -1 ;
-			//event.StructureName = (corelib.exposed.variable.Ed[event.StructureId]) ? corelib.exposed.variable.Ed[event.StructureId].name : null ;
-			// todo: hook into exposed vars and get structure name
-			break;
-		}
-
-		// double check and fire event
-		if (event.type !== null) {
-			console.log(event);
-			console.log(data);
-			//			log("debug", "corelib", `Worker Event ${JSON.stringify(event)}`);
-			//			fluxloaderAPI.events.trigger(`cl:worker${event.type}`, event);
-		}
+fluxloaderAPI.listenWorkerMessage("corelib:eventMessage", (eventMessage) => {
+	//console.log(eventMessage);
+	if (eventMessage.type === undefined || eventMessage.type === null || eventMessage.trigger === undefined || eventMessage.trigger === null) {
+		return;
 	}
 
+	if (eventMessage.type == "cell-change") {
+		eventMessage.data.fromCellType = (typeof eventMessage.rawData.from === "object") ? eventMessage.rawData.from.cellType : eventMessage.rawData.from;
+		eventMessage.data.fromParticleType = (eventMessage.data.fromCellType == 1 && typeof eventMessage.rawData.from === "object") ? eventMessage.rawData.from.type : null;
+		eventMessage.data.fromBlockType = (eventMessage.data.fromCellType == 15 && typeof eventMessage.rawData.from === "object") ? eventMessage.rawData.from.type : null;
+		eventMessage.data.fromCellTypeName = corelib.utils.getSolidNameByType(eventMessage.data.fromCellType);
+		eventMessage.data.fromParticleTypeName = corelib.utils.getParticleNameByType(eventMessage.data.fromParticleType);
+		eventMessage.data.fromBlockTypeName = corelib.utils.getBlockNameByType(eventMessage.data.fromBlockType);
+
+		eventMessage.data.toCellType = (typeof eventMessage.rawData.to === "object") ? eventMessage.rawData.to.cellType : eventMessage.rawData.to;
+		eventMessage.data.toParticleType = (eventMessage.data.toCellType == 1 && typeof eventMessage.rawData.to === "object") ? eventMessage.rawData.to.type : null;
+		eventMessage.data.toBlockType = (eventMessage.data.toCellType == 15 && typeof eventMessage.rawData.to === "object") ? eventMessage.rawData.to.type : null;
+		eventMessage.data.toCellTypeName = corelib.utils.getSolidNameByType(eventMessage.data.toCellType);
+		eventMessage.data.toParticleTypeName = corelib.utils.getParticleNameByType(eventMessage.data.toParticleType);
+		eventMessage.data.toBlockTypeName = corelib.utils.getBlockNameByType(eventMessage.data.toBlockType);
+		eventMessage.rawData = null;
+	}
+
+	console.log(eventMessage);
+	//console.log(JSON.stringify(eventMessage));
+//	fluxloaderAPI.events.tryTrigger(eventMessage.trigger, eventMessage);
+
 });
+

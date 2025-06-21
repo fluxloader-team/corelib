@@ -82,5 +82,5 @@ fluxloaderAPI.listenWorkerMessage("corelib:eventMessage", (eventMessage) => {
 		eventMessage.rawData = null;
 	}
 
-	fluxloaderAPI.events.tryTrigger(eventMessage.trigger, eventMessage);
+	fluxloaderAPI.events.trigger(eventMessage.trigger, eventMessage, false);
 });

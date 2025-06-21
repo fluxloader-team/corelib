@@ -1,8 +1,9 @@
-globalThis.corelib = { exposed: {}, simluation: {}, events: {}, utils: {} };
+globalThis.corelib = { exposed: {}, simulation: {}, events: {}, utils: {} };
 
 
 corelib.events.eventTypes = [
-    "cell-change"
+    "cell-change",
+    "fog-reveal",
 ];
 
 globalThis.EventMessage = class EventMessage {
@@ -20,5 +21,4 @@ globalThis.EventMessage = class EventMessage {
     rawData = {};
     worker = -1;
     trigger = null;
-
 }

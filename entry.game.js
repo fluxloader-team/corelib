@@ -61,11 +61,13 @@ for (var eventType in corelib.events.eventTypes) {
 }
 
 fluxloaderAPI.listenWorkerMessage("corelib:eventMessage", (eventMessage) => {
-	//console.log(eventMessage);
+
+	// validate the minimal eventMessage
 	if (eventMessage.type === undefined || eventMessage.type === null || eventMessage.trigger === undefined || eventMessage.trigger === null) {
 		return;
 	}
 
+	// additional pre-processing for cell-change
 	if (eventMessage.type == "cell-change") {
 		eventMessage.data.fromCellType = (typeof eventMessage.rawData.from === "object") ? eventMessage.rawData.from.cellType : eventMessage.rawData.from;
 		eventMessage.data.fromParticleType = (eventMessage.data.fromCellType == 1 && typeof eventMessage.rawData.from === "object") ? eventMessage.rawData.from.type : null;
@@ -83,9 +85,9 @@ fluxloaderAPI.listenWorkerMessage("corelib:eventMessage", (eventMessage) => {
 		eventMessage.rawData = null;
 	}
 
-	console.log(eventMessage);
-	//console.log(JSON.stringify(eventMessage));
-//	fluxloaderAPI.events.tryTrigger(eventMessage.trigger, eventMessage);
+	fluxloaderAPI.events.logging = false;
+	fluxloaderAPI.events.tryTrigger(eventMessage.trigger, eventMessage);
+	fluxloaderAPI.events.logging = true;
 
 });
 

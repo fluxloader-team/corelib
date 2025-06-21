@@ -9,5 +9,5 @@
 	"tags": ["lib"],
 	"electronEntrypoint": "entry.electron.js",
 	"gameEntrypoint": "entry.game.js",
-	"workerEntrypoint":"entry.worker.js"
+	"workerEntrypoint": "entry.worker.js"
 }

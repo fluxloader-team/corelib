@@ -26,9 +26,6 @@ class CoreLib {
 	applyCorePatches() {
 		log("debug", "corelib", "Loading expose patches");
 
-
-
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:absoluteImages", {
 			type: "replace",
 			from: `om("img/"`,

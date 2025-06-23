@@ -54,7 +54,7 @@ corelib.utils = {
 };
 
 // register the events
-for (var eventType in corelib.events.eventTypes) {
+for (let eventType of corelib.events.eventTypes) {
 	fluxloaderAPI.events.registerEvent(`cl:worker-${eventType}`);
 }
 

@@ -7,6 +7,7 @@ globalThis.corelib = {
 			function: {},
 		},
 	},
+	structures: {}
 };
 
 fluxloaderAPI.events.registerEvent("cl:raw-api-setup");

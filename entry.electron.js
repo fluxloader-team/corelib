@@ -1,6 +1,7 @@
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
+includeVMScript("modules/schedules.js");
 
 class CoreLib {
 
@@ -8,11 +9,13 @@ class CoreLib {
 		this.blocks = new BlocksModule();
 		this.tech = new TechModule();
 		this.items = new ItemsModule();
+		this.schedules = new ScheduleModule();
 	}
 
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
+		this.schedules.applyPatches();
 		this.blocks.applyPatches();
 		this.tech.loadTechPatches();
 		this.items.applyPatches();

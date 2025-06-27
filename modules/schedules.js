@@ -1,30 +1,28 @@
 
 class SchedulesModule {
-    scheduleDefinitions = []
+    scheduleDefinitions = {}
     nextIDNumber = 19;
     
     register(id, interval) {
-        for (const existingSchedule of this.scheduleDefinitions) {
-            if (existingSchedule.id === id) {
-                log("error", "corelib", `Schedule with id "${id}" already exists!`)
-                return;
-            }
+        if (this.scheduleDefinitions.id == interval) {
+            log("error", "corelib", `Schedule with id "${id}" already exists!`)
+            return;
         }
-        this.scheduleDefinitions.push({id, interval})
+        this.scheduleDefinitions[id] = interval;
     }
 
     applyPatches() {
         log("info", "corelib", "Loading schedule patches")
         let scheduleIDString = "";
         let scheduleDefinitionString = "";
-        for (let schedule of this.scheduleDefinitions) {
-            scheduleIDString += `,e[e.${schedule.id}=${nextIDNumber++}]="${schedule.id}",
-            fluxloaderAPI.events.register("corelib:schedule-${schedule.id}")`;
-            scheduleDefinitionString += `up[_.${schedule.id}]=
-            {interval:${schedule.interval},
+        for (let [id, interval] of Object.entries(this.scheduleDefinitions)) {
+            scheduleIDString += `,e[e.${id}=${nextIDNumber++}]="${id}",
+            fluxloaderAPI.events.register("corelib:schedule-${id}")`;
+            scheduleDefinitionString += `up[_.${id}]=
+            {interval:${interval},
             multithreading:!1,
-            callback:async function(e,t,n){
-            fluxloaderAPI.events.tryTrigger("corelib:schedule-${schedule.id}")
+            callback:function(e,t,n){
+            fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}")
             }},`
         }
         fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleID", {

@@ -3,7 +3,7 @@ class SchedulesModule {
     scheduleDefinitions = []
     nextIDNumber = 19;
     
-    register({id, interval}) {
+    register(id, interval) {
         for (const existingSchedule of this.scheduleDefinitions) {
             if (existingSchedule.id === id) {
                 log("error", "corelib", `Schedule with id "${id}" already exists!`)

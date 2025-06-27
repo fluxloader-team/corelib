@@ -18,8 +18,14 @@ class SchedulesModule {
         let scheduleIDString = "";
         let scheduleDefinitionString = "";
         for (let schedule of this.scheduleDefinitions) {
-            scheduleIDString += `,e[e.${schedule.id}=${nextIDNumber++}]="${schedule.id}"`;
-            scheduleDefinitionString += ``
+            scheduleIDString += `,e[e.${schedule.id}=${nextIDNumber++}]="${schedule.id}",
+            fluxloaderAPI.events.register("corelib:schedule-${schedule.id}")`;
+            scheduleDefinitionString += `up[_.${schedule.id}]=
+            {interval:${schedule.interval},
+            multithreading:!1,
+            callback:async function(e,t,n){
+            fluxloaderAPI.events.tryTrigger("corelib:schedule-${schedule.id}")
+            }},`
         }
         fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleID", {
             type: "replace",
@@ -30,7 +36,7 @@ class SchedulesModule {
         fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleDefinitions", {
             type: "replace",
             from: `up[_.Autosave]=`,
-            to: `${scheduleDefinitionString},~`,
+            to: `${scheduleDefinitionString}~`,
             token: `~`
         })
     }

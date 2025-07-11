@@ -2,14 +2,15 @@ includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
 includeVMScript("modules/events.js");
+includeVMScript("modules/schedules.js");
 
 class CoreLib {
-
 	constructor() {
 		this.blocks = new BlocksModule();
 		this.tech = new TechModule();
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
+		this.schedules = new ScheduleModule();
 	}
 
 	async applyPatches() {
@@ -19,6 +20,7 @@ class CoreLib {
 		this.tech.loadTechPatches();
 		this.items.applyPatches();
 		this.events.applyPatches();
+		this.schedules.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 	}
 
@@ -50,6 +52,47 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 	}
 }
 
+class DefinitionRegistry {
+	moduleType = "";
+
+	definitions = {};
+	freeIDs = [];
+	nextIDNumber = 0;
+
+	constructor(moduleType, startCount = 0) {
+		this.moduleType = moduleType;
+		this.nextIDNumber = startCount;
+	}
+
+	nextID() {
+		// Use available free IDs first
+		if (this.freeIDs.length > 0) {
+			return this.freeIDs.pop();
+		}
+		return this.nextIDNumber++;
+	}
+
+	register(data) {
+		let id = this.nextID();
+		if (this.definitions.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.moduleType} with id "${id}" already exists!`);
+			return false;
+		}
+		this.definitions[id] = data;
+		return id;
+	}
+
+	unregister(id) {
+		this.freeIDs.push(id);
+		delete this.definitions[id];
+	}
+}
+
+globalThis.DefinitionRegistry = DefinitionRegistry;
+
 globalThis.corelib = new CoreLib();
+
+// Re-apply patches any time a scene is about to be loaded
+fluxloaderAPI.events.on("fl:pre-scene-loaded", globalThis.corelib.applyPatches);
 
 fluxloaderAPI.events.on("fl:all-mods-loaded", () => globalThis.corelib.applyPatches());

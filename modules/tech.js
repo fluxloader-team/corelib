@@ -1,7 +1,6 @@
 class TechModule {
-	techDefinitions = [];
+	techRegistry = new DefinitionRegistry("Tech", 38);
 	baseTechIDs = [];
-	nextIdNumber = 38;
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -12,12 +11,13 @@ class TechModule {
 		baseTechsString = baseTechsString.replace(new RegExp(`w\\.([a-zA-Z0-9]+)`, "g"), `"$1"`);
 		baseTechsString = baseTechsString.replace(new RegExp(`d\\.([a-zA-Z0-9]+)`, "g"), `"d.$1"`);
 		baseTechsString = baseTechsString.replace(new RegExp(`l\\.([a-zA-Z0-9]+)`, "g"), `"l.$1"`);
+
 		const baseTechs = eval(baseTechsString);
 
 		// Recursively register tech from the base techs
 		const registerBaseTech = (tech, parent) => {
 			this.baseTechIDs.push(tech.id);
-			this.techDefinitions.push(tech);
+			this.techRegistry.register(tech);
 			for (const childTech of tech.children ?? []) {
 				registerBaseTech(childTech, tech.id);
 			}
@@ -32,21 +32,16 @@ class TechModule {
 	register({ id, name, description, cost, unlocks, parent }) {
 		log("debug", "corelib", `Adding Tech "${tech.id}"`);
 
-		// Ensure tech ids are unique
-		for (const existingTech of this.techDefinitions) {
-			if (existingTech.id === tech.id) {
-				log("error", "corelib", `Tech with id "${tech.id}" was already registered!`);
-				return;
-			}
-		}
-
-		// Assign it the next tech id
-		const idNumber = this.nextIdNumber++;
-
 		// The root tech must atleast be Refining1
 		if (!parent) parent = "Refining1";
 
-		this.techDefinitions.push({ id, idNumber, name, description, cost, unlocks, parent });
+		this.techRegistry.register({ id, idNumber, name, description, cost, unlocks, parent });
+	}
+
+	unregister(id) {
+		let numericID = this.idMap[id];
+		delete this.idMap[id];
+		this.techRegistry.unregister(numericID);
 	}
 
 	loadTechPatches() {
@@ -54,12 +49,12 @@ class TechModule {
 
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];
-		for (const tech of this.techDefinitions) {
+		for (const tech of Object.values(this.techRegistry.definitions)) {
 			tech.children ??= [];
 			if (!tech.parent) {
 				nestedTechDefinitions.push(tech);
 			} else {
-				let parent = this.techDefinitions.find((otherTech) => {
+				let parent = Object.values(this.techRegistry.definitions).find((otherTech) => {
 					return otherTech.id == tech.parent;
 				});
 				if (parent) {
@@ -72,7 +67,7 @@ class TechModule {
 		}
 
 		let techIDString = "";
-		for (const tech of this.techDefinitions) {
+		for (const tech of Object.values(this.techRegistry.definitions)) {
 			log("debug", "corelib", `Adding Technology "${tech.id}" with id ${tech.idNumber}`);
 			if (!this.baseTechIDs.includes(tech)) techIDString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
 			tech.id = `w.${tech.id}`;

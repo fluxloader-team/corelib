@@ -1,20 +1,9 @@
 class ItemsModule {
-	itemDefinitions = [];
-	nextIDNumber = 25;
+	itemRegistry = new DefinitionRegistry("Item", 25);
+	idMap = {};
 
 	register({ id, type, name, description }) {
 		log("debug", "corelib", `Adding Item "${id}"`);
-
-		// Ensure item ids are unique
-		for (const existingItem of this.itemDefinitions) {
-			if (existingItem.id === id) {
-				log("error", "corelib", `Item with id "${id}" already exists!`);
-				return;
-			}
-		}
-
-		// Assign it the next item id number
-		const idNumber = this.nextIDNumber++;
 
 		// Ensure item type is valid
 		let validTypes = ["Tool", "Weapon", "Consumable"];
@@ -26,7 +15,13 @@ class ItemsModule {
 			log("warn", "corelib", `Item type "${type}" is not fully supported yet, you should use "Tool" or "Weapon" instead.`);
 		}
 
-		this.itemDefinitions.push({ id, idNumber, type, name, description });
+		this.idMap[id] = this.itemRegistry.register({ id, idNumber, type, name, description });
+	}
+
+	unregister(id) {
+		let numericID = this.idMap[id];
+		delete this.idMap[id];
+		this.itemRegistry.unregister(numericID);
 	}
 
 	applyPatches() {
@@ -34,7 +29,7 @@ class ItemsModule {
 
 		let itemIDString = "";
 		let itemDefinitionString = "";
-		for (const item of this.itemDefinitions) {
+		for (const item of Object.values(this.itemRegistry.definitions)) {
 			itemIDString += `,H[H.${item.id}=${item.idNumber}]="${item.id}"`;
 			itemDefinitionString += `DF[l.${item.id}]= function() {
 				return {

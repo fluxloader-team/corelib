@@ -1,13 +1,10 @@
 class SchedulesModule {
 	scheduleRegistry = new DefinitionRegistry("Schedule", 19);
+	idMap = {};
 
 	// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 	register(id, interval) {
-		if (this.scheduleDefinitions.hasOwnProperty(id)) {
-			log("error", "corelib", `Schedule with id "${id}" already exists!`);
-			return;
-		}
-		this.scheduleDefinitions[id] = interval;
+		this.idMap[id] = this.scheduleRegistry.register(interval);
 	}
 
 	unregister(id) {
@@ -21,7 +18,8 @@ class SchedulesModule {
 		let scheduleIDString = "";
 		let scheduleDefinitionString = "";
 
-		for (let [id, interval] of Object.entries(this.scheduleDefinitions)) {
+		for (let id of Object.keys(this.idMap)) {
+			let interval = this.scheduleRegistry.definitions[this.idMap[id]];
 			scheduleIDString += `,e[e.${nextIDNumber++}]="${id}", fluxloaderAPI.events.register("corelib:schedule-${id}")`;
 			scheduleDefinitionString += `up[_.${id}]= {interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}")}},`;
 		}

@@ -70,7 +70,7 @@ class TechModule {
 		for (const tech of Object.values(this.techRegistry.definitions)) {
 			log("debug", "corelib", `Adding Technology "${tech.id}" with id ${tech.idNumber}`);
 			if (!this.baseTechIDs.includes(tech)) techIDString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
-			tech.id = `w.${tech.id}`;
+			// tech.id = `w.${tech.id}`; // Why..? breaks when patched a second time
 			// delete tech.parent;
 			delete tech.idNumber;
 		}

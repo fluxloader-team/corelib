@@ -10,7 +10,7 @@ class CoreLib {
 		this.tech = new TechModule();
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
-		this.schedules = new ScheduleModule();
+		this.schedules = new SchedulesModule();
 	}
 
 	async applyPatches() {
@@ -93,6 +93,6 @@ globalThis.DefinitionRegistry = DefinitionRegistry;
 globalThis.corelib = new CoreLib();
 
 // Re-apply patches any time a scene is about to be loaded
-fluxloaderAPI.events.on("fl:pre-scene-loaded", globalThis.corelib.applyPatches);
+fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
 
 fluxloaderAPI.events.on("fl:all-mods-loaded", () => globalThis.corelib.applyPatches());

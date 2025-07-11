@@ -11,6 +11,8 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.createParticle = corelib.exposed.Fh;
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
 	corelib.simulation.internal.setCell = corelib.exposed.Od;
+	corelib.utils.internal = {};
+	corelib.utils.internal.methods = corelib.exposed.q;
 });
 
 corelib.simulation = {
@@ -51,6 +53,14 @@ corelib.utils = {
 	getSolidNameByType: (type) => {
 		return corelib.simulation.internal.solids[type] != undefined ? corelib.simulation.internal.solids[type] : null;
 	},
+	getCellTypeAtXY: (x, y) => {
+		return fluxloaderAPI.gameInstance.state.store.world.matrix[y][x] != undefined ? fluxloaderAPI.gameInstance.state.store.world.matrix[y][x] : null;
+	},
+	getWorkerByX: (x) => {
+		let threads = fluxloaderAPI.gameInstance.state.environment.multithreading.simulation.threads;
+		let t = corelib.utils.internal.methods.getThreadIndexFromCellX(x, threads.length);
+		return threads[t];
+	},
 };
 
 // register the events
@@ -66,6 +76,15 @@ fluxloaderAPI.listenWorkerMessage("corelib:eventMessage", (eventMessage) => {
 
 	// additional pre-processing for cell-change
 	if (eventMessage.type == "cell-change") {
+		// no cell object data
+		if (typeof eventMessage.rawData.to !== "object") {
+			return;
+		}
+		let wm = fluxloaderAPI.gameInstance.state.store.world.matrix[eventMessage.loc.y][eventMessage.loc.x];
+		// cell hasn't changed
+		if (wm === eventMessage.rawData.to) {
+			return;
+		}
 		eventMessage.data.fromCellType = typeof eventMessage.rawData.from === "object" ? eventMessage.rawData.from.cellType : eventMessage.rawData.from;
 		eventMessage.data.fromParticleType = eventMessage.data.fromCellType == 1 && typeof eventMessage.rawData.from === "object" ? eventMessage.rawData.from.type : null;
 		eventMessage.data.fromBlockType = eventMessage.data.fromCellType == 15 && typeof eventMessage.rawData.from === "object" ? eventMessage.rawData.from.type : null;
@@ -79,8 +98,41 @@ fluxloaderAPI.listenWorkerMessage("corelib:eventMessage", (eventMessage) => {
 		eventMessage.data.toCellTypeName = corelib.utils.getSolidNameByType(eventMessage.data.toCellType);
 		eventMessage.data.toParticleTypeName = corelib.utils.getParticleNameByType(eventMessage.data.toParticleType);
 		eventMessage.data.toBlockTypeName = corelib.utils.getBlockNameByType(eventMessage.data.toBlockType);
-		eventMessage.rawData = null;
+		//eventMessage.rawData = null;
+
+		// additionaly update the game world matrix
+		// this probably needs to be a cloned cache or something, reset on save ?
+		console.log(`world.matrix[${eventMessage.loc.y}][${eventMessage.loc.x}] changed to ${JSON.stringify(eventMessage.rawData.to)}`);
+		fluxloaderAPI.gameInstance.state.store.world.matrix[eventMessage.loc.y][eventMessage.loc.x] = eventMessage.rawData.to;
 	}
 
+	// additional pre-processing for dig
+	if (eventMessage.type == "dig") {
+		eventMessage.data.tool = {
+			itemType: eventMessage.rawData.tool.itemType,
+			itemName: eventMessage.rawData.tool.name,
+			itemDescription: eventMessage.rawData.tool.description,
+		};
+		eventMessage.data.cell = corelib.utils.getCellTypeAtXY(eventMessage.loc.x, eventMessage.loc.y);
+		console.log(`(${eventMessage.worker}) Dig @ ${eventMessage.loc.x},${eventMessage.loc.y} using ${eventMessage.data.tool.itemName} on cell ${eventMessage.data.cell}`);
+	}
+
+	//	console.warn(eventMessage);
+
 	fluxloaderAPI.events.trigger(eventMessage.trigger, eventMessage, false);
+});
+
+fluxloaderAPI.events.on("fl:scene-loaded", (e) => {
+	if (e === "test") {
+		let x = 301;
+		let y = 602;
+		console.log("scene-load-test 1");
+		let t = corelib.utils.getCellTypeAtXY(x, y);
+		console.log(t);
+		console.log("scene-load-test Sand");
+		corelib.simulation.spawnParticle(x, y, "Sand");
+		console.log("scene-load-test 2");
+		t = corelib.utils.getCellTypeAtXY(x, y);
+		console.log(t);
+	}
 });

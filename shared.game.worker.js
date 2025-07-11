@@ -1,6 +1,6 @@
 globalThis.corelib = { exposed: {}, simulation: {}, events: {}, utils: {} };
 
-corelib.events.eventTypes = ["cell-change", "fog-reveal"];
+corelib.events.eventTypes = ["cell-change", "fog-reveal", "dig"];
 
 globalThis.EventMessage = class EventMessage {
 	constructor(_type, _worker = -1, _x = -1, _y = -1) {

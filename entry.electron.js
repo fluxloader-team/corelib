@@ -4,11 +4,10 @@ includeVMScript("modules/tech.js");
 includeVMScript("modules/events.js");
 
 class CoreLib {
-
 	constructor() {
 		this.blocks = new BlocksModule();
-		this.tech = new TechModule();
-		this.items = new ItemsModule();
+		//		this.tech = new TechModule();
+		//		this.items = new ItemsModule();
 		this.events = new EventsModule();
 	}
 
@@ -16,8 +15,8 @@ class CoreLib {
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
 		this.blocks.applyPatches();
-		this.tech.loadTechPatches();
-		this.items.applyPatches();
+		//		this.tech.loadTechPatches();
+		//		this.items.applyPatches();
 		this.events.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 	}
@@ -42,7 +41,7 @@ td,ed,Jh,Qh,Zh,Kh,qh,Yh,$h,zh,Qh,Bh,Lh,Nh,Fh,Dh,Ih,Rh,Ah,kh,Eh,Th,_h,bh,xh,vh,yh
 th,eh,Jc,Qc,qc,Yc,$c,Xc,Wc,Hc,Vc,Gc,Uc,jc,zc,Oc,Bc,Lc,Nc,Fc,Dc,Ic,Rc,Pc,Mc,Ac,kc,Ec,wc,bc,xc,yc,gc,
 mc,pc,fc,dc,hc,cc,uc,lc,tc,ec,Ju,Qu,Zu,Ku,$u,Hu,Vu,Uu,ju,zu,Ou,Lu,Nu,Fu,Du,Iu,Ru,Pu,ku,Eu,Tu,_u,Su,
 bu,xu,vu,yu,gu,pu,fu,du,lu,au,ou,ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
-Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,n,t,d};
+Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,n,t,d,q};
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
@@ -53,3 +52,5 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 globalThis.corelib = new CoreLib();
 
 fluxloaderAPI.events.on("fl:all-mods-loaded", () => globalThis.corelib.applyPatches());
+
+includeVMScript("example/testmod/entry.electron.js");

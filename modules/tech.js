@@ -1,6 +1,7 @@
 class TechModule {
 	techRegistry = new DefinitionRegistry("Tech", 38);
 	baseTechIDs = [];
+	baseTechs = [];
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -17,7 +18,7 @@ class TechModule {
 		// Recursively register tech from the base techs
 		const registerBaseTech = (tech, parent) => {
 			this.baseTechIDs.push(tech.id);
-			this.techRegistry.register(tech);
+			this.baseTechs.push(tech);
 			for (const childTech of tech.children ?? []) {
 				registerBaseTech(childTech, tech.id);
 			}
@@ -45,16 +46,17 @@ class TechModule {
 	}
 
 	loadTechPatches() {
+		let techList = this.baseTechs.concat(Object.values(this.techRegistry.definitions));
 		log("debug", "corelib", "Loading technology patches");
-
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];
-		for (const tech of Object.values(this.techRegistry.definitions)) {
+		techList.forEach((tech) => (tech.children = []));
+		for (const tech of techList) {
 			tech.children ??= [];
 			if (!tech.parent) {
 				nestedTechDefinitions.push(tech);
 			} else {
-				let parent = Object.values(this.techRegistry.definitions).find((otherTech) => {
+				let parent = techList.find((otherTech) => {
 					return otherTech.id == tech.parent;
 				});
 				if (parent) {
@@ -65,29 +67,22 @@ class TechModule {
 				}
 			}
 		}
-
 		let techIDString = "";
-		for (const tech of Object.values(this.techRegistry.definitions)) {
+		for (const tech of techList) {
 			log("debug", "corelib", `Adding Technology "${tech.id}" with id ${tech.idNumber}`);
-			if (!this.baseTechIDs.includes(tech)) techIDString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
-			// tech.id = `w.${tech.id}`; // Why..? breaks when patched a second time
-			// delete tech.parent;
-			delete tech.idNumber;
+			if (!this.baseTechIDs.includes(tech.id)) techIDString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
 		}
-
 		// This is the inverse of what we do to the raw string in the constructor
 		let techDefinitionString = JSON.stringify(nestedTechDefinitions);
-		techDefinitionString = techDefinitionString.replace(new RegExp(`"w\\.([a-zA-Z0-9]+)"`, "g"), `w.$1`);
+		techDefinitionString = techDefinitionString.replace(new RegExp(`"id":"([a-zA-Z0-9]+)"`, "g"), `"id":w.$1`);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"d\\.([a-zA-Z0-9]+)"`, "g"), `d.$1`);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"l\\.([a-zA-Z0-9]+)"`, "g"), `l.$1`);
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techIDs", {
 			type: "replace",
 			from: 'B[B.Guns3=28]="Guns3"',
 			to: `~${techIDString}`,
 			token: `~`,
 		});
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techDefinitions", {
 			type: "regex",
 			pattern: /\$f=function\(\).*?\},Y/,

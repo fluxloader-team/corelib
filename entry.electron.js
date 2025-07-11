@@ -14,6 +14,7 @@ class CoreLib {
 	}
 
 	async applyPatches() {
+		debugger;
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
 		this.blocks.applyPatches();
@@ -94,5 +95,3 @@ globalThis.corelib = new CoreLib();
 
 // Re-apply patches any time a scene is about to be loaded
 fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
-
-fluxloaderAPI.events.on("fl:all-mods-loaded", () => globalThis.corelib.applyPatches());

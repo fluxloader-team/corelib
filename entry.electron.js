@@ -14,7 +14,6 @@ class CoreLib {
 	}
 
 	async applyPatches() {
-		debugger;
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
 		this.blocks.applyPatches();

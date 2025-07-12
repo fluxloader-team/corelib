@@ -76,7 +76,7 @@ class DefinitionRegistry {
 		let id = this.nextID();
 		if (this.definitions.hasOwnProperty(id)) {
 			log("error", "corelib", `${this.moduleType} with id "${id}" already exists!`);
-			return false;
+			return;
 		}
 		this.definitions[id] = data;
 		return id;

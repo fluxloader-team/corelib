@@ -8,6 +8,9 @@ class SchedulesModule {
 	}
 
 	unregister(id) {
+		if (!this.idMap.hasOwnProperty(id)) {
+			return log("error", "corelib", `Schedule with id "${id}" not found! Unable to unregister.`);
+		}
 		let numericID = this.idMap[id];
 		delete this.idMap[id];
 		this.scheduleRegistry.unregister(numericID);

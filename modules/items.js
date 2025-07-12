@@ -19,6 +19,9 @@ class ItemsModule {
 	}
 
 	unregister(id) {
+		if (!this.idMap.hasOwnProperty(id)) {
+			return log("error", "corelib", `Item with id "${id}" not found! Unable to unregister.`);
+		}
 		let numericID = this.idMap[id];
 		delete this.idMap[id];
 		this.itemRegistry.unregister(numericID);

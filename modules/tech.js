@@ -31,12 +31,12 @@ class TechModule {
 	}
 
 	register({ id, name, description, cost, unlocks, parent }) {
-		log("debug", "corelib", `Adding Tech "${tech.id}"`);
+		log("debug", "corelib", `Adding Tech "${id}"`);
 
 		// The root tech must atleast be Refining1
 		if (!parent) parent = "Refining1";
 
-		this.techRegistry.register({ id, idNumber, name, description, cost, unlocks, parent });
+		this.techRegistry.register({ id, name, description, cost, unlocks, parent });
 	}
 
 	unregister(id) {
@@ -68,9 +68,9 @@ class TechModule {
 			}
 		}
 		let techIDString = "";
-		for (const tech of techList) {
-			log("debug", "corelib", `Adding Technology "${tech.id}" with id ${tech.idNumber}`);
-			if (!this.baseTechIDs.includes(tech.id)) techIDString += `,B[B.${tech.id}=${tech.idNumber}]="${tech.id}"`;
+		for (const [id, tech] of Object.entries(this.techRegistry.definitions)) {
+			log("debug", "corelib", `Adding technology "${tech.id}" with id ${id}`);
+			techIDString += `,B[B.${tech.id}=${id}]="${tech.id}"`;
 		}
 		// This is the inverse of what we do to the raw string in the constructor
 		let techDefinitionString = JSON.stringify(nestedTechDefinitions);

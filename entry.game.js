@@ -16,14 +16,14 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 corelib.simulation = {
 	// ---------------- Elements, cells, particles, solids ----------------
 	spawnParticle: (x, y, type, data = {}) => {
-		const particleType = corelib.simulation.internal.particles[type];
-		if (particleType === undefined) log("error", "corelib", `Particle type ${type} does not exist!`);
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
 		const particle = corelib.simulation.internal.createParticle(particleType, x, y, data);
 		corelib.simulation.internal.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 	},
 	spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
-		const particleType = corelib.simulation.internal.particles[type];
-		if (particleType === undefined) log("error", "corelib", `Particle type ${type} does not exist!`);
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
 		const innerParticle = corelib.simulation.internal.createParticle(particleType, x, y, data);
 		const outerParticle = corelib.simulation.internal.createParticle(corelib.simulation.internal.particles.Particle, x, y, {
 			element: innerParticle,
@@ -33,7 +33,7 @@ corelib.simulation = {
 	},
 	spawnBlock: (x, y, type) => {
 		const blockType = corelib.simulation.internal.blocks[type];
-		if (blockType === undefined) log("error", "corelib", `Block type ${type} does not exist!`);
+		if (blockType === undefined) return log("error", "corelib", `Block type ${type} does not exist!`);
 		corelib.simulation.internal.createBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
 	},
 	revealFog: (x, y) => {

@@ -38,13 +38,12 @@ corelib.events.processCellChange = (worker, x, y, from, to) => {
 	fluxloaderAPI.events.trigger("cl:cell-change", data, false);
 };
 
-corelib.events.processFogReveal = (worker, x, y) => {
-	if (worker === undefined || x === undefined || y === undefined) {
+corelib.events.processFogReveal = (x, y) => {
+	if (x === undefined || y === undefined) {
 		return;
 	}
 
 	let data = {
-		worker,
 		loc: {
 			x,
 			y,

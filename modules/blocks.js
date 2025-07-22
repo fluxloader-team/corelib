@@ -4,7 +4,7 @@ class BlocksModule {
 
 	register({ sourceMod, id, name, description, shape, angles, imagePath }) {
 		let fullImagePath = this._getFullImagePath(sourceMod, id, imagePath);
-		this.idMap[id] = this.blockRegistry.register({ sourceMod, id, name, description, shape, angles, variants: [], fullImagePath });
+		this.idMap[id] = this.blockRegistry.register({ isVariant: false, sourceMod, id, name, description, shape, angles, variants: [], fullImagePath });
 	}
 
 	registerVariant({ parentId, suffix, shape, angles, imagePath }) {
@@ -12,11 +12,12 @@ class BlocksModule {
 			return log("error", "corelib", `Parent block id:"${parentId}" for variant "${parentId}${id}"not found!`);
 		}
 
-		let parentBlock = this.blockRegistry.definitions[this.idMap[parentId]];
 		let id = parentId + suffix;
-
+		let parentBlock = this.blockRegistry.definitions[this.idMap[parentId]];
 		let fullImagePath = this._getFullImagePath(parentBlock.sourceMod, id, imagePath);
-		parentBlock.variants.push({ id, idNumber, shape, angles, fullImagePath });
+		this.idMap[id] = this.blockRegistry.register({ isVariant: true, parentId, id, shape, angles, fullImagePath });
+
+		parentBlock.variants.push({ id, shape, angles, fullImagePath });
 	}
 
 	unregister(id) {
@@ -24,9 +25,17 @@ class BlocksModule {
 			return log("error", "corelib", `Block with id "${id}" not found! Unable to unregister.`);
 		}
 
-		let numericID = this.idMap[id];
+		if (this.blockRegistry.definitions[this.idMap[id]].isVariant) {
+			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
+		}
+
+		for (let variant of this.blockRegistry.definitions[this.idMap[id]].variants) {
+			this.blockRegistry.unregister(this.idMap[variant.id]);
+			delete this.idMap[variant.id];
+		}
+		
+		this.blockRegistry.unregister(this.idMap[id]);
 		delete this.idMap[id];
-		this.blockRegistry.unregister(numericID);
 	}
 
 	_getFullImagePath = function (sourceMod, id, imagePath) {
@@ -43,7 +52,9 @@ class BlocksModule {
 		log("info", "corelib", "Loading block patches");
 
 		const reduceBlocks = (f) => {
-			return Object.values(this.blockRegistry.definitions).reduce((acc, b) => acc + f(b), "");
+			return Object.values(this.blockRegistry.definitions)
+				.filter((b) => !b.isVariant)
+				.reduce((acc, b) => acc + f(b), "");
 		};
 
 		const reduceBlockVariants = (b, f) => {
@@ -53,7 +64,7 @@ class BlocksModule {
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["V"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, "corelib:blockTypes", (v1) => ({
 			type: "replace",
 			from: `${v1}[${v1}.GloomEmitter=27]="GloomEmitter"`,
-			to: `~` + reduceBlocks((b) => `,${v1}[${v1}.${b.id}=${b.idNumber}]="${b.id}"` + reduceBlockVariants(b, (v) => `,${v1}[${v1}.${v.id}=${v.idNumber}]="${v.id}"`)),
+			to: `~` + reduceBlocks((b) => `,${v1}[${v1}.${b.id}=${this.idMap[b.id]}]="${b.id}"` + reduceBlockVariants(b, (v) => `,${v1}[${v1}.${v.id}=${this.idMap[v.id]}]="${v.id}"`)),
 			token: `~`,
 		}));
 

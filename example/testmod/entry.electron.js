@@ -1,11 +1,11 @@
 corelib.blocks.register({
-    sourceMod: "corelib",
+    sourceMod: "testmod",
     id: "wedge",
     name: "Wedge Block",
     description: "A simple yet versatile wedge block",
     shape: "[10,0,0,0],[3,10,0,0],[3,3,0,0],[3,0,0,0]",
     angles: "[0]",
-    imagePath: "example/wedge",
+    imagePath: "wedge",
 });
 
 corelib.blocks.registerVariant({
@@ -13,7 +13,7 @@ corelib.blocks.registerVariant({
     suffix: "Left",
     shape: "[0,0,0,9],[0,0,9,3],[0,0,3,3],[0,0,0,3]",
     angles: "[-180,180]",
-    imagePath: "example/wedgeLeft",
+    imagePath: "wedgeLeft",
 });
 
 corelib.blocks.registerVariant({
@@ -21,7 +21,7 @@ corelib.blocks.registerVariant({
     suffix: "Up",
     shape: "[3,3,3,3],[0,3,3,0],[0,0,0,0],[0,0,0,0]",
     angles: "[90]",
-    imagePath: "example/wedgeUp",
+    imagePath: "wedgeUp",
 });
 
 corelib.blocks.registerVariant({
@@ -29,7 +29,7 @@ corelib.blocks.registerVariant({
     suffix: "Down",
     shape: "[0,0,0,0],[0,0,0,0],[0,9,10,0],[9,3,3,10]",
     angles: "[-90]",
-    imagePath: "example/wedgeDown",
+    imagePath: "wedgeDown",
 });
 
 corelib.tech.register({

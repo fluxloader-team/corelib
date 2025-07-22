@@ -14,7 +14,6 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 });
 
 corelib.simulation = {
-	// ---------------- Elements, cells, particles, solids ----------------
 	spawnParticle: (x, y, type, data = {}) => {
 		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
 		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);

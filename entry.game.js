@@ -16,14 +16,14 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 corelib.simulation = {
 	// ---------------- Elements, cells, particles, solids ----------------
 	spawnParticle: (x, y, type, data = {}) => {
-		const particleType = corelib.simulation.internal.particles[type];
-		if (particleType === undefined) log("error", "corelib", `Particle type ${type} does not exist!`);
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
 		const particle = corelib.simulation.internal.createParticle(particleType, x, y, data);
 		corelib.simulation.internal.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 	},
 	spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
-		const particleType = corelib.simulation.internal.particles[type];
-		if (particleType === undefined) log("error", "corelib", `Particle type ${type} does not exist!`);
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
 		const innerParticle = corelib.simulation.internal.createParticle(particleType, x, y, data);
 		const outerParticle = corelib.simulation.internal.createParticle(corelib.simulation.internal.particles.Particle, x, y, {
 			element: innerParticle,
@@ -33,7 +33,7 @@ corelib.simulation = {
 	},
 	spawnBlock: (x, y, type) => {
 		const blockType = corelib.simulation.internal.blocks[type];
-		if (blockType === undefined) log("error", "corelib", `Block type ${type} does not exist!`);
+		if (blockType === undefined) return log("error", "corelib", `Block type ${type} does not exist!`);
 		corelib.simulation.internal.createBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
 	},
 	revealFog: (x, y) => {
@@ -52,35 +52,3 @@ corelib.utils = {
 		return corelib.simulation.internal.solids[type] != undefined ? corelib.simulation.internal.solids[type] : null;
 	},
 };
-
-// register the events
-for (let eventType of corelib.events.eventTypes) {
-	fluxloaderAPI.events.registerEvent(`cl:worker-${eventType}`);
-}
-
-fluxloaderAPI.listenWorkerMessage("corelib:eventMessage", (eventMessage) => {
-	// validate the minimal eventMessage
-	if (eventMessage.type === undefined || eventMessage.type === null || eventMessage.trigger === undefined || eventMessage.trigger === null) {
-		return;
-	}
-
-	// additional pre-processing for cell-change
-	if (eventMessage.type == "cell-change") {
-		eventMessage.data.fromCellType = typeof eventMessage.rawData.from === "object" ? eventMessage.rawData.from.cellType : eventMessage.rawData.from;
-		eventMessage.data.fromParticleType = eventMessage.data.fromCellType == 1 && typeof eventMessage.rawData.from === "object" ? eventMessage.rawData.from.type : null;
-		eventMessage.data.fromBlockType = eventMessage.data.fromCellType == 15 && typeof eventMessage.rawData.from === "object" ? eventMessage.rawData.from.type : null;
-		eventMessage.data.fromCellTypeName = corelib.utils.getSolidNameByType(eventMessage.data.fromCellType);
-		eventMessage.data.fromParticleTypeName = corelib.utils.getParticleNameByType(eventMessage.data.fromParticleType);
-		eventMessage.data.fromBlockTypeName = corelib.utils.getBlockNameByType(eventMessage.data.fromBlockType);
-
-		eventMessage.data.toCellType = typeof eventMessage.rawData.to === "object" ? eventMessage.rawData.to.cellType : eventMessage.rawData.to;
-		eventMessage.data.toParticleType = eventMessage.data.toCellType == 1 && typeof eventMessage.rawData.to === "object" ? eventMessage.rawData.to.type : null;
-		eventMessage.data.toBlockType = eventMessage.data.toCellType == 15 && typeof eventMessage.rawData.to === "object" ? eventMessage.rawData.to.type : null;
-		eventMessage.data.toCellTypeName = corelib.utils.getSolidNameByType(eventMessage.data.toCellType);
-		eventMessage.data.toParticleTypeName = corelib.utils.getParticleNameByType(eventMessage.data.toParticleType);
-		eventMessage.data.toBlockTypeName = corelib.utils.getBlockNameByType(eventMessage.data.toBlockType);
-		eventMessage.rawData = null;
-	}
-
-	fluxloaderAPI.events.trigger(eventMessage.trigger, eventMessage, false);
-});

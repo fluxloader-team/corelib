@@ -1,25 +1,54 @@
 await import("./shared.game.worker.js");
 
-// events: worker-cell-changed
-corelib.events.processCellChange = (_worker, _x, _y, _from, _to) => {
-	if (_worker === undefined || _x === undefined || _y === undefined || _from === undefined || _to === undefined) {
+fluxloaderAPI.events.registerEvent("cl:cell-change");
+fluxloaderAPI.events.registerEvent("cl:fog-reveal");
+
+corelib.events.processCellChange = (worker, x, y, from, to) => {
+	if (worker === undefined || x === undefined || y === undefined || from === undefined || to === undefined) {
 		return;
 	}
 
-	let eventMessage = new EventMessage("cell-change", _worker, _x, _y);
-	eventMessage.rawData.from = _from;
-	eventMessage.rawData.to = _to;
+	let data = {
+		raw: {
+			from,
+			to,
+		},
+		worker,
+		loc: {
+			x,
+			y,
+		},
+	};
 
-	fluxloaderAPI.sendGameMessage("corelib:eventMessage", eventMessage);
+	// These `Name` variables need to be ported to the worker
+	data.fromCellType = typeof data.raw.from === "object" ? data.raw.from.cellType : data.raw.from;
+	data.fromParticleType = data.fromCellType == 1 && typeof data.raw.from === "object" ? data.raw.from.type : null;
+	data.fromBlockType = data.fromCellType == 15 && typeof data.raw.from === "object" ? data.raw.from.type : null;
+	// data.fromCellTypeName = corelib.utils.getSolidNameByType(data.fromCellType);
+	// data.fromParticleTypeName = corelib.utils.getParticleNameByType(data.fromParticleType);
+	// data.fromBlockTypeName = corelib.utils.getBlockNameByType(data.fromBlockType);
+
+	data.toCellType = typeof data.raw.to === "object" ? data.raw.to.cellType : data.raw.to;
+	data.toParticleType = data.toCellType == 1 && typeof data.raw.to === "object" ? data.raw.to.type : null;
+	data.toBlockType = data.toCellType == 15 && typeof data.raw.to === "object" ? data.raw.to.type : null;
+	// data.toCellTypeName = corelib.utils.getSolidNameByType(data.toCellType);
+	// data.toParticleTypeName = corelib.utils.getParticleNameByType(data.toParticleType);
+	// data.toBlockTypeName = corelib.utils.getBlockNameByType(data.toBlockType);
+
+	fluxloaderAPI.events.trigger("cl:cell-change", data, false);
 };
 
-// events: worker-fog-reveal
-corelib.events.processFogReveal = (_worker, _x, _y) => {
-	if (_worker === undefined || _x === undefined || _y === undefined) {
+corelib.events.processFogReveal = (x, y) => {
+	if (x === undefined || y === undefined) {
 		return;
 	}
 
-	let eventMessage = new EventMessage("fog-reveal", _worker, _x, _y);
+	let data = {
+		loc: {
+			x,
+			y,
+		},
+	};
 
-	fluxloaderAPI.sendGameMessage("corelib:eventMessage", eventMessage);
+	fluxloaderAPI.events.trigger("cl:fog-reveal", data, false);
 };

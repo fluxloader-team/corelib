@@ -32,11 +32,6 @@ fluxloaderAPI.events.on("fl:scene-loaded", (scene) => {
 
 		blockSpawns.forEach((s) => spawnBlockRange(s));
 
-		// CML.scriptAPI.revealFog(24, 97);
-		// CML.scriptAPI.revealFog(92, 48);
-		// CML.scriptAPI.revealFog(95, 51);
-		// CML.scriptAPI.revealFog(105, 59);
-
 		setInterval(() => {
 			corelib.simulation.spawnParticle(500, 500, "Water");
 		}, 16);

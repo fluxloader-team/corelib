@@ -5,13 +5,14 @@ class ItemsModule {
 	register({ id, type, name, description }) {
 		log("debug", "corelib", `Adding Item "${id}"`);
 
-		// Ensure item type is valid
 		let validTypes = ["Tool", "Weapon", "Consumable"];
 		if (!validTypes.includes(type)) {
 			log("error", "corelib", `Item type "${type}" is not recongized. Supported types are: "${validTypes.join(`", "`)}"`);
 			return;
 		}
+
 		if (type === "Consumable") {
+			// For now just silently continue but with a warning
 			log("warn", "corelib", `Item type "${type}" is not fully supported yet, you should use "Tool" or "Weapon" instead.`);
 		}
 
@@ -22,6 +23,7 @@ class ItemsModule {
 		if (!this.idMap.hasOwnProperty(id)) {
 			return log("error", "corelib", `Item with id "${id}" not found! Unable to unregister.`);
 		}
+		
 		let numericID = this.idMap[id];
 		delete this.idMap[id];
 		this.itemRegistry.unregister(numericID);

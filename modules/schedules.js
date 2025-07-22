@@ -2,8 +2,8 @@ class SchedulesModule {
 	scheduleRegistry = new DefinitionRegistry("Schedule", 19);
 	idMap = {};
 
-	// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 	register(id, interval) {
+		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 		this.idMap[id] = this.scheduleRegistry.register(interval);
 	}
 
@@ -11,6 +11,7 @@ class SchedulesModule {
 		if (!this.idMap.hasOwnProperty(id)) {
 			return log("error", "corelib", `Schedule with id "${id}" not found! Unable to unregister.`);
 		}
+
 		let numericID = this.idMap[id];
 		delete this.idMap[id];
 		this.scheduleRegistry.unregister(numericID);
@@ -33,6 +34,7 @@ class SchedulesModule {
 			to: `~${scheduleIDString}`,
 			token: `~`,
 		});
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleDefinitions", {
 			type: "replace",
 			from: `up[_.Autosave]=`,

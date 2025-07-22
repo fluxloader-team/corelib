@@ -3,17 +3,11 @@ class BlocksModule {
 	idMap = {};
 
 	register({ sourceMod, id, name, description, shape, angles, imagePath }) {
-		//log("info", "corelib", `Attempting to register Block with id "${sourceMod}|${id}|${name}|${angles}"`);
-		// Resolve image paths to each mods folder
 		let fullImagePath = this._getFullImagePath(sourceMod, id, imagePath);
-		// Register block and store the numeric ID in the idMap
 		this.idMap[id] = this.blockRegistry.register({ sourceMod, id, name, description, shape, angles, variants: [], fullImagePath });
 	}
 
-	// I suggest changing this to `registerVariant` to be consistent
-	addVariant({ parentId, suffix, shape, angles, imagePath }) {
-		//log("info", "corelib", `Attempting to register Block Variant "${parentId}|${suffix}|${angles}"`);
-
+	registerVariant({ parentId, suffix, shape, angles, imagePath }) {
 		if (!this.idMap.hasOwnProperty(parentId)) {
 			return log("error", "corelib", `Parent block id:"${parentId}" for variant "${parentId}${id}"not found!`);
 		}
@@ -21,7 +15,6 @@ class BlocksModule {
 		let parentBlock = this.blockRegistry.definitions[this.idMap[parentId]];
 		let id = parentId + suffix;
 
-		// Resolve image paths to each mods folder
 		let fullImagePath = this._getFullImagePath(parentBlock.sourceMod, id, imagePath);
 		parentBlock.variants.push({ id, idNumber, shape, angles, fullImagePath });
 	}
@@ -30,6 +23,7 @@ class BlocksModule {
 		if (!this.idMap.hasOwnProperty(id)) {
 			return log("error", "corelib", `Block with id "${id}" not found! Unable to unregister.`);
 		}
+
 		let numericID = this.idMap[id];
 		delete this.idMap[id];
 		this.blockRegistry.unregister(numericID);
@@ -42,8 +36,6 @@ class BlocksModule {
 			_return = path.join(fluxloaderAPI.getModsPath(), "corelib", "assets/noimage.png").replace(/\\/g, "/");
 		}
 
-		//log("info", "corelib", `Block Image: ${sourceMod} | ${id} | ${imagePath} => ${_return}`);
-
 		return _return;
 	};
 
@@ -53,6 +45,7 @@ class BlocksModule {
 		const reduceBlocks = (f) => {
 			return Object.values(this.blockRegistry.definitions).reduce((acc, b) => acc + f(b), "");
 		};
+
 		const reduceBlockVariants = (b, f) => {
 			return b.variants.reduce((acc, v) => acc + f(v), "");
 		};

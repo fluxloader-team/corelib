@@ -10,17 +10,19 @@ class EventsModule {
 			token: `~`,
 		});
 
-		// fog-reveal patch
+		// fog-reveal patches
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:event-fog-reveal", {
 			type: "replace",
 			from: `case i.dD.StartFogReveal:`,
 			to: `~corelib.events.processFogReveal(e.data[1],e.data[2]);`,
 			token: `~`,
 		});
-
-		// This shouldn't be needed, but apparently it is..
-		// It *should* repatch when the file is requested, but I guess not... thanks tom
-		fluxloaderAPI.repatchFile("js/336.bundle.js");
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:event-fog-reveal", {
+			type: "replace",
+			from: `u.has("".concat(f,",")`,
+			to: `performance.mark('fog-reveal-start'),corelib.events.processFogReveal(f,v),performance.mark('fog-reveal-end'),performance.measure('fog-reveal','fog-reveal-start','fog-reveal-end'),~`,
+			token: `~`,
+		});
 	}
 }
 

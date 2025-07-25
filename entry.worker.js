@@ -50,5 +50,8 @@ corelib.events.processFogReveal = (x, y) => {
 		},
 	};
 
+	performance.mark("process-reveal-start");
 	fluxloaderAPI.events.trigger("cl:fog-reveal", data, false);
+	performance.mark("process-reveal-end");
+	performance.measure("process-reveal", "process-reveal-start", "process-reveal-end");
 };

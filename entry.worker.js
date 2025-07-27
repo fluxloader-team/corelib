@@ -1,7 +1,22 @@
 await import("./shared.game.worker.js");
 
-fluxloaderAPI.events.registerEvent("cl:cell-change");
-fluxloaderAPI.events.registerEvent("cl:fog-reveal");
+// Events are batched together because of how many are triggered
+// All batched data is sent when the worker receives the "RunUpdate" message
+let batchData = {};
+const events = ["cell-change", "fog-reveal"];
+
+for (let event of events) {
+	fluxloaderAPI.events.registerEvent(`cl:${event}`);
+	batchData[event] = [];
+}
+
+corelib.events.sendBatches = () => {
+	for (let event of events) {
+		if (batchData[event].length === 0) continue;
+		fluxloaderAPI.events.trigger(`cl:${event}`, batchData[event], false);
+		batchData[event] = [];
+	}
+};
 
 corelib.events.processCellChange = (worker, x, y, from, to) => {
 	if (worker === undefined || x === undefined || y === undefined || from === undefined || to === undefined) {
@@ -22,7 +37,7 @@ corelib.events.processCellChange = (worker, x, y, from, to) => {
 	data.toParticleType = data.toCellType == 1 && typeof data.raw.to === "object" ? data.raw.to.type : null;
 	data.toBlockType = data.toCellType == 15 && typeof data.raw.to === "object" ? data.raw.to.type : null;
 
-	fluxloaderAPI.events.trigger("cl:cell-change", data, false);
+	batchData["cell-change"].push(data);
 };
 
 corelib.events.processFogReveal = (x, y) => {
@@ -34,5 +49,5 @@ corelib.events.processFogReveal = (x, y) => {
 		loc: { x, y },
 	};
 
-	fluxloaderAPI.events.trigger("cl:fog-reveal", data, false);
+	batchData["fog-reveal"].push(data);
 };

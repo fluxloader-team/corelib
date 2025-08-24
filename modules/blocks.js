@@ -33,7 +33,7 @@ class BlocksModule {
 			this.blockRegistry.unregister(this.idMap[variant.id]);
 			delete this.idMap[variant.id];
 		}
-		
+
 		this.blockRegistry.unregister(this.idMap[id]);
 		delete this.idMap[id];
 	}
@@ -78,7 +78,7 @@ class BlocksModule {
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [], "js/515.bundle.js": [] }, "corelib:blockShapes", (v) => ({
 			type: "replace",
 			from: `"grower":[[12,12,12,12],[0,0,0,0],[0,0,0,0],[0,0,0,0]]`,
-			to: `~` + reduceBlocks((b) => `,"${b.id}":[${b.shape}]` + reduceBlockVariants(b, (v) => `,"${v.id}":[${v.shape}]`)),
+			to: `~` + reduceBlocks((b) => `,"${b.id}":${JSON.stringify(b.shape)}` + reduceBlockVariants(b, (v) => `,"${v.id}":${JSON.stringify(v.shape)}`)),
 			token: `~`,
 		}));
 
@@ -89,8 +89,8 @@ class BlocksModule {
 				`~` +
 				reduceBlocks(
 					(b) =>
-						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:${b.angles}}` +
-						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:${v.angles}}`) +
+						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:${JSON.stringify(b.angles)}}` +
+						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:${JSON.stringify(v.angles)}}`) +
 						`],name:"${b.name}",description:"${b.description}"}` +
 						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`)
 				),
@@ -100,7 +100,22 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}` + reduceBlockVariants(b, (v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true}`)),
+			to:
+				`~` +
+				reduceBlocks(
+					(b) =>
+						`,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true,size: {
+                width: 4 * e.cellSize,
+                height: 4 * e.cellSize
+            }}` +
+						reduceBlockVariants(
+							b,
+							(v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true,size: {
+                width: 4 * e.cellSize,
+                height: 4 * e.cellSize
+            }}`
+						)
+				),
 			token: `~`,
 		});
 
@@ -117,7 +132,7 @@ class BlocksModule {
 			to:
 				"if([" +
 				reduceBlocks((b) => `d.${b.id},` + reduceBlockVariants(b, (v) => `d.${v.id},`)) +
-				"].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,0,0,e.snapGridCellSize,e.snapGridCellSize,c.x,c.y,u,u);}else ~",
+				`].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(t.shared.conveyorBeltsAnimationIndex[0]%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ~`,
 			token: `~`,
 		});
 	}

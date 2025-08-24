@@ -1,6 +1,7 @@
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
+includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
 includeVMScript("modules/schedules.js");
 
@@ -8,6 +9,7 @@ class CoreLib {
 	constructor() {
 		this.blocks = new BlocksModule();
 		this.tech = new TechModule();
+		this.upgrades = new UpgradesModule();
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
@@ -17,7 +19,8 @@ class CoreLib {
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
 		this.blocks.applyPatches();
-		this.tech.loadTechPatches();
+		this.tech.applyPatches();
+		this.upgrades.applyPatches();
 		this.items.applyPatches();
 		this.events.applyPatches();
 		this.schedules.applyPatches();

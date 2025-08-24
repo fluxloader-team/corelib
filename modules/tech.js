@@ -45,9 +45,8 @@ class TechModule {
 		this.techRegistry.unregister(numericID);
 	}
 
-	loadTechPatches() {
+	applyPatches() {
 		log("debug", "corelib", "Loading technology patches");
-		
 		let techList = this.baseTechs.concat(Object.values(this.techRegistry.definitions));
 
 		// Convert the big list of tech into a nested list structure
@@ -78,9 +77,9 @@ class TechModule {
 
 		// This is the inverse of what we do to the raw string in the constructor
 		let techDefinitionString = JSON.stringify(nestedTechDefinitions);
-		techDefinitionString = techDefinitionString.replace(new RegExp(`"id":"([a-zA-Z0-9]+)"`, "g"), `"id":w.$1`);
-		techDefinitionString = techDefinitionString.replace(new RegExp(`"d\\.([a-zA-Z0-9]+)"`, "g"), `d.$1`);
-		techDefinitionString = techDefinitionString.replace(new RegExp(`"l\\.([a-zA-Z0-9]+)"`, "g"), `l.$1`);
+		techDefinitionString = techDefinitionString.replace(new RegExp(`"id":"([a-zA-Z0-9_]+)"`, "g"), `"id":w.$1`);
+		techDefinitionString = techDefinitionString.replace(new RegExp(`"d\\.([a-zA-Z0-9_]+)"`, "g"), `d.$1`);
+		techDefinitionString = techDefinitionString.replace(new RegExp(`"l\\.([a-zA-Z0-9_]+)"`, "g"), `l.$1`);
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techIDs", {
 			type: "replace",
 			from: 'B[B.Guns3=28]="Guns3"',

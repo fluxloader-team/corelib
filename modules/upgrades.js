@@ -1,0 +1,138 @@
+class UpgradesModule {
+	upgrades = {};
+
+	constructor() {
+		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
+		let baseUpgradesString = `[{name:"Tools",id:"tools",items:[{name:"Grabber",id:"grabber",upgrades:[{name:"Material Scanner",id:"scanner",description:"Shows more information about materials when hovering",maxLevel:2,costs:[100]},{name:"Hydro Sponge",id:"waterGrab",description:"Pick up water (above ground only)",maxLevel:2,costs:[200],oneOff:!0}]},{name:"Jetpack",id:"jetpack",upgrades:[{name:"Thrust Amplifier",id:"speed",description:"Increases flight and movement speed",maxLevel:1,costs:[]}]},{name:"Flamethrower",id:"flamethrower",requirement:{item:l.Flamethrower},upgrades:[{name:"Extended Range",id:"range",description:"Increases the range of the flames (+25% per level)",maxLevel:3,costs:[800,1200]}]}]},{name:"Weapons",id:"weapons",items:[{name:"Shovel",id:"shovel",upgrades:[{name:"Quick Dig",id:"speed",description:"Reduces digging cooldown",maxLevel:4,costs:[500,500,500]}]},{name:"Gun",id:"gun",requirement:{item:l.Gun},upgrades:[{name:"Rapid Fire",id:"speed",description:"Increases firing rate",maxLevel:4,costs:[500,500,500]},{name:"Triple Burst",id:"bullets",description:"Increases bullets per shot (x3)",maxLevel:2,costs:[1e3],oneOff:!0}]},{name:"Rocket Launcher",id:"rocketLauncher",requirement:{item:l.RocketLauncher},upgrades:[{name:"Quick-Load System",id:"reload",description:"Reduces reload time",maxLevel:3,costs:[500,500]},{name:"Extended Magazine",id:"maxAmmo",description:"Increases max ammo",maxLevel:3,costs:[500,500]},{name:"Incendiary Warhead",id:"napalm",description:"Launches a napalm rocket that explodes into a fireball",maxLevel:2,costs:[1e3],oneOff:!0}]}]},{name:"Drones",id:"drones",requirement:{tech:w.Drones1},items:[{name:"Hauler",id:"hauler",requirement:{item:l.Hauler},upgrades:[{name:"Drone Fleet",id:"maxDrones",description:"Increases the maximum number of hauler drones (+2)",maxLevel:6,costs:[1e3,2e3,3e3,4e3,5e3]},{name:"Quantum Propulsion",id:"speed",description:"Increases drone movement speed (+25% per level)",maxLevel:4,costs:[1500,2e3,2500]}]},{name:"Digger",id:"digger",requirement:{item:l.Bouncer},upgrades:[{name:"Rapid Deployment",id:"cooldown",description:"Reduces the cooldown between launching diggers",maxLevel:4,costs:[1e3,1500,2e3]},{name:"Reinforced Hull",id:"hp",description:"Increases the number of bedrock hits before destruction",maxLevel:6,costs:[800,1200,1600,2e3,2500]}]}]}]`;
+
+		// Convert `w.var` -> `"var"` and `l.var` -> `"var"`
+		// Later when we evaluate it we update this
+		baseUpgradesString = baseUpgradesString.replace(new RegExp(`w\\.([a-zA-Z0-9]+)`, "g"), `"$1"`);
+		baseUpgradesString = baseUpgradesString.replace(new RegExp(`l\\.([a-zA-Z0-9]+)`, "g"), `"$1"`);
+
+		const baseUpgrades = eval(baseUpgradesString);
+
+		for (const tab of baseUpgrades) {
+			this.registerTab(tab); // Only needs id and name
+			for (const category of tab.items) {
+				this.registerCategory({ tabID: tab.id, ...category });
+				for (const upgrade of category.upgrades) {
+					this.registerUpgrade({ tabID: tab.id, categoryID: category.id, ...upgrade });
+				}
+			}
+		}
+	}
+
+	// Tabs on the left
+	registerTab({ id, name }) {
+		log("debug", "corelib", `Adding upgrade tab "${id}"`);
+
+		this.upgrades[id] = { id, name, items: {} };
+	}
+
+	registerCategory({ tabID, id, name }) {
+		log("debug", "corelib", `Adding upgrade category "${id}" under tab "${tabID}"`);
+
+		if (!this.upgrades.hasOwnProperty(tabID)) {
+			log("warn", "corelib", `Tried to register upgrade "${id}" under non-existent tab "${tabID}"`);
+			return;
+		}
+
+		this.upgrades[tabID].items[id] = { id, name, upgrades: {} };
+	}
+
+	// Upgrades under specific categories
+	registerUpgrade({ tabID, categoryID, id, name, description, requirement, maxLevel, costs }) {
+		log("debug", "corelib", `Adding upgrade "${id}" under category "${categoryID}", tab "${tabID}"`);
+
+		if (!this.upgrades.hasOwnProperty(tabID)) {
+			log("warn", "corelib", `Tried to register upgrade "${id}" under non-existent tab "${tabID}"`);
+			return;
+		}
+		if (!this.upgrades[tabID].items.hasOwnProperty(categoryID)) {
+			log("warn", "corelib", `Tried to register upgrade "${id}" under non-existent category "${categoryID}"`);
+			return;
+		}
+
+		if (maxLevel !== costs.length + 1) {
+			log("warn", "corelib", `Max level of an upgrade should be one more than the number of costs`);
+			// Won't return.. just a slight warning for now ig
+		}
+
+		this.upgrades[tabID].items[categoryID].upgrades[id] = { id, name, description, requirement, maxLevel, costs };
+	}
+
+	unregisterTab(id) {
+		if (!this.upgrades.hasOwnProperty(id)) {
+			log("warn", "corelib", `Tried to unregister non-existent upgrade category "${id}"`);
+			return;
+		}
+		delete this.upgrades[id];
+	}
+
+	unregisterCategory(tabID, id) {
+		if (!this.upgrades.hasOwnProperty(tabID)) {
+			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
+			return;
+		}
+		if (!this.upgrades[tabID].items.hasOwnProperty(id)) {
+			log("warn", "corelib", `Tried to unregister non-existent upgrade category "${id}"`);
+			return;
+		}
+		delete this.upgrades[tabID].items[id];
+	}
+
+	unregisterUpgrade(tabID, categoryID, id) {
+		if (!this.upgrades.hasOwnProperty(tabID)) {
+			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
+			return;
+		}
+		if (!this.upgrades[tabID].items.hasOwnProperty(categoryID)) {
+			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent category "${categoryID}"`);
+			return;
+		}
+		delete this.upgrades[tabID].items[categoryID].upgrades[id];
+	}
+
+	applyPatches() {
+		let nestedUpgradeDefinitions = [];
+		// Merged into game's upgrades data to add new upgrades even in old saves
+		let updates = {};
+		for (let tab of Object.values(this.upgrades)) {
+			let newTab = { ...tab };
+			newTab.items = [];
+			for (let category of Object.values(tab.items)) {
+				updates[category.id] = {};
+				for (const upgrade of Object.values(category.upgrades)) {
+					updates[category.id][upgrade.id] = { level: 1, availableLevel: 1 };
+				}
+				newTab.items.push({ ...category, upgrades: Object.values(category.upgrades) });
+			}
+			nestedUpgradeDefinitions.push(newTab);
+		}
+		// This is the inverse of what we do to the raw string in the constructor
+		let upgradeDefinitionString = JSON.stringify(nestedUpgradeDefinitions);
+		upgradeDefinitionString = upgradeDefinitionString.replace(new RegExp(`"tech":"([a-zA-Z0-9_]+)"`, "g"), `"tech":w.$1`);
+		upgradeDefinitionString = upgradeDefinitionString.replace(new RegExp(`"item":"([a-zA-Z0-9_]+)"`, "g"), `"item":l.$1`);
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:upgradeDefinitions", {
+			type: "regex",
+			pattern: /Wu=\[.+?\],Xu=/,
+			replace: `Wu=${upgradeDefinitionString},Xu=`,
+		});
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:upgradeUpdating", {
+			type: "replace",
+			from: "return[2,s];",
+			to: `const newData=${JSON.stringify(
+				updates
+			)};for(const category of Object.keys(newData)){if(!s.upgrades.hasOwnProperty(category))s.upgrades[category]={};for(const upgrade of Object.keys(newData[category])){if(!s.upgrades[category].hasOwnProperty(upgrade))s.upgrades[category][upgrade]=newData[category][upgrade];}};~`,
+			token: "~",
+		});
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:upgradeTemplate", {
+			type: "regex",
+			pattern: "upgrades:\\{.+?},hints",
+			replace: `upgrades:${JSON.stringify(updates)},hints`,
+		});
+	}
+}
+
+globalThis.UpgradesModule = UpgradesModule;

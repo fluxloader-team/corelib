@@ -23,14 +23,17 @@ class UpgradesModule {
 		}
 	}
 
-	// Tabs on the left
-	registerTab({ id, name }) {
+	// Tabs on the left (e.g. Tools, Weapons, etc.)
+	// - requirement is a table of { tech: techID, item: itemID, building: buildingID }
+	registerTab({ id, name, requirement }) {
 		log("debug", "corelib", `Adding upgrade tab "${id}"`);
 
-		this.upgrades[id] = { id, name, items: {} };
+		this.upgrades[id] = { id, name, requirement, items: {} };
 	}
 
-	registerCategory({ tabID, id, name }) {
+	// Sections inside the tabs (e.g. Weapons -> Shovel, Gun, etc.)
+	// - requirement is a table of { tech: techID, item: itemID, building: buildingID }
+	registerCategory({ tabID, id, name, requirement }) {
 		log("debug", "corelib", `Adding upgrade category "${id}" under tab "${tabID}"`);
 
 		if (!this.upgrades.hasOwnProperty(tabID)) {
@@ -38,11 +41,15 @@ class UpgradesModule {
 			return;
 		}
 
-		this.upgrades[tabID].items[id] = { id, name, upgrades: {} };
+		this.upgrades[tabID].items[id] = { id, name, requirement, upgrades: {} };
 	}
 
-	// Upgrades under specific categories
-	registerUpgrade({ tabID, categoryID, id, name, description, requirement, maxLevel, costs }) {
+	// Upgrades under specific categories (e.g. Weapons -> Gun -> Speed, Bullets )
+	// - requirement is a table of { tech: techID, item: itemID, building: buildingID }
+	// - costs is an array of integers representing the cost, in fluxite, for each level of the upgrade
+	// - maxLevel is an integer that must be one more than the length of costs (highest level of the upgrade)
+	// - oneOff is a boolean representing if the upgrade can only be bought once (creates a checkbox in game)
+	registerUpgrade({ tabID, categoryID, id, name, description, requirement, maxLevel, costs, oneOff }) {
 		log("debug", "corelib", `Adding upgrade "${id}" under category "${categoryID}", tab "${tabID}"`);
 
 		if (!this.upgrades.hasOwnProperty(tabID)) {
@@ -59,7 +66,7 @@ class UpgradesModule {
 			// Won't return.. just a slight warning for now ig
 		}
 
-		this.upgrades[tabID].items[categoryID].upgrades[id] = { id, name, description, requirement, maxLevel, costs };
+		this.upgrades[tabID].items[categoryID].upgrades[id] = { id, name, description, requirement, maxLevel, costs, oneOff };
 	}
 
 	unregisterTab(id) {

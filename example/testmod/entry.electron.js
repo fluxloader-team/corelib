@@ -57,3 +57,20 @@ corelib.tech.register({
     cost: 50,
     parent: "Logistics1"
 });
+    corelib.elements.registerSoil({
+        id: "AshWood",
+        name: "Ash Wood",
+        hp: 1000,
+        hoverText: "Don't",
+        outputElement: "Ash",
+        chanceForOutput: 0.5,
+        colorHSL: "[17, 14, 43]"
+    });
+    corelib.elements.registerElement({
+        id: "Ash",
+        name: "Ash",
+        colors: [[207, 206, 202, 255],[207, 203, 202, 255],[205, 203, 202, 255]],
+        density: 50,
+        hoverText: "🚫",
+        matterType: "Wisp"
+    });

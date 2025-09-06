@@ -110,6 +110,7 @@ class UpgradesModule {
 			}
 			nestedUpgradeDefinitions.push(newTab);
 		}
+		updates.shovel.momentum = { level: 1, availableLevel: 1 }; // Really lantto?
 		// This is the inverse of what we do to the raw string in the constructor
 		let upgradeDefinitionString = JSON.stringify(nestedUpgradeDefinitions);
 		upgradeDefinitionString = upgradeDefinitionString.replace(new RegExp(`"tech":"([a-zA-Z0-9_]+)"`, "g"), `"tech":w.$1`);

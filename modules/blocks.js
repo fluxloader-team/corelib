@@ -2,14 +2,14 @@ class BlocksModule {
 	blockRegistry = new DefinitionRegistry("Block", 99);
 	idMap = {};
 
-	register({ sourceMod, id, name, description, shape, angles, imagePath }) {
+	register({ sourceMod, id, name, description, shape, angles = [], imagePath, singleBuild = false }) {
 		let fullImagePath = this._getFullImagePath(sourceMod, id, imagePath);
-		this.idMap[id] = this.blockRegistry.register({ isVariant: false, sourceMod, id, name, description, shape, angles, variants: [], fullImagePath });
+		this.idMap[id] = this.blockRegistry.register({ isVariant: false, sourceMod, id, name, description, shape, angles, variants: [], fullImagePath, singleBuild });
 	}
 
 	registerVariant({ parentId, suffix, shape, angles, imagePath }) {
 		if (!this.idMap.hasOwnProperty(parentId)) {
-			return log("error", "corelib", `Parent block id:"${parentId}" for variant "${parentId}${id}"not found!`);
+			return log("error", "corelib", `Parent block id: "${parentId}" for variant "${parentId}${suffix}"not found!`);
 		}
 
 		let id = parentId + suffix;
@@ -89,9 +89,9 @@ class BlocksModule {
 				`~` +
 				reduceBlocks(
 					(b) =>
-						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:${JSON.stringify(b.angles)}}` +
-						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:${JSON.stringify(v.angles)}}`) +
-						`],name:"${b.name}",description:"${b.description}"}` +
+						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
+						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
+						`],name:"${b.name}",description:"${b.description}",singleBuild:${b.singleBuild}}` +
 						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`)
 				),
 			token: `~`,

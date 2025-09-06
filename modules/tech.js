@@ -1,7 +1,6 @@
 class TechModule {
 	techRegistry = new DefinitionRegistry("Tech", 38);
-	baseTechIDs = [];
-	baseTechs = [];
+	baseTechs = {};
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -15,10 +14,11 @@ class TechModule {
 
 		const baseTechs = eval(baseTechsString);
 
+		log("debug", "corelib", `Registering base tech`);
+
 		// Recursively register tech from the base techs
 		const registerBaseTech = (tech, parent) => {
-			this.baseTechIDs.push(tech.id);
-			this.baseTechs.push(tech);
+			this.baseTechs[tech.id] = tech;
 			for (const childTech of tech.children ?? []) {
 				registerBaseTech(childTech, tech.id);
 			}
@@ -47,7 +47,7 @@ class TechModule {
 
 	applyPatches() {
 		log("debug", "corelib", "Loading technology patches");
-		let techList = this.baseTechs.concat(Object.values(this.techRegistry.definitions));
+		let techList = Object.values(this.baseTechs).concat(Object.values(this.techRegistry.definitions));
 
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];

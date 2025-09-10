@@ -36,4 +36,41 @@ fluxloaderAPI.events.on("fl:scene-loaded", (scene) => {
 			corelib.simulation.spawnParticle(500, 500, "Water");
 		}, 16);
 	}
+	fluxloaderAPI.gameInstance.state.store.options.portalConfig ??= {
+		channel: 1,
+	};
 });
+
+// `Portal` must match the block id
+globalThis.blockPortalPreConfigUI = function ({ state }) {
+	// useState will trigger a UI reload when set is called with a new value
+	let [val, set] = React.useState(state.store.options.portalConfig?.channel ?? 1);
+	// Data returned here is passed into `blockIDConfigUI` under `extra`
+	// And is also used to determine width and height of configUI
+	return { width: "200px", height: "60px", val, set };
+};
+
+// `Portal` must match the block id
+globalThis.blockPortalConfigUI = function ({ extra }) {
+	return React.createElement(
+		"div",
+		{},
+		React.createElement(
+			"div",
+			{ className: "flex items-center space-x-2" },
+			React.createElement("label", { htmlFor: "portal_channel", className: "text-white text-sm" }, "Portal channel"),
+			React.createElement("input", {
+				type: "number",
+				id: "portal_channel",
+				value: extra.val,
+				min: 1,
+				max: 16,
+				onChange: (e) => {
+					const i = parseInt(e.target.value, 10);
+					extra.set(i);
+				},
+				className: "text-center text-black",
+			})
+		)
+	);
+};

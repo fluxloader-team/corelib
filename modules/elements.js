@@ -30,6 +30,7 @@ class ElementsModule {
 	}
 
 	registerElement({ id, name, hoverText, colors, density, matterType }) {
+		if (!(id && name && colors && density && matterType)) return log("error", "corelib", `Couldn't register element with id ${id}! Not all parameters are present`);
 		const element = {
 			id,
 			name,
@@ -43,6 +44,7 @@ class ElementsModule {
 	}
 
 	registerSoil({ id, name, colorHSL, hoverText, hp, outputElement, chanceForOutput }) {
+		if (!(id && name && colorHSL)) return log("error", "corelib", `Couldn't register soil with id ${id}! Not all parameters are present`);
 		const soil = {
 			id,
 			name,
@@ -60,16 +62,33 @@ class ElementsModule {
 
 	registerShakerRecipe() {}
 
-	registerPressRecipe(input, requiredSpeed, topOutput, bottemOutput) {}
+	registerPressRecipe() {}
 
 	registerRecipe(input1, input2, output1, output2) {
 		const add = (from, to) => {
 			this.elementReactions["n.RJ." + from] ??= [];
 			this.elementReactions["n.RJ." + from].push(["n.RJ." + to, "n.RJ." + output1, "n.RJ." + output2]);
 		};
-
 		add(input1, input2);
 		add(input2, input1);
+	}
+
+	unregisterSoil(id) {
+		if (!this.soilRegistry[id]) return log("error", "corelib", `Soil with id "${id}" not found! Unable to unregister.`);
+		delete this.this.elementRegistry[id];
+	}
+	unregisterElement(id) {
+		if (!this.elementRegistry[id]) return log("error", "corelib", `Element with id "${id}" not found! Unable to unregister.`);
+		delete this.elementRegistry[id];
+	}
+	unregisterRecipe(element1, element2) {
+		const removeRecipesBothWays = (input1, input2) => {
+			if (!this.elementReactions[input1]) return log("error", "corelib", `Could not unregister recipe between ${element1} and ${element2}! The reaction doesn't exist.`);
+			this.elementReactions[input1] = this.elementReactions[input1].filter(([target]) => target !== input2);
+			if (this.elementReactions[input1].length === 0) delete this.elementReactions[input1];
+		};
+		removeRecipesBothWays("n.RJ." + element1, "n.RJ." + element2);
+		removeRecipesBothWays("n.RJ." + element2, "n.RJ." + element1);
 	}
 
 	applyPatches() {
@@ -88,7 +107,7 @@ class ElementsModule {
 			elementReactionsListToPatch.push(`i[${key}]=${contents}`);
 		}
 		const joinedReactionsList = elementReactionsListToPatch.join(",");
-		this.#sortRegistryIds(this.elementRegistry,25);
+		this.#sortRegistryIds(this.elementRegistry, 25);
 		//loops over the element object and adds it
 		for (const e of Object.values(this.elementRegistry)) {
 			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:${e.id}-elementRegistry`, (l0, l1, l2) => ({

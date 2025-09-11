@@ -168,9 +168,6 @@ class BlocksModule {
 			token: "~",
 		});
 
-		// `e.session.windows.building.${id}Config=!1;`
-		// "~" + blocksWithConfig.map((id) => `(0,bm.jsx)(globalThis["corelib:blockConfigCallback${id}"]=${configUIFunction.toString().replaceAll("__BLOCKID__", id)}, {})`),
-
 		const configUIFunction = function () {
 			const data = {
 				scale: ip,

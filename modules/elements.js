@@ -21,11 +21,11 @@ class ElementsModule {
 		return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 	}
 	//chatgpt is great for simple tasks like these
-	#sortRegistryIds(registry) {
+	#sortRegistryIds(registry, startingId) {
 		const items = Object.values(registry);
 		items.sort((a, b) => a.numericHash - b.numericHash);
 		items.forEach((item, index) => {
-			item.numericId = index;
+			item.numericId = index + startingId;
 		});
 	}
 
@@ -34,7 +34,7 @@ class ElementsModule {
 			id,
 			name,
 			hoverText,
-			colors: JSON.stringify(colors),
+			colors,
 			density,
 			matterType,
 			numericHash: this.#cyrb53(id),
@@ -46,7 +46,7 @@ class ElementsModule {
 		const soil = {
 			id,
 			name,
-			colorHSL: JSON.stringify(colorHSL), //need to add
+			colorHSL, //need to add
 			hoverText,
 			hp, //NaN for unbreakable like bedrock
 			outputElement,
@@ -88,7 +88,7 @@ class ElementsModule {
 			elementReactionsListToPatch.push(`i[${key}]=${contents}`);
 		}
 		const joinedReactionsList = elementReactionsListToPatch.join(",");
-		this.#sortRegistryIds(this.elementRegistry);
+		this.#sortRegistryIds(this.elementRegistry,25);
 		//loops over the element object and adds it
 		for (const e of Object.values(this.elementRegistry)) {
 			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:${e.id}-elementRegistry`, (l0, l1, l2) => ({
@@ -121,11 +121,11 @@ class ElementsModule {
 			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-particleColors`, {
 				type: "replace",
 				from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,
-				to: `~` + `,e[n.${e.id}]=${e.colors}`,
+				to: `~` + `,e[n.${e.id}]=${JSON.stringify(e.colors)}`,
 				token: "~",
 			});
 		}
-		this.#sortRegistryIds(this.soilRegistry);
+		this.#sortRegistryIds(this.soilRegistry, 35);
 		//like the last one, loops over the soils list
 		for (const e of Object.values(this.soilRegistry)) {
 			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Y"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:${e.id}-soilIdRegistry`, (l) => ({
@@ -164,13 +164,13 @@ class ElementsModule {
 			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-soilregistry-main`, {
 				type: "replace",
 				from: `Jl[t.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:n.Basalt,chance:1},colorHSL:[0,100,15]},`,
-				to: `~` + `Jl[t.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${e.colorHSL}},`,
+				to: `~` + `Jl[t.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
 				token: "~",
 			});
 			fluxloaderAPI.setPatch("js/515.bundle.js", `corelib:elements:${e.id}-soilregistry-515`, {
 				type: "replace",
 				from: `i[n.vZ.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:n.RJ.Basalt,chance:1},colorHSL:[0,100,15]},`,
-				to: `~` + `i[n.vZ.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.RJ.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${e.colorHSL}},`,
+				to: `~` + `i[n.vZ.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.RJ.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
 				token: "~",
 			});
 		}

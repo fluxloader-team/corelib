@@ -4,31 +4,53 @@ class ElementsModule {
 	elementReactions = {}
 	burningReactions = {}
 	addTheNormalRecipes = true
-
+	//found this online somewhere, it's a hashing function
+	#cyrb53 (str, seed = 0) {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for(let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1  = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2  = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+	};
+	//chatgpt is great for simple tasks like these
+	#sortRegistryIds(registry) {
+    const items = Object.values(registry);
+    items.sort((a, b) => a.numericHash - b.numericHash);
+    items.forEach((item, index) => {
+        item.numericId = index;
+    });
+	}
 
 	registerElement({ id, name, hoverText, colors, density, matterType }) {
 		const element = {
 			id,
 			name,
 			hoverText,
-			colors, //this is an array of rgba arrays, needs to be a string
+			colors: JSON.stringify(colors), 
 			density,
 			matterType,
-			numericId: Object.keys(this.elementRegistry).length + 25
+			numericHash: this.#cyrb53(id)
 		};
 		this.elementRegistry[id]=element
 	}
 	
-	registerSoil({id,name,colorHSL,hoverText,hp,outputElement,chanceForOutput,specialOnBreakFunction}) {
+	registerSoil({id,name,colorHSL,hoverText,hp,outputElement,chanceForOutput}) {
 		const soil = {	
 			id,
 			name,
-			colorHSL, //need to add
+			colorHSL: JSON.stringify(colorHSL), //need to add
 			hoverText, 
 			hp, //NaN for unbreakable like bedrock
 			outputElement,
 			chanceForOutput, //in decimal
-			numericId: Object.keys(this.soilRegistry).length + 35
+			numericHash: this.#cyrb53(id)
 		}
 		this.soilRegistry[id]=soil
 	}
@@ -59,22 +81,22 @@ class ElementsModule {
 	applyPatches() {
 
 		//re-adds the base recipes
-		if (corelib.elements.addTheNormalRecipes) {
-			corelib.elements.registerRecipe("Sand","Water","WetSand","WetSand")
-			corelib.elements.registerRecipe("Spore","Water","WetSpore")
-			corelib.elements.registerRecipe("Lava","Water","Steam","Lava")
-			corelib.elements.registerRecipe("Flame","Water","Steam","Steam")
-			corelib.elements.registerRecipe("Petalium","Sandium","Gloom","Gloom")
+		if (this.addTheNormalRecipes) {
+			this.registerRecipe("Sand","Water","WetSand","WetSand")
+			this.registerRecipe("Spore","Water","WetSpore")
+			this.registerRecipe("Lava","Water","Steam","Lava")
+			this.registerRecipe("Flame","Water","Steam","Steam")
+			this.registerRecipe("Petalium","Sandium","Gloom","Gloom")
 		}
 		//formats the recipe list into a patchable format (chatgpt)
 		let elementReactionsListToPatch = []
-		for (const key in corelib.elements.elementReactions) {
-		  const contents = JSON.stringify(corelib.elements.elementReactions[key])
+		for (const key in this.elementReactions) {
+		  const contents = JSON.stringify(this.elementReactions[key])
 		    .replace(/"/g, "");
 		  elementReactionsListToPatch.push(`i[${key}]=${contents}`);
 		}
 		const joinedReactionsList = elementReactionsListToPatch.join(",");
-		
+		this.#sortRegistryIds(this.elementRegistry)
 		//loops over the element object and adds it
 		for (const e of Object.values(this.elementRegistry)) {
 			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] },`corelib:elements:${e.id}-elementRegistry`, (l0,l1,l2) => ({
@@ -90,7 +112,7 @@ class ElementsModule {
     			token: "~",
 			}));
 			// Why did lantto do this, it seems useless
-			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["o","n","k","r"], "js/336.bundle.js": ["s","n.RJ","B","e"], "js/546.bundle.js": ["s","a.RJ","B","e"] }, `corelib:elements:${e.id}-mappingColorsToElements`, (l0,l1,l2,l3) => ({
+			fluxloaderAPI.addMappedPatch({ "js/bundle.js": ["o","n","k","r"], "js/336.bundle.js": ["s","n.RJ","B","e"], "js/546.bundle.js": ["s","a.RJ","B","e"] }, (l0,l1,l2,l3) => ({
    				type: "replace",
     			from: `[0]:${l0}.type===${l1}.Basalt?(${l2}=${l3}.session.colors.scheme.element[${l1}.Basalt])`,
     			to: `~`+`[0]:${l0}.type===${l1}.${e.id}?(${l2}=${l3}.session.colors.scheme.element[${l1}.${e.id}])`,
@@ -107,10 +129,11 @@ class ElementsModule {
 			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-particleColors`,{
 				type: "replace",
 				from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,
-				to: `~`+`,e[n.${e.id}]=${JSON.stringify(e.colors)}`,
+				to: `~`+`,e[n.${e.id}]=${e.colors}`,
 				token: "~",
 			});
 		}
+		this.#sortRegistryIds(this.soilRegistry)
 		//like the last one, loops over the soils list
 		for (const e of Object.values(this.soilRegistry)) {
 			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Y"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] },`corelib:elements:${e.id}-soilIdRegistry`, (l) => ({
@@ -127,8 +150,7 @@ class ElementsModule {
 				expectedMatches: 2,
 			});
 			//Doing the same thing three times is either because of lantto or the minifier
-			let definingThreeTimesIsSoFun = [["a","a"],["r","n"],["i","o"]]
-			for (const l of definingThreeTimesIsSoFun) {
+			for (const l of [["a","a"],["r","n"],["i","o"]]) {
 				fluxloaderAPI.addPatch("js/546.bundle.js", {
 					type: "replace",
 					from: `,${l[0]}.vZ.Crackstone`,

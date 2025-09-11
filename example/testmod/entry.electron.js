@@ -64,7 +64,7 @@ corelib.tech.register({
         hoverText: "Don't",
         outputElement: "Ash",
         chanceForOutput: 0.5,
-        colorHSL: "[17, 14, 43]"
+        colorHSL: [17, 14, 43]
     });
     corelib.elements.registerElement({
         id: "Ash",

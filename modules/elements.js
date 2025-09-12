@@ -110,6 +110,10 @@ class ElementsModule {
 		removeRecipesBothWays("n.RJ." + element1, "n.RJ." + element2);
 		removeRecipesBothWays("n.RJ." + element2, "n.RJ." + element1);
 	}
+	unregisterPressRecipe(id) {
+		if (!this.elementReactions.press[`n.RJ.${id}`]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);
+		delete this.elementReactions.press[`n.RJ.${id}`]
+	}
 
 	applyPatches() {
 		//re-adds the base recipes

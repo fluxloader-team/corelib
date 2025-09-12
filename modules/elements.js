@@ -1,8 +1,14 @@
 class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
-	elementReactions = {};
-	burningReactions = {};
+	elementReactions = {
+		normal: {},
+		press: {},
+	};
+	idMaps = {
+		soil: {Empty:0,Element:1,SandSoil:2,SporeSoil:3,Fog:4,FogJetpackBlock:5,FogWater:6,FreezingIceSoil:7,Divider:8,Grass:9,Moss:10,GoldSoil:11,Petal:12,FogLava:13,Fluxite:14,Block:15,SlidingBlock:16,SlidingBlockLeft:17,SlidingBlockRight:18,ConveyorLeft:19,ConveyorRight:20,ShakerLeft:21,ShakerRight:22,Bedrock:23,VelocitySoaker:24,Ice:25,Grower:26,NascentWater:27,SandiumSoil:28,Obsidian:29,Crackstone:30},
+		element:{Sand:1,Particle:2,Water:3,WetSand:4,Sandium:5,Slag:6,Gold:7,Gloom:8,Shake:9,Steam:10,Fire:11,FreezingIce:12,Flame:13,BurntSlag:14,Spore:15,WetSpore:16,Seed:17,Petalium:18,Lava:19,Basalt:20}
+	};
 	addTheNormalRecipes = true;
 	//found this online somewhere, it's a hashing function
 	#cyrb53(str, seed = 0) {
@@ -29,7 +35,7 @@ class ElementsModule {
 		});
 	}
 
-	registerElement({ id, name, hoverText, colors, density, matterType }) {
+	registerElement({ id, name, hoverText, colors, density, matterType, addToFilterList = true }) {
 		if (!(id && name && colors && density && matterType)) return log("error", "corelib", `Couldn't register element with id ${id}! Not all parameters are present`);
 		const element = {
 			id,
@@ -38,6 +44,7 @@ class ElementsModule {
 			colors,
 			density,
 			matterType,
+			addToFilterList,
 			numericHash: this.#cyrb53(id),
 		};
 		this.elementRegistry[id] = element;
@@ -57,17 +64,30 @@ class ElementsModule {
 		};
 		this.soilRegistry[id] = soil;
 	}
-
-	registerBurnable() {}
+	/* I give up on this for now
+	registerBurnable({id,elementOrSoil,result,chance = 1,noOutput=false}) {
+		if (!id) return log("error", "corelib", `Couldn't register burning reaction! No id.`)
+		if (elementOrSoil==="element") {
+			this.burningReactions["i.RJ."+id]={output:"i.RJ."+result,chance,noOutput}
+		} else if (elementOrSoil==="soil") {
+			this.burningReactions["i.vZ."+id]={output:"i.RJ."+result,chance,noOutput}
+		} else {
+			return log("error", "corelib", `Couldn't register burning reaction for ${id}! elementOrSoil needs to be "element" or "soil"`)
+		}
+	}
+	*/
 
 	registerShakerRecipe() {}
 
-	registerPressRecipe() {}
+	registerPressRecipe(input, requiredVelocity = 200, ...arrayOfOutputThenChance) {
+		const modifiedOutputs = arrayOfOutputThenChance.map(([output, chance]) => [`n.RJ.${output}`, chance]);
+		this.elementReactions.press[`n.RJ.${input}`] = [requiredVelocity, modifiedOutputs];
+	}
 
 	registerRecipe(input1, input2, output1, output2) {
 		const add = (from, to) => {
-			this.elementReactions["n.RJ." + from] ??= [];
-			this.elementReactions["n.RJ." + from].push(["n.RJ." + to, "n.RJ." + output1, "n.RJ." + output2]);
+			this.elementReactions.normal["n.RJ." + from] ??= [];
+			this.elementReactions.normal["n.RJ." + from].push(["n.RJ." + to, "n.RJ." + output1, "n.RJ." + output2]);
 		};
 		add(input1, input2);
 		add(input2, input1);
@@ -83,9 +103,9 @@ class ElementsModule {
 	}
 	unregisterRecipe(element1, element2) {
 		const removeRecipesBothWays = (input1, input2) => {
-			if (!this.elementReactions[input1]) return log("error", "corelib", `Could not unregister recipe between ${element1} and ${element2}! The reaction doesn't exist.`);
-			this.elementReactions[input1] = this.elementReactions[input1].filter(([target]) => target !== input2);
-			if (this.elementReactions[input1].length === 0) delete this.elementReactions[input1];
+			if (!this.elementReactions.normal[input1]) return log("error", "corelib", `Could not unregister recipe between ${element1} and ${element2}! The reaction doesn't exist.`);
+			this.elementReactions.normal[input1] = this.elementReactions.normal[input1].filter(([target]) => target !== input2);
+			if (this.elementReactions.normal[input1].length === 0) delete this.elementReactions.normal[input1];
 		};
 		removeRecipesBothWays("n.RJ." + element1, "n.RJ." + element2);
 		removeRecipesBothWays("n.RJ." + element2, "n.RJ." + element1);
@@ -99,14 +119,23 @@ class ElementsModule {
 			this.registerRecipe("Lava", "Water", "Steam", "Lava");
 			this.registerRecipe("Flame", "Water", "Steam", "Steam");
 			this.registerRecipe("Petalium", "Sandium", "Gloom", "Gloom");
+			this.registerPressRecipe("BurntSlag", 200, ["Spore", 1], ["Gold", 1]);
 		}
 		//formats the recipe list into a patchable format (chatgpt)
 		let elementReactionsListToPatch = [];
-		for (const key in this.elementReactions) {
-			const contents = JSON.stringify(this.elementReactions[key]).replace(/"/g, "");
+		for (const key in this.elementReactions.normal) {
+			const contents = JSON.stringify(this.elementReactions.normal[key]).replace(/"/g, "");
 			elementReactionsListToPatch.push(`i[${key}]=${contents}`);
 		}
 		const joinedReactionsList = elementReactionsListToPatch.join(",");
+
+		let pressReactionsListToPatch = [];
+		for (const key in this.elementReactions.press) {
+			const contents = JSON.stringify(this.elementReactions.press[key]).replace(/"/g, "");
+			pressReactionsListToPatch.push(`press[${key}]=${contents}`);
+		}
+		const joinedPressReactionsList = pressReactionsListToPatch.join(",");
+
 		this.#sortRegistryIds(this.elementRegistry, 25);
 		//loops over the element object and adds it
 		for (const e of Object.values(this.elementRegistry)) {
@@ -129,14 +158,14 @@ class ElementsModule {
 				to: `~` + `[0]:${l0}.type===${l1}.${e.id}?(${l2}=${l3}.session.colors.scheme.element[${l1}.${e.id}])`,
 				token: "~",
 			}));
-
-			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-filterlist`, {
-				type: "replace",
-				from: `,n.Basalt`,
-				to: `~` + `,n.${e.id}`,
-				token: "~",
-			});
-
+			if (e.addToFilterList) {
+				fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-filterlist`, {
+					type: "replace",
+					from: `,n.Basalt`,
+					to: `~` + `,n.${e.id}`,
+					token: "~",
+				});
+			}
 			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-particleColors`, {
 				type: "replace",
 				from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,
@@ -144,6 +173,7 @@ class ElementsModule {
 				token: "~",
 			});
 		}
+
 		this.#sortRegistryIds(this.soilRegistry, 35);
 		//like the last one, loops over the soils list
 		for (const e of Object.values(this.soilRegistry)) {
@@ -205,11 +235,22 @@ class ElementsModule {
 			to: `i[2]?(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[2],r.x,r.y)):(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)`,
 		});
 		/*
-		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:Press", {
-		  type: "replace",
-		  from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
-		  to: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:burningInteractions", {
+			type: "replace",
+			from: `S=((n={})[i.vZ.Moss]=!1,n[i.vZ.Divider]=!1,n[i.vZ.GoldSoil]=i.RJ.Gold,n[i.vZ.Petal]=i.RJ.Petalium,n)`,
+			to: `S=((n={}),${joinedBurningReactionsList},n)`,
+		});
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:burningFuctionEdit", {
+   			type: "replace",
+   			from: `x=function(e,t,r,a){if(a=null!=a?a:(0,c.tT)(e.store,t,r),(0,c.ez)(a)){if((0,c.kw)(a,[i.vZ.Moss,i.vZ.Divider,i.vZ.GoldSoil,i.vZ.Petal])){var n=(0,s.n)(i.RJ.Flame,t,r);return n.skipPhysics=!0,n.data={output:{elementType:S[a]}},(0,c.Jx)(e,t,r,n),!0}(0,d.zT)(e,t,r,4)}return!1}}`,
+    		to: `x=function(e,t,r,a){if(a=null!=a?a:(0,c.tT)(e.store,t,r),(0,c.ez)(a)){if(a in S && Math.random() <= (S[a].chance ?? 1)){var n=(0,s.n)(i.RJ.Flame,t,r);return n.skipPhysics=!0,n.data={output:{elementType:S[a]}},(0,c.Jx)(e,t,r,n),!0}(0,d.zT)(e,t,r,4)}return!1}}`
 		}); */
+
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:Press", {
+			type: "replace",
+			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
+			to: `pressRecipes=(function(){var press={};${joinedPressReactionsList};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];for(const[outputId,chance]of outputs){if(Math.random()<chance){h(e,t.x,t.y,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
+		});
 	}
 }
 

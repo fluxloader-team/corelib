@@ -324,7 +324,7 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockOpenConfig", {
 			type: "replace",
 			from: "t.type===o.Building?t.id===",
-			to: "~" + blocksWithConfig.map((id) => `d.${id}?((e.session.windows.building.${id}Config=!0),void Al(e,k.${id}Config)):`),
+			to: "~" + blocksWithConfig.map((id) => `d.${id}?((e.session.windows.building.${id}Config=!0),void Al(e,k.${id}Config)):t.id===`),
 			token: "~",
 		});
 

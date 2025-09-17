@@ -2,28 +2,50 @@ class ItemsModule {
 	itemRegistry = new DefinitionRegistry("Item", 25);
 	idMap = {};
 
-	register({ id, type, name, description }) {
-		log("debug", "corelib", `Adding Item "${id}"`);
+	itemSchema = {
+		id: {
+			type: "string",
+		},
+		type: {
+			type: "string",
+			verifier: (v) => {
+				return {
+					success: ["Tool", "Weapon", "Consumable"].includes(v),
+					message: `Parameter 'type' must be one of "Tool", "Weapon", "Consumable"`,
+				};
+			},
+		},
+		name: {
+			type: "string",
+		},
+		description: {
+			type: "string",
+		},
+	};
+	register(data) {
+		log("debug", "corelib", `Adding Item "${data.id}"`); // Using unverified id..
 
-		let validTypes = ["Tool", "Weapon", "Consumable"];
-		if (!validTypes.includes(type)) {
-			log("error", "corelib", `Item type "${type}" is not recongized. Supported types are: "${validTypes.join(`", "`)}"`);
-			return;
+		let res = InputHandler(data, this.itemSchema);
+		if (!res.success) {
+			// Makes mod fail electron entrypoint, instead of failing silently..
+			throw new Error(res.message);
 		}
+		// Use processed data, which includes defaults
+		data = res.data;
 
-		if (type === "Consumable") {
+		if (data.type === "Consumable") {
 			// For now just silently continue but with a warning
-			log("warn", "corelib", `Item type "${type}" is not fully supported yet, you should use "Tool" or "Weapon" instead.`);
+			log("warn", "corelib", `Item type "Consumable" is not fully supported yet; you should use "Tool" or "Weapon" instead.`);
 		}
 
-		this.idMap[id] = this.itemRegistry.register({ id, idNumber, type, name, description });
+		this.idMap[id] = this.itemRegistry.register({ idNumber, ...data });
 	}
 
 	unregister(id) {
 		if (!this.idMap.hasOwnProperty(id)) {
 			return log("error", "corelib", `Item with id "${id}" not found! Unable to unregister.`);
 		}
-		
+
 		let numericID = this.idMap[id];
 		delete this.idMap[id];
 		this.itemRegistry.unregister(numericID);

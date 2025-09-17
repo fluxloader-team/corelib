@@ -30,11 +30,44 @@ class TechModule {
 		}
 	}
 
-	register({ id, name, description, cost, unlocks, parent }) {
-		log("debug", "corelib", `Adding Tech "${id}"`);
+	techSchema = {
+		id: {
+			type: "string",
+		},
+		name: {
+			type: "string",
+		},
+		description: {
+			type: "string",
+		},
+		cost: {
+			type: "number",
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v >= 0,
+					message: "Parameter 'cost' must be an integer >= 0",
+				};
+			},
+		},
+		unlocks: {
+			type: "object",
+			// game accepts `structures[]` and/or `items[]`
+		},
+		parent: {
+			type: "string",
+			default: "Refining1",
+		},
+	};
+	register(data) {
+		log("debug", "corelib", `Adding Tech "${data.id}"`); // Using unverified id..
 
-		// The root tech *must* atleast be Refining1
-		if (!parent) parent = "Refining1";
+		let res = InputHandler(data, this.techSchema);
+		if (!res.success) {
+			// Makes mod fail electron entrypoint, instead of failing silently..
+			throw new Error(res.message);
+		}
+		// Use processed data, which includes defaults
+		data = res.data;
 
 		this.techRegistry.register({ id, name, description, cost, unlocks, parent });
 	}

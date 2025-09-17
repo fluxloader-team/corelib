@@ -2,9 +2,34 @@ class SchedulesModule {
 	scheduleRegistry = new DefinitionRegistry("Schedule", 19);
 	idMap = {};
 
+	scheduleSchema = {
+		id: {
+			type: "string",
+		},
+		interval: {
+			type: "number",
+			verifier: (v) => {
+				return {
+					// I think an interval of 0 will cause issues..
+					success: Number.isInteger(v) && v > 0,
+					message: "Parameter 'interval' must be an integer > 0",
+				};
+			},
+		},
+	};
 	register(id, interval) {
+		log("debug", "corelib", `Adding Schedule "${data.id}"`); // Using unverified id..
+		// This could be done with more basic checks, but this ensures both parameters
+		// are checked and logged, and that it follows how other modules are handling input
+		let res = InputHandler({ id, interval }, this.scheduleSchema);
+		if (!res.success) {
+			// Makes mod fail electron entrypoint, instead of failing silently..
+			throw new Error(res.message);
+		}
+		// Use processed data, which includes defaults
+		data = res.data;
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
-		this.idMap[id] = this.scheduleRegistry.register(interval);
+		this.idMap[data.id] = this.scheduleRegistry.register(data.interval);
 	}
 
 	unregister(id) {

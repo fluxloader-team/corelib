@@ -24,49 +24,158 @@ class UpgradesModule {
 	}
 
 	// Tabs on the left (e.g. Tools, Weapons, etc.)
-	// - requirement is a table of { tech: techID, item: itemID, building: buildingID }
-	registerTab({ id, name, requirement }) {
-		log("debug", "corelib", `Adding upgrade tab "${id}"`);
+	tabSchema = {
+		id: {
+			type: "string",
+		},
+		name: {
+			type: "string",
+		},
+		requirement: {
+			type: "object",
+			default: {},
+			verifier: (v) => {
+				return {
+					success: Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
+				};
+			},
+		},
+	};
+	registerTab(data) {
+		log("debug", "corelib", `Adding upgrade tab "${data.id}"`); // Using unverified id..
 
-		this.upgrades[id] = { id, name, requirement, items: {} };
+		let res = InputHandler(data, this.tabSchema);
+		if (!res.success) {
+			// Makes mod fail electron entrypoint, instead of failing silently..
+			throw new Error(res.message);
+		}
+		// Use processed data, which includes defaults
+		data = res.data;
+
+		this.upgrades[data.id] = { ...data, items: {} };
 	}
 
 	// Sections inside the tabs (e.g. Weapons -> Shovel, Gun, etc.)
-	// - requirement is a table of { tech: techID, item: itemID, building: buildingID }
-	registerCategory({ tabID, id, name, requirement }) {
-		log("debug", "corelib", `Adding upgrade category "${id}" under tab "${tabID}"`);
+	categorySchema = {
+		tabID: {
+			type: "string",
+		},
+		id: {
+			type: "string",
+		},
+		name: {
+			type: "string",
+		},
+		requirement: {
+			type: "object",
+			default: {},
+			verifier: (v) => {
+				return {
+					success: Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
+				};
+			},
+		},
+	};
+	registerCategory(data) {
+		log("debug", "corelib", `Adding upgrade category "${data.id}" under tab "${data.tabID}"`); // Using unverified ids..
 
-		if (!this.upgrades.hasOwnProperty(tabID)) {
-			log("warn", "corelib", `Tried to register upgrade "${id}" under non-existent tab "${tabID}"`);
+		let res = InputHandler(data, this.categorySchema);
+		if (!res.success) {
+			// Makes mod fail electron entrypoint, instead of failing silently..
+			throw new Error(res.message);
+		}
+		// Use processed data, which includes defaults
+		data = res.data;
+
+		if (!this.upgrades.hasOwnProperty(data.tabID)) {
+			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
 			return;
 		}
 
-		this.upgrades[tabID].items[id] = { id, name, requirement, upgrades: {} };
+		this.upgrades[data.tabID].items[data.id] = { ...data, upgrades: {} };
 	}
 
 	// Upgrades under specific categories (e.g. Weapons -> Gun -> Speed, Bullets )
-	// - requirement is a table of { tech: techID, item: itemID, building: buildingID }
 	// - costs is an array of integers representing the cost, in fluxite, for each level of the upgrade
 	// - maxLevel is an integer that must be one more than the length of costs (highest level of the upgrade)
 	// - oneOff is a boolean representing if the upgrade can only be bought once (creates a checkbox in game)
-	registerUpgrade({ tabID, categoryID, id, name, description, requirement, maxLevel, costs, oneOff }) {
-		log("debug", "corelib", `Adding upgrade "${id}" under category "${categoryID}", tab "${tabID}"`);
+	upgradeSchema = {
+		tabID: {
+			type: "string",
+		},
+		categoryID: {
+			type: "string",
+		},
+		id: {
+			type: "string",
+		},
+		name: {
+			type: "string",
+		},
+		description: {
+			type: "string",
+		},
+		requirement: {
+			type: "object",
+			default: {},
+			verifier: (v) => {
+				return {
+					success: Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
+				};
+			},
+		},
+		maxLevel: {
+			type: "number",
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v > 0,
+					message: "Parameter 'maxLevel' must be an integer > 0",
+				};
+			},
+		},
+		cost: {
+			type: "number",
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v >= 0,
+					message: "Parameter 'cost' must be an integer >= 0",
+				};
+			},
+		},
+		oneOff: {
+			type: "boolean",
+			default: false,
+		},
+	};
+	registerUpgrade(data) {
+		log("debug", "corelib", `Adding upgrade "${data.id}" under category "${data.categoryID}", tab "${data.tabID}"`); // Using unverified ids..
 
-		if (!this.upgrades.hasOwnProperty(tabID)) {
-			log("warn", "corelib", `Tried to register upgrade "${id}" under non-existent tab "${tabID}"`);
+		let res = InputHandler(data, this.upgradeSchema);
+		if (!res.success) {
+			// Makes mod fail electron entrypoint, instead of failing silently..
+			throw new Error(res.message);
+		}
+		// Use processed data, which includes defaults
+		data = res.data;
+
+		if (!this.upgrades.hasOwnProperty(data.tabID)) {
+			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
 			return;
 		}
-		if (!this.upgrades[tabID].items.hasOwnProperty(categoryID)) {
-			log("warn", "corelib", `Tried to register upgrade "${id}" under non-existent category "${categoryID}"`);
+		if (!this.upgrades[data.tabID].items.hasOwnProperty(data.categoryID)) {
+			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent category "${data.categoryID}"`);
 			return;
 		}
 
-		if (maxLevel !== costs.length + 1) {
+		if (data.maxLevel !== data.costs.length + 1) {
 			log("warn", "corelib", `Max level of an upgrade should be one more than the number of costs`);
 			// Won't return.. just a slight warning for now ig
 		}
 
-		this.upgrades[tabID].items[categoryID].upgrades[id] = { id, name, description, requirement, maxLevel, costs, oneOff };
+		this.upgrades[data.tabID].items[data.categoryID].upgrades[data.id] = data;
 	}
 
 	unregisterTab(id) {

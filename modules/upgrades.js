@@ -36,7 +36,7 @@ class UpgradesModule {
 			default: {},
 			verifier: (v) => {
 				return {
-					success: Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+					success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
 					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
 				};
 			},
@@ -72,7 +72,7 @@ class UpgradesModule {
 			default: {},
 			verifier: (v) => {
 				return {
-					success: Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+					success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
 					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
 				};
 			},
@@ -122,7 +122,7 @@ class UpgradesModule {
 			default: {},
 			verifier: (v) => {
 				return {
-					success: Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+					success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
 					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
 				};
 			},

@@ -103,7 +103,8 @@ class DefinitionRegistry {
 // 		example: {
 // 			default: 10,
 // 			type: "number",
-// 			verifier: (v) => Number.isInteger(v)
+//			// verifier MUST return an object with { success: bool, message: string }
+// 			verifier: (v) => { success: Number.isInteger(v), message: "Parameter 'example' must be an integer" }
 // 		},
 //	}
 // );

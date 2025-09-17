@@ -136,12 +136,18 @@ class UpgradesModule {
 				};
 			},
 		},
-		cost: {
-			type: "number",
+		costs: {
+			type: "object",
 			verifier: (v) => {
+				let valid = Array.isArray(v);
+				if (valid) {
+					for (const x of v) {
+						valid &&= Number.isInteger(x) && x >= 0;
+					}
+				}
 				return {
-					success: Number.isInteger(v) && v >= 0,
-					message: "Parameter 'cost' must be an integer >= 0",
+					success: valid,
+					message: "Parameter 'cost' must be an array of integers >= 0",
 				};
 			},
 		},

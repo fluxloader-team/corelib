@@ -69,7 +69,7 @@ class TechModule {
 		// Use processed data, which includes defaults
 		data = res.data;
 
-		this.techRegistry.register({ id, name, description, cost, unlocks, parent });
+		this.techRegistry.register(data);
 	}
 
 	unregister(id) {

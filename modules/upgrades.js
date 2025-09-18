@@ -53,6 +53,8 @@ class UpgradesModule {
 		// Use processed data, which includes defaults
 		data = res.data;
 
+		if (Object.keys(data.requirement).length === 0) delete data.requirement;
+
 		this.upgrades[data.id] = { ...data, items: {} };
 	}
 
@@ -93,6 +95,8 @@ class UpgradesModule {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
 			return;
 		}
+
+		if (Object.keys(data.requirement).length === 0) delete data.requirement;
 
 		this.upgrades[data.tabID].items[data.id] = { ...data, upgrades: {} };
 	}
@@ -181,6 +185,8 @@ class UpgradesModule {
 			// Won't return.. just a slight warning for now ig
 		}
 
+		if (Object.keys(data.requirement).length === 0) delete data.requirement;
+
 		this.upgrades[data.tabID].items[data.categoryID].upgrades[data.id] = data;
 	}
 
@@ -252,7 +258,7 @@ class UpgradesModule {
 		});
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:upgradeTemplate", {
 			type: "regex",
-			pattern: "upgrades:\\{.+?},hints",
+			pattern: "upgrades:\\{grabber:\\{.+?},hints",
 			replace: `upgrades:${JSON.stringify(updates)},hints`,
 		});
 	}

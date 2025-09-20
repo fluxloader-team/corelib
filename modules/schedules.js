@@ -18,7 +18,7 @@ class SchedulesModule {
 		},
 	};
 	register(id, interval) {
-		log("debug", "corelib", `Adding Schedule "${data.id}"`); // Using unverified id..
+		log("debug", "corelib", `Adding Schedule "${id}"`); // Using unverified id..
 		// This could be done with more basic checks, but this ensures both parameters
 		// are checked and logged, and that it follows how other modules are handling input
 		let res = InputHandler({ id, interval }, this.scheduleSchema);
@@ -27,7 +27,7 @@ class SchedulesModule {
 			throw new Error(res.message);
 		}
 		// Use processed data, which includes defaults
-		data = res.data;
+		let data = res.data;
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 		this.idMap[data.id] = this.scheduleRegistry.register(data.interval);
 	}

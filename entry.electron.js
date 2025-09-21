@@ -50,7 +50,7 @@ td,ed,Jh,Qh,Zh,Kh,qh,Yh,$h,zh,Qh,Bh,Lh,Nh,Fh,Dh,Ih,Rh,Ah,kh,Eh,Th,_h,bh,xh,vh,yh
 th,eh,Jc,Qc,qc,Yc,$c,Xc,Wc,Hc,Vc,Gc,Uc,jc,zc,Oc,Bc,Lc,Nc,Fc,Dc,Ic,Rc,Pc,Mc,Ac,kc,Ec,wc,bc,xc,yc,gc,
 mc,pc,fc,dc,hc,cc,uc,lc,tc,ec,Ju,Qu,Zu,Ku,$u,Hu,Vu,Uu,ju,zu,Ou,Lu,Nu,Fu,Du,Iu,Ru,Pu,ku,Eu,Tu,_u,Su,
 bu,xu,vu,yu,gu,pu,fu,du,lu,au,ou,ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
-Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,n,t,d,q};
+Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,n,t,d,q,le};
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
@@ -94,7 +94,80 @@ class DefinitionRegistry {
 	}
 }
 
+// args should be an object of any:any (should match schema keys, and have valid values)
+// schema should be an object which maps keys of arguments to expected data
+//   schema items without `default` will be assumed to be required parameters
+//   type is a basic `typeof` check to ensure inputs pass basic type checks
+//   verifier is an optional function to provide extra checks for what values are valid
+// Example:
+//	InputHandler(
+//		{ example: 50 },
+//		{
+// 		example: {
+// 			default: 10,
+// 			type: "number",
+//			// verifier MUST return an object with { success: bool, message: string }
+// 			verifier: (v) => { success: Number.isInteger(v), message: "Parameter 'example' must be an integer" }
+// 		},
+//	}
+// );
+
+const InputHandler = function (parameters, schema) {
+	let result = {
+		success: true,
+		data: {},
+		errors: {},
+	};
+	for (const parameter of Object.keys(parameters)) {
+		if (!schema.hasOwnProperty(parameter)) {
+			log("warn", "corelib", `Parameter '${parameter}' is unexpected - ignoring`);
+		}
+	}
+	for (const [parameter, data] of Object.entries(schema)) {
+		let value = parameters[parameter] || data.default;
+		if (value === undefined) {
+			result.success = false;
+			result.errors[parameter] = {
+				parameter,
+				message: `Parameter '${parameter}' was undefined but is required`,
+				code: "required_not_provided",
+			};
+			log("error", "corelib", result.errors[parameter].message);
+			continue;
+		}
+		if (data.type && typeof value !== data.type) {
+			result.success = false;
+			result.errors[parameter] = {
+				parameter,
+				message: `Parameter '${parameter}' is of type ${typeof arg}, but was expected to be of type ${data.type}`,
+				code: "type_mismatch",
+			};
+			log("error", "corelib", result.errors[parameter].message);
+			continue;
+		}
+		if (data.verifier) {
+			let verifierResult = data.verifier(value);
+			if (!verifierResult.success) {
+				let message = `Parameter '${parameter}' failed custom verifier`;
+				// Allow override of message from verifier
+				if (verifierResult.message) message = verifierResult.message;
+				result.success = false;
+				result.errors[parameter] = {
+					parameter,
+					message,
+					code: "failed_verifier",
+				};
+				log("error", "corelib", message);
+				continue;
+			}
+		}
+		result.data[parameter] = value;
+	}
+	return result;
+};
+
 globalThis.DefinitionRegistry = DefinitionRegistry;
+globalThis.InputHandler = InputHandler;
 
 globalThis.corelib = new CoreLib();
 

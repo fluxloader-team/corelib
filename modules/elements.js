@@ -4,6 +4,7 @@ class ElementsModule {
 	elementReactions = {
 		normal: {},
 		press: {},
+		shaker: {},
 	};
 	idMaps = {
 		soil: {Empty:0,Element:1,SandSoil:2,SporeSoil:3,Fog:4,FogJetpackBlock:5,FogWater:6,FreezingIceSoil:7,Divider:8,Grass:9,Moss:10,GoldSoil:11,Petal:12,FogLava:13,Fluxite:14,Block:15,SlidingBlock:16,SlidingBlockLeft:17,SlidingBlockRight:18,ConveyorLeft:19,ConveyorRight:20,ShakerLeft:21,ShakerRight:22,Bedrock:23,VelocitySoaker:24,Ice:25,Grower:26,NascentWater:27,SandiumSoil:28,Obsidian:29,Crackstone:30},
@@ -55,7 +56,7 @@ class ElementsModule {
 		const soil = {
 			id,
 			name,
-			colorHSL, //need to add
+			colorHSL, //single array of HSL
 			hoverText,
 			hp, //NaN for unbreakable like bedrock
 			outputElement,
@@ -77,10 +78,16 @@ class ElementsModule {
 	}
 	*/
 
-	registerShakerRecipe() {}
+	registerShakerRecipe(input,output1,output2) {}
 
-	registerPressRecipe(input, requiredVelocity = 200, ...arrayOfOutputThenChance) {
-		const modifiedOutputs = arrayOfOutputThenChance.map(([output, chance]) => [`n.RJ.${output}`, chance]);
+	registerShakerAllow(id) {
+		
+	}
+	
+	// you can input however many outputs you want, they should be in the form of ["output",chance]
+	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
+	registerPressRecipe(input, requiredVelocity = 200, ...outputArrays) {
+		const modifiedOutputs = outputArrays.map(([output, chance]) => [`n.RJ.${output}`, chance]);
 		this.elementReactions.press[`n.RJ.${input}`] = [requiredVelocity, modifiedOutputs];
 	}
 
@@ -152,7 +159,7 @@ class ElementsModule {
 			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["$"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:${e.id}-elementIdRegistry`, (l0) => ({
 				type: "replace",
 				from: `,${l0}[${l0}.Basalt=20]="Basalt"`,
-				to: `~` + `,${l0}[${l0}.${e.id}=${e.numericId}]="${e.name}"`,
+				to: `~` + `,${l0}[${l0}.${e.id}=${e.numericId}]="${e.id}"`,
 				token: "~",
 			}));
 			// Why did lantto do this, it seems useless
@@ -184,7 +191,8 @@ class ElementsModule {
 			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Y"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:${e.id}-soilIdRegistry`, (l) => ({
 				type: "replace",
 				from: `${l}[${l}.Crackstone=30]="Crackstone"`,
-				to: `${l}[${l}.Crackstone=30]="Crackstone",${l}[${l}.${e.id}=${e.numericId}]="${e.name}"`,
+				to: `~` + `,${l}[${l}.${e.id}=${e.numericId}]="${e.id}"`,
+				token: "~",
 			}));
 
 			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-breaksWithoutIt`, {
@@ -255,6 +263,7 @@ class ElementsModule {
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
 			to: `pressRecipes=(function(){var press={};${joinedPressReactionsList};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];for(const[outputId,chance]of outputs){if(Math.random()<chance){h(e,t.x,t.y,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});
+	
 	}
 }
 

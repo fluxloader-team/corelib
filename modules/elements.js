@@ -6,10 +6,7 @@ class ElementsModule {
 		press: {},
 		shaker: {},
 	};
-	idMaps = {
-		soil: {Empty:0,Element:1,SandSoil:2,SporeSoil:3,Fog:4,FogJetpackBlock:5,FogWater:6,FreezingIceSoil:7,Divider:8,Grass:9,Moss:10,GoldSoil:11,Petal:12,FogLava:13,Fluxite:14,Block:15,SlidingBlock:16,SlidingBlockLeft:17,SlidingBlockRight:18,ConveyorLeft:19,ConveyorRight:20,ShakerLeft:21,ShakerRight:22,Bedrock:23,VelocitySoaker:24,Ice:25,Grower:26,NascentWater:27,SandiumSoil:28,Obsidian:29,Crackstone:30},
-		element:{Sand:1,Particle:2,Water:3,WetSand:4,Sandium:5,Slag:6,Gold:7,Gloom:8,Shake:9,Steam:10,Fire:11,FreezingIce:12,Flame:13,BurntSlag:14,Spore:15,WetSpore:16,Seed:17,Petalium:18,Lava:19,Basalt:20}
-	};
+	idMaps={soil:{Empty:0,Element:1,SandSoil:2,SporeSoil:3,Fog:4,FogJetpackBlock:5,FogWater:6,FreezingIceSoil:7,Divider:8,Grass:9,Moss:10,GoldSoil:11,Petal:12,FogLava:13,Fluxite:14,Block:15,SlidingBlock:16,SlidingBlockLeft:17,SlidingBlockRight:18,ConveyorLeft:19,ConveyorRight:20,ShakerLeft:21,ShakerRight:22,Bedrock:23,VelocitySoaker:24,Ice:25,Grower:26,NascentWater:27,SandiumSoil:28,Obsidian:29,Crackstone:30,},element:{Sand:1,Particle:2,Water:3,WetSand:4,Sandium:5,Slag:6,Gold:7,Gloom:8,Shake:9,Steam:10,Fire:11,FreezingIce:12,Flame:13,BurntSlag:14,Spore:15,WetSpore:16,Seed:17,Petalium:18,Lava:19,Basalt:20,},};
 	addTheNormalRecipes = true;
 	//found this online somewhere, it's a hashing function
 	#cyrb53(str, seed = 0) {
@@ -78,12 +75,10 @@ class ElementsModule {
 	}
 	*/
 
-	registerShakerRecipe(input,output1,output2) {}
+	registerShakerRecipe(input, output1, output2) {}
 
-	registerShakerAllow(id) {
-		
-	}
-	
+	registerShakerAllow(id) {}
+
 	// you can input however many outputs you want, they should be in the form of ["output",chance]
 	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
 	registerPressRecipe(input, requiredVelocity = 200, ...outputArrays) {
@@ -102,7 +97,7 @@ class ElementsModule {
 
 	unregisterSoil(id) {
 		if (!this.soilRegistry[id]) return log("error", "corelib", `Soil with id "${id}" not found! Unable to unregister.`);
-		delete this.this.elementRegistry[id];
+		delete this.soilRegistry[id];
 	}
 	unregisterElement(id) {
 		if (!this.elementRegistry[id]) return log("error", "corelib", `Element with id "${id}" not found! Unable to unregister.`);
@@ -119,10 +114,15 @@ class ElementsModule {
 	}
 	unregisterPressRecipe(id) {
 		if (!this.elementReactions.press[`n.RJ.${id}`]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);
-		delete this.elementReactions.press[`n.RJ.${id}`]
+		delete this.elementReactions.press[`n.RJ.${id}`];
 	}
 
 	applyPatches() {
+		const reduceElements = (f, registry) => {
+			return Object.values(registry).reduce((acc, e) => acc + f(e), "");
+		};
+		this.#sortRegistryIds(this.elementRegistry, 25);
+		this.#sortRegistryIds(this.soilRegistry, 35);
 		//re-adds the base recipes
 		if (this.addTheNormalRecipes) {
 			this.registerRecipe("Sand", "Water", "WetSand", "WetSand");
@@ -147,94 +147,100 @@ class ElementsModule {
 		}
 		const joinedPressReactionsList = pressReactionsListToPatch.join(",");
 
-		this.#sortRegistryIds(this.elementRegistry, 25);
-		//loops over the element object and adds it
-		for (const e of Object.values(this.elementRegistry)) {
-			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:${e.id}-elementRegistry`, (l0, l1, l2) => ({
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
+			type: "replace",
+			from: `${l0}[${l1}.Basalt]={name:"Cinder",interactions:["🔥"],density:50,matterType:${l2}.Solid},`,
+			to: `~` + reduceElements((e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],density:${e.density},matterType:${l2}.${e.matterType}},`, this.elementRegistry),
+			token: "~",
+		}));
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["$"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:elementIdRegistry`, (l0) => ({
+			type: "replace",
+			from: `,${l0}[${l0}.Basalt=20]="Basalt"`,
+			to: `~` + reduceElements((e) => `,${l0}[${l0}.${e.id}=${e.numericId}]="${e.id}"`, this.elementRegistry),
+			token: "~",
+		}));
+		// Why did lantto do this, it seems useless
+		fluxloaderAPI.addMappedPatch({ "js/bundle.js": ["o", "n", "k", "r"], "js/336.bundle.js": ["s", "n.RJ", "B", "e"], "js/546.bundle.js": ["s", "a.RJ", "B", "e"] }, (l0, l1, l2, l3) => ({
+			type: "replace",
+			from: `[0]:${l0}.type===${l1}.Basalt?(${l2}=${l3}.session.colors.scheme.element[${l1}.Basalt])`,
+			to: `~` + reduceElements((e) => `[0]:${l0}.type===${l1}.${e.id}?(${l2}=${l3}.session.colors.scheme.element[${l1}.${e.id}])`, this.elementRegistry),
+			token: "~",
+		}));
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:filterlist`, {
+			type: "replace",
+			from: `,n.Basalt`,
+			to:
+				"~" +
+				reduceElements((e) => {
+					if (!e.addToFilterList) return "";
+					return `,n.${e.id}`;
+				}, this.elementRegistry),
+			token: "~",
+		});
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:particleColors`, {
+			type: "replace",
+			from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,
+			to: `~` + reduceElements((e) => `,e[n.${e.id}]=${JSON.stringify(e.colors)}`, this.elementRegistry),
+			token: "~",
+		});
+
+		//soils
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Y"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:soilIdRegistry`, (l) => ({
+			type: "replace",
+			from: `${l}[${l}.Crackstone=30]="Crackstone"`,
+			to: `~` + reduceElements((e) => `,${l}[${l}.${e.id}=${e.numericId}]="${e.id}"`, this.soilRegistry),
+			token: "~",
+		}));
+
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:breaksWithoutIt`, {
+			type: "replace",
+			from: `n,t.Crackstone`,
+			to: `~` + reduceElements((e) => `,t.${e.id}`, this.soilRegistry),
+			token: "~",
+			expectedMatches: 2,
+		});
+		//Doing the same thing three times is either because of lantto or the minifier
+		for (const l of [
+			["a", "a"],
+			["r", "n"],
+			["i", "o"],
+		]) {
+			fluxloaderAPI.addPatch("js/546.bundle.js", {
 				type: "replace",
-				from: `${l0}[${l1}.Basalt]={name:"Cinder",interactions:["🔥"],density:50,matterType:${l2}.Solid},`,
-				to: `~` + `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],density:${e.density},matterType:${l2}.${e.matterType}},`,
+				from: `,${l[0]}.vZ.Crackstone`,
+				to: `~` + reduceElements((e) => `,${l[0]}.vZ.${e.id}`, this.soilRegistry),
 				token: "~",
-			}));
-			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["$"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:${e.id}-elementIdRegistry`, (l0) => ({
+			});
+			fluxloaderAPI.addPatch("js/336.bundle.js", {
 				type: "replace",
-				from: `,${l0}[${l0}.Basalt=20]="Basalt"`,
-				to: `~` + `,${l0}[${l0}.${e.id}=${e.numericId}]="${e.id}"`,
-				token: "~",
-			}));
-			// Why did lantto do this, it seems useless
-			fluxloaderAPI.addMappedPatch({ "js/bundle.js": ["o", "n", "k", "r"], "js/336.bundle.js": ["s", "n.RJ", "B", "e"], "js/546.bundle.js": ["s", "a.RJ", "B", "e"] }, (l0, l1, l2, l3) => ({
-				type: "replace",
-				from: `[0]:${l0}.type===${l1}.Basalt?(${l2}=${l3}.session.colors.scheme.element[${l1}.Basalt])`,
-				to: `~` + `[0]:${l0}.type===${l1}.${e.id}?(${l2}=${l3}.session.colors.scheme.element[${l1}.${e.id}])`,
-				token: "~",
-			}));
-			if (e.addToFilterList) {
-				fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-filterlist`, {
-					type: "replace",
-					from: `,n.Basalt`,
-					to: `~` + `,n.${e.id}`,
-					token: "~",
-				});
-			}
-			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-particleColors`, {
-				type: "replace",
-				from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,
-				to: `~` + `,e[n.${e.id}]=${JSON.stringify(e.colors)}`,
+				from: `,${l[1]}.vZ.Crackstone`,
+				to: `~` + reduceElements((e) => `,${l[1]}.vZ.${e.id}`, this.soilRegistry),
 				token: "~",
 			});
 		}
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:soilregistry-main`, {
+			type: "replace",
+			from: `Jl[t.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:n.Basalt,chance:1},colorHSL:[0,100,15]},`,
+			to:
+				`~` +
+				reduceElements(
+					(e) => `Jl[t.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
+					this.soilRegistry
+				),
+			token: "~",
+		});
+		fluxloaderAPI.setPatch("js/515.bundle.js", `corelib:elements:soilregistry-515`, {
+			type: "replace",
+			from: `i[n.vZ.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:n.RJ.Basalt,chance:1},colorHSL:[0,100,15]},`,
+			to:
+				`~` +
+				reduceElements(
+					(e) => `i[n.vZ.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.RJ.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
+					this.soilRegistry
+				),
+			token: "~",
+		});
 
-		this.#sortRegistryIds(this.soilRegistry, 35);
-		//like the last one, loops over the soils list
-		for (const e of Object.values(this.soilRegistry)) {
-			fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Y"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:${e.id}-soilIdRegistry`, (l) => ({
-				type: "replace",
-				from: `${l}[${l}.Crackstone=30]="Crackstone"`,
-				to: `~` + `,${l}[${l}.${e.id}=${e.numericId}]="${e.id}"`,
-				token: "~",
-			}));
-
-			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-breaksWithoutIt`, {
-				type: "replace",
-				from: `n,t.Crackstone`,
-				to: `~` + `,t.${e.id}`,
-				token: "~",
-				expectedMatches: 2,
-			});
-			//Doing the same thing three times is either because of lantto or the minifier
-			for (const l of [
-				["a", "a"],
-				["r", "n"],
-				["i", "o"],
-			]) {
-				fluxloaderAPI.addPatch("js/546.bundle.js", {
-					type: "replace",
-					from: `,${l[0]}.vZ.Crackstone`,
-					to: `~` + `,${l[0]}.vZ.${e.id}`,
-					token: "~",
-				});
-				fluxloaderAPI.addPatch("js/336.bundle.js", {
-					type: "replace",
-					from: `,${l[1]}.vZ.Crackstone`,
-					to: `~` + `,${l[1]}.vZ.${e.id}`,
-					token: "~",
-				});
-			}
-			//need to make a mappedpatch but to lazy
-			fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:${e.id}-soilregistry-main`, {
-				type: "replace",
-				from: `Jl[t.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:n.Basalt,chance:1},colorHSL:[0,100,15]},`,
-				to: `~` + `Jl[t.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
-				token: "~",
-			});
-			fluxloaderAPI.setPatch("js/515.bundle.js", `corelib:elements:${e.id}-soilregistry-515`, {
-				type: "replace",
-				from: `i[n.vZ.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:n.RJ.Basalt,chance:1},colorHSL:[0,100,15]},`,
-				to: `~` + `i[n.vZ.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:n.RJ.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
-				token: "~",
-			});
-		}
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:reactionsList", {
 			type: "replace",
 			from: `c=((i={})[n.RJ.Water]=[[n.RJ.Sand,n.RJ.WetSand],[n.RJ.Spore,n.RJ.WetSpore],[n.RJ.Lava,n.RJ.Steam],[n.RJ.Flame,n.RJ.Steam]],i[n.RJ.Sand]=[[n.RJ.Water,n.RJ.WetSand]],i[n.RJ.Spore]=[[n.RJ.Water,n.RJ.WetSpore]],i[n.RJ.Lava]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Flame]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Sandium]=[[n.RJ.Petalium,n.RJ.Gloom]],i[n.RJ.Petalium]=[[n.RJ.Sandium,n.RJ.Gloom]],i)`,
@@ -263,7 +269,6 @@ class ElementsModule {
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
 			to: `pressRecipes=(function(){var press={};${joinedPressReactionsList};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];for(const[outputId,chance]of outputs){if(Math.random()<chance){h(e,t.x,t.y,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});
-	
 	}
 }
 

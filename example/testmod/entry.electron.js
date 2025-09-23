@@ -3,41 +3,61 @@ corelib.blocks.register({
 	id: "wedge",
 	name: "Wedge Block",
 	description: "A simple yet versatile wedge block",
-	shape: "[10,0,0,0],[3,10,0,0],[3,3,0,0],[3,0,0,0]",
-	angles: "[0]",
+	shape: [[10,0,0,0],[3,10,0,0],[3,3,0,0],[3,0,0,0]],
+	angles: [0],
 	imagePath: "wedge",
 });
 
 corelib.blocks.registerVariant({
 	parentId: "wedge",
 	suffix: "Left",
-	shape: "[0,0,0,9],[0,0,9,3],[0,0,3,3],[0,0,0,3]",
-	angles: "[-180,180]",
+	shape: [[0,0,0,9],[0,0,9,3],[0,0,3,3],[0,0,0,3]],
+	angles: [-180,180],
 	imagePath: "wedgeLeft",
 });
 
 corelib.blocks.registerVariant({
 	parentId: "wedge",
 	suffix: "Up",
-	shape: "[3,3,3,3],[0,3,3,0],[0,0,0,0],[0,0,0,0]",
-	angles: "[90]",
+	shape: [[3,3,3,3],[0,3,3,0],[0,0,0,0],[0,0,0,0]],
+	angles: [90],
 	imagePath: "wedgeUp",
 });
 
 corelib.blocks.registerVariant({
 	parentId: "wedge",
 	suffix: "Down",
-	shape: "[0,0,0,0],[0,0,0,0],[0,9,10,0],[9,3,3,10]",
-	angles: "[-90]",
+	shape: [[0,0,0,0],[0,0,0,0],[0,9,10,0],[9,3,3,10]],
+	angles: [-90],
 	imagePath: "wedgeDown",
 });
+
+corelib.blocks.register({
+	sourceMod: "testmod",
+	id: "tickingtest",
+	name: "Steamer",
+	description: "A block that produces steam for demonstration purposes.",
+	shape: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+	angles: [0],
+	imagePath: "", // no image cus I'm lazy
+	interval: 100
+})
+
+corelib.tech.register({
+	id: "testSteamTech",
+	name: "Test Steam",
+	description: "A test tech for testing ticking blocks.",
+	cost: 2,
+	parent: "Logistics1",
+	unlocks: {structures:["d.tickingtest"]}
+})
 
 corelib.tech.register({
 	id: "testTech1",
 	name: "Test Tech 1",
 	description: "A test tech for example and testing purposes.",
 	cost: 1,
-	unlocks: {},
+	unlocks: {structures:["d.wedge"]},
 });
 
 corelib.tech.register({

@@ -49,7 +49,7 @@ class SchedulesModule {
 
 		for (let id of Object.keys(this.idMap)) {
 			let interval = this.scheduleRegistry.definitions[this.idMap[id]];
-			scheduleIDString += `,e[e["${id}"]=${this.idMap[id]}]="${id}", fluxloaderAPI.events.registerEvent("corelib:schedule-${id}")`;
+			scheduleIDString += `,e[e["${id}"]=${this.idMap[id]}]="${id}"`;
 			scheduleDefinitionString += `up[_["${id}"]]= {interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`;
 		}
 

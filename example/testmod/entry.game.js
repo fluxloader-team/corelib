@@ -35,10 +35,26 @@ fluxloaderAPI.events.on("fl:scene-loaded", (scene) => {
 		setInterval(() => {
 			corelib.simulation.spawnParticle(500, 500, "Water");
 		}, 16);
+		// not sure where to place this?
+		corelib.simulation.spawnBlock(40, 164, "tickingtest");
 	}
 	fluxloaderAPI.gameInstance.state.store.options.portalConfig ??= {
 		channel: 1,
 	};
+});
+
+fluxloaderAPI.events.on("corelib:blocks-tickingtest", (block) => {
+	// simple lazy spawn pixel on every cell, extra rx and ry cus I didn't want to retype as much and this is more so technically what you do
+	for (let x = 0; x < 4; x++) {
+		let rx = block.x + x;
+		for (let y = 0; y < 4; y++) {
+			let ry = block.y + y;
+			if (Math.random() > 0.1) continue;
+			// check if cell is clear
+			if (!corelib.exposed.tf(fluxloaderAPI.gameInstance.state, rx, ry)) continue;
+			corelib.simulation.spawnParticle(rx, ry, "Steam");
+		}
+	}
 });
 
 // `Portal` must match the block id

@@ -169,3 +169,12 @@ globalThis.InputHandler = InputHandler;
 globalThis.corelib = new CoreLib();
 
 fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
+
+// register schedules top level to allow early listening; old method never let you start listening right away
+fluxloaderAPI.handleGameIPC("corelib:getGameRegistries", () => {
+	// very modular so you can easily add on if you need to send anything else
+	let data = {};
+	data.schedules = corelib.schedules.schedulesRegistry.definitions;
+	data.blocks = corelib.blocks.blocksRegistry.definitions;
+	return data;
+});

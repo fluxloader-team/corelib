@@ -112,6 +112,10 @@ class BlocksModule {
 			type: "boolean",
 			default: false,
 		},
+		interval: {
+			type: "number",
+			default: 0 // means no ticking 
+		}
 	};
 	register(data) {
 		let res = InputHandler(data, this.blockSchema);
@@ -121,6 +125,10 @@ class BlocksModule {
 		}
 		// Use processed data, which includes defaults
 		data = res.data;
+		if (data.interval > 0) {
+			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
+			globalThis.corelib.schedules.register({id:`_tickingBlock-${data.id}`, interval: data.interval});
+		}
 		let fullImagePath = this._getFullImagePath(data.sourceMod, data.id, data.imagePath);
 		this.idMap[data.id] = this.blockRegistry.register({ isVariant: false, variants: [], fullImagePath, ...data });
 	}
@@ -396,6 +404,27 @@ class BlocksModule {
 			from: `(0,bm.jsx)(HS,{state:e.state})`,
 			to: "~" + blocksWithConfig.map((id) => `,(0,bm.jsx)(globalThis["corelib:blockConfigCallback${id}"]=${configUIFunction.toString().replaceAll("__BLOCKID__", id)}, {})`),
 			token: "~",
+		});
+
+		// get ticking blocks
+		let reduceTicking = (f) => {
+			return Object.values(this.blockRegistry.definitions)
+			.filter((t) => t.interval > 0)
+			.reduce((acc, t) => acc + f(t.id), "");
+		}
+		
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
+			type: "replace",
+			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
+			to: `~${reduceTicking((id) => `,(r.type===d[${id}])&&(n.store.corelibCache[${id}]=n.store.corelibCache[${id}].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
+			token: "~"
+		});
+		
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
+			type: "replace",
+			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
+			to: `~${reduceTicking((id) => `,h.type===d[${id}]&&t.store.corelibCache[${id}].push({x:h.x,y:h.y})`)}`,
+			token: "~"
 		});
 	}
 }

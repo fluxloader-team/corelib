@@ -1,5 +1,6 @@
 class TechModule {
 	techRegistry = new DefinitionRegistry("Tech", 38);
+	enums = new EnumStore("w");
 	baseTechs = {};
 
 	constructor() {
@@ -69,13 +70,15 @@ class TechModule {
 		// Use processed data, which includes defaults
 		data = res.data;
 
-		this.techRegistry.register(data);
+		if (this.techRegistry.register(data.id, data)) {
+			this.enums.register(data.id);
+		}
 	}
 
 	unregister(id) {
-		let numericID = this.idMap[id];
-		delete this.idMap[id];
-		this.techRegistry.unregister(numericID);
+		if (this.techRegistry.unregister(id)) {
+			this.enums.unregister(id);
+		}
 	}
 
 	applyPatches() {
@@ -102,23 +105,11 @@ class TechModule {
 			}
 		}
 
-		let techIDString = "";
-		for (const [id, tech] of Object.entries(this.techRegistry.definitions)) {
-			log("debug", "corelib", `Adding technology "${tech.id}" with id ${id}`);
-			techIDString += `,B[B.${tech.id}=${id}]="${tech.id}"`;
-		}
-
 		// This is the inverse of what we do to the raw string in the constructor
 		let techDefinitionString = JSON.stringify(nestedTechDefinitions);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"id":"([a-zA-Z0-9_]+)"`, "g"), `"id":w.$1`);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"d\\.([a-zA-Z0-9_]+)"`, "g"), `d.$1`);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"l\\.([a-zA-Z0-9_]+)"`, "g"), `l.$1`);
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techIDs", {
-			type: "replace",
-			from: 'B[B.Guns3=28]="Guns3"',
-			to: `~${techIDString}`,
-			token: `~`,
-		});
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techDefinitions", {
 			type: "regex",
 			pattern: /\$f=function\(\).*?\},Y/,

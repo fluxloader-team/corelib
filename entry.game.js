@@ -96,3 +96,32 @@ for (let id of tickingIds) {
 	});
 }
 
+// load enums
+globalThis.corelib.hooks.setupSave = (store) => {
+	let allEnums = [n,t,d,q,r,s,o,a,l,u,c,h,f,p,g,y,v,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F];
+	// we can't just have this only run when it generates a new save since the save could of been made without this
+	if (!store.corelibEnums) {
+		store.corelibEnums = {};
+		for (let variable of allEnums) {
+			store.corelibEnums[variable] = {
+				next: 1 + Math.max(...Object.values(corelib.exposed[variable]).filter((value) => typeof value == "number")),
+				values: {} // we don't store the game's enums becuase theres no reason to save them, they already exist right there
+			}
+		}
+	}
+	// can't use 'enum' because intellisense gets angry because it exists in TypeScript
+	for (let variable in localRegistry.enums) {
+		// there is a limit to how much verbosity I can tolerate
+		let storeVals = store.corelibEnums[variable].values;
+		// first we check and add any new enums to the save
+		for (let entry of localRegistry.enums[variable].values) {
+			if (!Object.hasOwn(storeVals, entry)) {
+				let num = store.corelibEnums[variable].next++;
+				storeVals[entry] = num;
+				storeVals[num] = entry;
+			}
+		}
+		// we now add all saved values to the real enum
+		Object.assign(corelib.exposed[variable], storeVals);
+	}
+};

@@ -47,10 +47,25 @@ td,ed,Jh,Qh,Zh,Kh,qh,Yh,$h,zh,Qh,Bh,Lh,Nh,Fh,Dh,Ih,Rh,Ah,kh,Eh,Th,_h,bh,xh,vh,yh
 th,eh,Jc,Qc,qc,Yc,$c,Xc,Wc,Hc,Vc,Gc,Uc,jc,zc,Oc,Bc,Lc,Nc,Fc,Dc,Ic,Rc,Pc,Mc,Ac,kc,Ec,wc,bc,xc,yc,gc,
 mc,pc,fc,dc,hc,cc,uc,lc,tc,ec,Ju,Qu,Zu,Ku,$u,Hu,Vu,Uu,ju,zu,Ou,Lu,Nu,Fu,Du,Iu,Ru,Pu,ku,Eu,Tu,_u,Su,
 bu,xu,vu,yu,gu,pu,fu,du,lu,au,ou,ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
-Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,n,t,d,q,le};
+Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,le,n,t,d,q,r,s,o,a,l,u,c,h,f,p,g,y,v
+,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F};
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveLoadHook", {
+			type: "replace",
+			from: `var r=JSON.parse(n.target.result);`,
+			to: `~globalThis.corelib.hooks.setupSave(r);`,
+			token: `~`
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveCreateHook", {
+			type: "replace",
+			from: `KT(t,n)`,
+			to: `(store)=>{globalThis.corelib.hooks.setupSave(store);return store;}(~)`,
+			token: `~`
 		});
 	}
 }
@@ -59,35 +74,51 @@ class DefinitionRegistry {
 	moduleType = "";
 
 	definitions = {};
-	freeIDs = [];
-	nextIDNumber = 0;
 
-	constructor(moduleType, startCount = 0) {
+	constructor(moduleType) {
 		this.moduleType = moduleType;
-		this.nextIDNumber = startCount;
 	}
 
-	nextID() {
-		// Use available free IDs first
-		if (this.freeIDs.length > 0) {
-			return this.freeIDs.pop();
-		}
-		return this.nextIDNumber++;
-	}
-
-	register(data) {
-		let id = this.nextID();
+	register(id, data) {
 		if (this.definitions.hasOwnProperty(id)) {
 			log("error", "corelib", `${this.moduleType} with id "${id}" already exists!`);
-			return;
+			return false;
 		}
 		this.definitions[id] = data;
-		return id;
+		return true;
 	}
 
 	unregister(id) {
-		this.freeIDs.push(id);
+		if (!this.definitions.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.moduleType} with id "${id}" already exists!`);
+			return false;
+		}
 		delete this.definitions[id];
+		return true;
+	}
+}
+
+// I decided this would benefit from not strictly being strictly a singleton, I am ready to call yall crazy if you say this shouldn't be like this
+// doing it like this for elements since soils and base elements have different enums
+
+// all enums for double checking: n,t,d,q,r,s,o,a,l,u,c,h,f,p,g,y,v,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F
+class EnumStore {
+	static all = {};
+	variable = '';
+	values = [];
+
+	constructor(variable) {
+		// 'proper' syntax for referencing constructing class
+		new.target.all[variable] = this;
+		this.variable = variable;
+	}
+
+	register(id) {
+		this.values.push(id);
+	}
+	
+	unregister(id) {
+		this.values.splice(this.values.indexOf(id), 1);
 	}
 }
 
@@ -176,5 +207,6 @@ fluxloaderAPI.handleGameIPC("corelib:getGameRegistries", () => {
 	let data = {};
 	data.schedules = corelib.schedules.schedulesRegistry.definitions;
 	data.blocks = corelib.blocks.blocksRegistry.definitions;
+	data.enums = EnumStore.all;
 	return data;
 });

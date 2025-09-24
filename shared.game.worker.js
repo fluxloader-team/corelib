@@ -1,1 +1,1 @@
-globalThis.corelib = { exposed: {}, simulation: {}, events: {}, utils: {} };
+globalThis.corelib = { exposed: {}, simulation: {}, events: {}, utils: {}, hooks: {} };

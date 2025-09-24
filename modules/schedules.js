@@ -1,6 +1,6 @@
 class SchedulesModule {
 	scheduleRegistry = new DefinitionRegistry("Schedule", 19);
-	idMap = {};
+	enums = new EnumStore("_");
 
 	scheduleSchema = {
 		id: {
@@ -29,36 +29,24 @@ class SchedulesModule {
 		// Use processed data, which includes defaults
 		let data = res.data;
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
-		this.idMap[data.id] = this.scheduleRegistry.register(data.interval);
+		if (this.scheduleRegistry.register(data.id, data.interval)) {
+			this.enums.register(data.id);
+		}
 	}
 
 	unregister(id) {
-		if (!this.idMap.hasOwnProperty(id)) {
-			return log("error", "corelib", `Schedule with id "${id}" not found! Unable to unregister.`);
+		if (this.scheduleRegistry.unregister(id)) {
+			this.enums.unregister(id);
 		}
-
-		let numericID = this.idMap[id];
-		delete this.idMap[id];
-		this.scheduleRegistry.unregister(numericID);
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading schedule patches");
-		let scheduleIDString = "";
 		let scheduleDefinitionString = "";
 
-		for (let id of Object.keys(this.idMap)) {
-			let interval = this.scheduleRegistry.definitions[this.idMap[id]];
-			scheduleIDString += `,e[e["${id}"]=${this.idMap[id]}]="${id}"`;
+		for (let [id, interval] of Object.keys(this.scheduleRegistry.definitions)) {
 			scheduleDefinitionString += `up[_["${id}"]]= {interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`;
 		}
-
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleID", {
-			type: "replace",
-			from: `e[e.PingPumpChunksFIX=8]="PingPumpChunksFIX"`,
-			to: `~${scheduleIDString}`,
-			token: `~`,
-		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleDefinitions", {
 			type: "replace",

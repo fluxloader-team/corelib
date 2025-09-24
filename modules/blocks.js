@@ -1,6 +1,6 @@
 class BlocksModule {
 	blockRegistry = new DefinitionRegistry("Block", 99);
-	idMap = {};
+	enums = new EnumStore("d");
 
 	validateInput() {
 		let res = InputHandler(data, {
@@ -127,10 +127,12 @@ class BlocksModule {
 		data = res.data;
 		if (data.interval > 0) {
 			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
-			globalThis.corelib.schedules.register({id:`_tickingBlock-${data.id}`, interval: data.interval});
+			corelib.schedules.register({id:`_tickingBlock-${data.id}`, interval: data.interval});
 		}
 		let fullImagePath = this._getFullImagePath(data.sourceMod, data.id, data.imagePath);
-		this.idMap[data.id] = this.blockRegistry.register({ isVariant: false, variants: [], fullImagePath, ...data });
+		if (this.blockRegistry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data })) {
+			this.enums.register(data.id);
+		}
 	}
 
 	variantSchema = {
@@ -197,27 +199,29 @@ class BlocksModule {
 		let id = data.parentId + data.suffix;
 		let parentBlock = this.blockRegistry.definitions[this.idMap[data.parentId]];
 		let fullImagePath = this._getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
-		this.idMap[id] = this.blockRegistry.register({ isVariant: true, fullImagePath, ...data });
-
-		parentBlock.variants.push({ fullImagePath, ...data });
+		if (this.blockRegistry.register(data.id, { isVariant: true, fullImagePath, ...data })) {
+			this.enums.register(data.id);
+			parentBlock.variants.push({ fullImagePath, ...data });
+		}
 	}
 
 	unregister(id) {
-		if (!this.idMap.hasOwnProperty(id)) {
-			return log("error", "corelib", `Block with id "${id}" not found! Unable to unregister.`);
+		// manually check here since we don't unregister until we unregister variants
+		if (!this.blockRegistry.definitions[id]) {
+			return log("error", "corelib", `Block with id "${id}" does not exist!`)
 		}
-
-		if (this.blockRegistry.definitions[this.idMap[id]].isVariant) {
+		if (this.blockRegistry.definitions[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
-		for (let variant of this.blockRegistry.definitions[this.idMap[id]].variants) {
-			this.blockRegistry.unregister(this.idMap[variant.id]);
-			delete this.idMap[variant.id];
+		for (let variant of this.blockRegistry.definitions[id].variants) {
+			this.blockRegistry.unregister(id);
+			// the variants will always be registered and can't fail to unregister
+			this.enums.unregister(id);
 		}
 
-		this.blockRegistry.unregister(this.idMap[id]);
-		delete this.idMap[id];
+		this.blockRegistry.unregister(id);
+		this.enums.unregister(id);
 	}
 
 	_getFullImagePath = function (sourceMod, id, imagePath) {

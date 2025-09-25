@@ -274,22 +274,7 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to:
-				`~` +
-				reduceBlocks(
-					(b) =>
-						`,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true,size: {
-                width: 4 * e.cellSize,
-                height: 4 * e.cellSize
-            }}` +
-						reduceBlockVariants(
-							b,
-							(v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true,size: {
-                width: 4 * e.cellSize,
-                height: 4 * e.cellSize
-            }}`
-						)
-				),
+			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}` + reduceBlockVariants(b, (v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true}`)),
 			token: `~`,
 		});
 
@@ -306,7 +291,7 @@ class BlocksModule {
 			to:
 				"if([" +
 				reduceBlocks((b) => `d.${b.id},` + reduceBlockVariants(b, (v) => `d.${v.id},`)) +
-				`].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(t.shared.conveyorBeltsAnimationIndex[0]%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ~`,
+				`].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/500)%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ~`,
 			token: `~`,
 		});
 
@@ -350,6 +335,17 @@ class BlocksModule {
 				updateWindow: Al,
 				specialUI: US, // I only know of `US.div`, which appears to be a special animated div
 				extra: {},
+				closeConfig: (name, config) => {
+					e.state.session.windows.building.__BLOCKID__Config = false;
+					e.state.session.windows.building.open = false;
+					e.state.store.options[name] = config;
+					e.state.session.building.activeStructureType = d.__BLOCKID__;
+					Al(e.state, k.__BLOCKID__Config);
+					Al(e.state, k.Management);
+					e.state.store.player.hotbar.activeSlotIndex = null;
+					e.state.store.player.action = null;
+					Al(e.state, k.Hotbar);
+				},
 			};
 			data.showWindow(data.state, k.__BLOCKID__Config);
 			let targetChecker = React.useRef(null);
@@ -370,8 +366,10 @@ class BlocksModule {
 					{
 						ref: targetChecker,
 						style: {
-							height: data.extra.height || 600,
-							width: data.extra.width || 300,
+							// Overflow is used if either height or width aren't provided
+							overflow: "auto",
+							height: data.extra.height,
+							width: data.extra.width,
 							transform: `scale(${data.scale(data.state)})`,
 							transformOrigin: "center",
 						},

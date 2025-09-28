@@ -52,6 +52,13 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
 		});
+
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:expose", {
+			type: "replace",
+			from: `const O=function()`,
+			to: `globalThis.corelib.exposed={a,n,o,i,l,s,d,u,c},fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
+			token: `~`,
+		});
 	}
 }
 

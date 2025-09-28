@@ -13,9 +13,9 @@ class UpgradesModule {
 		const baseUpgrades = eval(baseUpgradesString);
 
 		for (const tab of baseUpgrades) {
-			this.registerTab(tab); // Only needs id and name
+			this.registerTab({ id: tab.id, name: tab.name });
 			for (const category of tab.items) {
-				this.registerCategory({ tabID: tab.id, ...category });
+				this.registerCategory({ tabID: tab.id, id: category.id, name: category.name, requirement: category.requirement });
 				for (const upgrade of category.upgrades) {
 					this.registerUpgrade({ tabID: tab.id, categoryID: category.id, ...upgrade });
 				}

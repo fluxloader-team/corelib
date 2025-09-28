@@ -1,5 +1,15 @@
 await import("./shared.game.worker.js");
 
+fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
+
+fluxloaderAPI.events.on("cl:raw-api-setup", () => {
+	log("info", "corelib", "Setting up corelib raw API");
+	corelib.simulation.internal = {};
+	corelib.simulation.internal.setCell = (x, y, data) => {
+		corelib.exposed.u.Jx(fluxloaderAPI.gameInstanceState, x, y, data);
+	};
+});
+
 // Events are batched together because of how many are triggered
 // All batched data is sent when the worker receives the "RunUpdate" message
 let batchData = {};

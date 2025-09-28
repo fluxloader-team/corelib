@@ -38,6 +38,9 @@ corelib.simulation = {
 	revealFog: (x, y) => {
 		fluxloaderAPI.gameInstance.state.environment.multithreading.simulation.postAll(fluxloaderAPI.gameInstance.state, [14, x, y]);
 	},
+	isEmpty: (x, y) => {
+		return corelib.exposed.tf(fluxloaderAPI.gameInstance.state, x, y);
+	},
 };
 
 corelib.utils = {

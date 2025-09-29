@@ -97,9 +97,18 @@ for (let id of tickingIds) {
 }
 
 // load enums
+
+// so the user can't click again while we're reading the save and before we continue to load the game
+function disableScreen() {
+	let disable = document.createElement('div');
+	disable.id = "interactibility"
+	disabled.class = "fixed inset-0 z-[99999] bg-black/0 cursor-wait";
+	document.body.appendChild(disable);
+}
+
 globalThis.corelib.hooks.setupSave = (store) => {
-	let allEnums = [n,t,d,q,r,s,o,a,l,u,c,h,f,p,g,y,v,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F];
 	// we can't just have this only run when it generates a new save since the save could of been made without this
+
 	if (!store.corelibEnums) {
 		store.corelibEnums = {};
 		for (let variable of allEnums) {
@@ -109,6 +118,7 @@ globalThis.corelib.hooks.setupSave = (store) => {
 			}
 		}
 	}
+
 	// can't use 'enum' because intellisense gets angry because it exists in TypeScript
 	for (let variable in localRegistry.enums) {
 		// there is a limit to how much verbosity I can tolerate
@@ -125,3 +135,20 @@ globalThis.corelib.hooks.setupSave = (store) => {
 		Object.assign(corelib.exposed[variable], storeVals);
 	}
 };
+
+globalThis.corelib.hooks.preSceneChange = async (param) => {
+	// we're doing operations that might take time and the window will reload when we finish
+	disableScreen();
+	if (typeof param == "boolean" && param.includes("db_load")) { // means main menu loading game
+		url = param.substring(8); // "db_load="
+		let results = await window.electron.load(url);
+		let data = results.data; // get results
+		let store = data?.corelibEnums ?? {main:{},sim:{},manager:{}};
+		// load the enums it has if triggered
+		await fluxloaderAPI.invokeElectronIPC("corelib:saveEnumStore", store);
+	}
+	corelib.hooks.doSceneChange(param);
+}
+
+
+

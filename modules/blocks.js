@@ -1,6 +1,6 @@
 class BlocksModule {
 	blockRegistry = new DefinitionRegistry("Block", 99);
-	enums = new EnumStore("d");
+	enums = new EnumStore("d", {"336": "ev", "546": "ev"});
 
 	validateInput() {
 		let res = InputHandler(data, {

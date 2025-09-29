@@ -1,6 +1,8 @@
 class SchedulesModule {
-	scheduleRegistry = new DefinitionRegistry("Schedule", 19);
-	enums = new EnumStore("_");
+	scheduleRegistry = new DefinitionRegistry("Schedule");
+	enums = new EnumStore({id:"Schedule", start:19,map: {
+		main: "_"
+	}});
 
 	scheduleSchema = {
 		id: {
@@ -36,7 +38,7 @@ class SchedulesModule {
 
 	unregister(id) {
 		if (this.scheduleRegistry.unregister(id)) {
-			this.enums.unregister(id);
+			this.enums.remove(id);
 		}
 	}
 

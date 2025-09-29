@@ -1,6 +1,6 @@
 class ItemsModule {
 	itemRegistry = new DefinitionRegistry("Item", 25);
-	enums = new EnumStore("l");
+	enums = corelib.enums.register("Item", "l");
 
 	itemSchema = {
 		id: {

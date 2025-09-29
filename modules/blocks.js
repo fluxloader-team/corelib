@@ -1,6 +1,8 @@
 class BlocksModule {
-	blockRegistry = new DefinitionRegistry("Block", 99);
-	enums = new EnumStore("d", {"336": "ev", "546": "ev"});
+	blockRegistry = new DefinitionRegistry("Block");
+	enums = corelib.enums.register({id:"Block", start: 99, map: {
+		main: "d", sim: "h", manager: "h"
+	}});
 
 	validateInput() {
 		let res = InputHandler(data, {
@@ -131,7 +133,7 @@ class BlocksModule {
 		}
 		let fullImagePath = this._getFullImagePath(data.sourceMod, data.id, data.imagePath);
 		if (this.blockRegistry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data })) {
-			this.enums.register(data.id);
+			corelib.enums.add("Block", data.id);
 		}
 	}
 
@@ -200,7 +202,7 @@ class BlocksModule {
 		let parentBlock = this.blockRegistry.definitions[this.idMap[data.parentId]];
 		let fullImagePath = this._getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
 		if (this.blockRegistry.register(data.id, { isVariant: true, fullImagePath, ...data })) {
-			this.enums.register(data.id);
+			corelib.enums.add("Block", data.id);
 			parentBlock.variants.push({ fullImagePath, ...data });
 		}
 	}
@@ -221,7 +223,7 @@ class BlocksModule {
 		}
 
 		this.blockRegistry.unregister(id);
-		this.enums.unregister(id);
+		this.enums.remove("Block", id);
 	}
 
 	_getFullImagePath = function (sourceMod, id, imagePath) {
@@ -246,20 +248,6 @@ class BlocksModule {
 		const reduceBlockVariants = (b, f) => {
 			return b.variants.reduce((acc, v) => acc + f(v), "");
 		};
-
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["V"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, "corelib:blockTypes", (v1) => ({
-			type: "replace",
-			from: `${v1}[${v1}.GloomEmitter=27]="GloomEmitter"`,
-			to: `~` + reduceBlocks((b) => `,${v1}[${v1}.${b.id}=${this.idMap[b.id]}]="${b.id}"` + reduceBlockVariants(b, (v) => `,${v1}[${v1}.${v.id}=${this.idMap[v.id]}]="${v.id}"`)),
-			token: `~`,
-		}));
-
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
-			type: "replace",
-			from: `d.Foundation,d.Collector`,
-			to: `~` + reduceBlocks((b) => `,d.${b.id}`),
-			token: `~`,
-		});
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [], "js/515.bundle.js": [] }, "corelib:blockShapes", (v) => ({
 			type: "replace",

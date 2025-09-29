@@ -1,7 +1,7 @@
 class SchedulesModule {
 	scheduleRegistry = new DefinitionRegistry("Schedule");
-	enums = new EnumStore({id:"Schedule", start:19,map: {
-		main: "_"
+	enums = corelib.enums.register({id:"Schedule", start:19,map: {
+		main: "_", sim: "w", manager: "w"
 	}});
 
 	scheduleSchema = {
@@ -32,13 +32,13 @@ class SchedulesModule {
 		let data = res.data;
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 		if (this.scheduleRegistry.register(data.id, data.interval)) {
-			this.enums.register(data.id);
+			corelib.enums.add("Schedule", data.id);
 		}
 	}
 
 	unregister(id) {
 		if (this.scheduleRegistry.unregister(id)) {
-			this.enums.remove(id);
+			corelib.enums.remove("Schedule", id);
 		}
 	}
 

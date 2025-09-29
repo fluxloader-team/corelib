@@ -178,5 +178,6 @@ fluxloaderAPI.handleGameIPC("corelib:getGameRegistries", () => {
 });
 
 fluxloaderAPI.handleGameIPC("corelib:saveEnumStore", (store) => {
+	// update also stores it
 	corelib.enums.updateStore(store);
 });

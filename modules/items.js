@@ -1,6 +1,8 @@
 class ItemsModule {
 	itemRegistry = new DefinitionRegistry("Item", 25);
-	enums = corelib.enums.register("Item", "l");
+	enums = corelib.enums.register({id:"Item", start: 25, map: {
+		main: "l", worker: "d", manager: "u"
+	}});
 
 	itemSchema = {
 		id: {
@@ -38,12 +40,14 @@ class ItemsModule {
 			log("warn", "corelib", `Item type "Consumable" is not fully supported yet; you should use "Tool" or "Weapon" instead.`);
 		}
 
-		this.itemRegistry.register(data.id, data);
+		if (this.itemRegistry.register(data.id, data)) {
+			this.enums.add("Item", data.id);
+		}
 	}
 
 	unregister(id) {
 		if (this.itemRegistry.unregister(id)) {
-			this.enums.unregister(id);
+			this.enums.remove("Item", id);
 		}
 	}
 

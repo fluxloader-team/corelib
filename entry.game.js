@@ -102,44 +102,19 @@ for (let id of tickingIds) {
 function disableScreen() {
 	let disable = document.createElement('div');
 	disable.id = "interactibility"
-	disabled.class = "fixed inset-0 z-[99999] bg-black/0 cursor-wait";
+	disable.className = "fixed inset-0 z-[99999] bg-black/0 cursor-wait";
 	document.body.appendChild(disable);
 }
 
 globalThis.corelib.hooks.setupSave = (store) => {
-	// we can't just have this only run when it generates a new save since the save could of been made without this
-
-	if (!store.corelibEnums) {
-		store.corelibEnums = {};
-		for (let variable of allEnums) {
-			store.corelibEnums[variable] = {
-				next: 1 + Math.max(...Object.values(corelib.exposed[variable]).filter((value) => typeof value == "number")),
-				values: {} // we don't store the game's enums becuase theres no reason to save them, they already exist right there
-			}
-		}
-	}
-
-	// can't use 'enum' because intellisense gets angry because it exists in TypeScript
-	for (let variable in localRegistry.enums) {
-		// there is a limit to how much verbosity I can tolerate
-		let storeVals = store.corelibEnums[variable].values;
-		// first we check and add any new enums to the save
-		for (let entry of localRegistry.enums[variable].values) {
-			if (!Object.hasOwn(storeVals, entry)) {
-				let num = store.corelibEnums[variable].next++;
-				storeVals[entry] = num;
-				storeVals[num] = entry;
-			}
-		}
-		// we now add all saved values to the real enum
-		Object.assign(corelib.exposed[variable], storeVals);
-	}
+	// we can always overwrite it
+	store.corelibEnums = data.enumStore;
 };
 
 globalThis.corelib.hooks.preSceneChange = async (param) => {
 	// we're doing operations that might take time and the window will reload when we finish
 	disableScreen();
-	if (typeof param == "boolean" && param.includes("db_load")) { // means main menu loading game
+	if (typeof param == "string" && param.includes("db_load")) { // means main menu loading game and not new game
 		url = param.substring(8); // "db_load="
 		let results = await window.electron.load(url);
 		let data = results.data; // get results

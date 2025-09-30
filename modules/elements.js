@@ -6,7 +6,6 @@ class ElementsModule {
 		press: {},
 		shaker: {},
 	};
-	possibleMatterStates={ Solid: 1, Liquid: 2, Particle: 3, Gas: 4, Static: 5, Slushy: 6, Wisp: 7 };
 	idMaps={soil:{Empty:0,Element:1,SandSoil:2,SporeSoil:3,Fog:4,FogJetpackBlock:5,FogWater:6,FreezingIceSoil:7,Divider:8,Grass:9,Moss:10,GoldSoil:11,Petal:12,FogLava:13,Fluxite:14,Block:15,SlidingBlock:16,SlidingBlockLeft:17,SlidingBlockRight:18,ConveyorLeft:19,ConveyorRight:20,ShakerLeft:21,ShakerRight:22,Bedrock:23,VelocitySoaker:24,Ice:25,Grower:26,NascentWater:27,SandiumSoil:28,Obsidian:29,Crackstone:30,},element:{Sand:1,Particle:2,Water:3,WetSand:4,Sandium:5,Slag:6,Gold:7,Gloom:8,Shake:9,Steam:10,Fire:11,FreezingIce:12,Flame:13,BurntSlag:14,Spore:15,WetSpore:16,Seed:17,Petalium:18,Lava:19,Basalt:20,},};
 	addTheNormalRecipes = true;
 	//found this online somewhere, it's a hashing function
@@ -36,7 +35,7 @@ class ElementsModule {
 
 	registerElement({ id, name, hoverText, colors, density, matterType, addToFilterList = true }) {
 		if (!(id && name && colors && density)) return log("error", "corelib", `Couldn't register element with id ${id}! Not all parameters are present`);
-		if (!this.possibleMatterStates[matterType]) return log("error", "corelib", `matterType invalid for element ${id}`);
+		// if (!corelib.simulation.internal.matterTypes[matterType]) return log("error", "corelib", `matterType invalid for element ${id}, valid ones are ${corelib.simulation.internal.matterTypes}`);
 		const element = {
 			id,
 			name,

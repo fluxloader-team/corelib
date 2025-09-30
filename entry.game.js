@@ -99,10 +99,10 @@ for (let id of tickingIds) {
 
 // load enums
 
-// so the user can't click again while we're reading the save and before we continue to load the game
+// so the user can't click again while we're reading the save and before we continue to load the game -- confirmed you get ~1-2 seconds as we're reading the file early
 function disableScreen() {
 	let disable = document.createElement('div');
-	disable.id = "interactibility"
+	disable.id = "interactibility-nuker";
 	disable.className = "fixed inset-0 z-[99999] bg-black/0 cursor-wait";
 	document.body.appendChild(disable);
 }

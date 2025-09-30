@@ -1,5 +1,23 @@
 await import("./shared.game.worker.js");
 
+fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
+
+fluxloaderAPI.events.on("cl:raw-api-setup", () => {
+	console.log(corelib.exposed)
+	log("info", "corelib", "Setting up corelib raw API");
+	corelib.simulation.internal = {};
+	corelib.simulation.internal.soils = corelib.exposed.i.vZ
+	corelib.simulation.internal.tech = corelib.exposed.i.xQ
+	corelib.simulation.internal.blocks = corelib.exposed.i.ev
+	corelib.simulation.internal.particles = corelib.exposed.i.RJ
+	corelib.simulation.internal.items = corelib.exposed.i.Np
+	corelib.simulation.internal.matterTypes = corelib.exposed.i.es
+	corelib.simulation.internal.jetpackZones = corelib.exposed.i.s0
+	corelib.simulation.internal.setCell = (x, y, data) => {
+		corelib.exposed.u.Jx(fluxloaderAPI.gameInstanceState, x, y, data);
+	};
+});
+
 // Events are batched together because of how many are triggered
 // All batched data is sent when the worker receives the "RunUpdate" message
 let batchData = {};
@@ -51,3 +69,13 @@ corelib.events.processFogReveal = (x, y) => {
 
 	batchData["fog-reveal"].push(data);
 };
+fluxloaderAPI.events.on("cl:cell-change", (data) => {
+    for (const cell of data) {
+    	if (cell.fromCellType) {
+	    	const cellFromName = corelib.simulation.internal.soils[cell.fromCellType]
+	    	if (cellFromName) {
+	    		fluxloaderAPI.events.tryTrigger(`cl:elements:soilDug-${cellFromName}`);
+	    	}
+    	}
+    }
+});

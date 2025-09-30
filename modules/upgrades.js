@@ -13,9 +13,9 @@ class UpgradesModule {
 		const baseUpgrades = eval(baseUpgradesString);
 
 		for (const tab of baseUpgrades) {
-			this.registerTab(tab); // Only needs id and name
+			this.registerTab({ id: tab.id, name: tab.name });
 			for (const category of tab.items) {
-				this.registerCategory({ tabID: tab.id, ...category });
+				this.registerCategory({ tabID: tab.id, id: category.id, name: category.name, requirement: category.requirement });
 				for (const upgrade of category.upgrades) {
 					this.registerUpgrade({ tabID: tab.id, categoryID: category.id, ...upgrade });
 				}
@@ -239,6 +239,7 @@ class UpgradesModule {
 			nestedUpgradeDefinitions.push(newTab);
 		}
 		updates.shovel.momentum = { level: 1, availableLevel: 1 }; // Really lantto?
+		updates.digger.gravity = { level: 1, availableLevel: 1 }; // ANOTHER??
 		// This is the inverse of what we do to the raw string in the constructor
 		let upgradeDefinitionString = JSON.stringify(nestedUpgradeDefinitions);
 		upgradeDefinitionString = upgradeDefinitionString.replace(new RegExp(`"tech":"([a-zA-Z0-9_]+)"`, "g"), `"tech":w.$1`);

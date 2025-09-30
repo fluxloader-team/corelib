@@ -112,6 +112,12 @@ class BlocksModule {
 			type: "boolean",
 			default: false,
 		},
+		// Determines if a block should be given with no tech unlocked
+		// Keep off if you want this unlocked by tech; on if it's unlocked at the start of a new game
+		default: {
+			type: "boolean",
+			default: false,
+		},
 	};
 	register(data) {
 		let res = InputHandler(data, this.blockSchema);
@@ -245,7 +251,8 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
 			from: `d.Foundation,d.Collector`,
-			to: `~` + reduceBlocks((b) => `,d.${b.id}`),
+			// Only include blocks that have the `default` property
+			to: `~` + reduceBlocks((b) => (b.default ? `,d.${b.id}` : "")),
 			token: `~`,
 		});
 
@@ -274,22 +281,7 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to:
-				`~` +
-				reduceBlocks(
-					(b) =>
-						`,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true,size: {
-                width: 4 * e.cellSize,
-                height: 4 * e.cellSize
-            }}` +
-						reduceBlockVariants(
-							b,
-							(v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true,size: {
-                width: 4 * e.cellSize,
-                height: 4 * e.cellSize
-            }}`
-						)
-				),
+			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}` + reduceBlockVariants(b, (v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true}`)),
 			token: `~`,
 		});
 
@@ -306,7 +298,7 @@ class BlocksModule {
 			to:
 				"if([" +
 				reduceBlocks((b) => `d.${b.id},` + reduceBlockVariants(b, (v) => `d.${v.id},`)) +
-				`].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(t.shared.conveyorBeltsAnimationIndex[0]%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ~`,
+				`].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/500)%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ~`,
 			token: `~`,
 		});
 
@@ -314,31 +306,35 @@ class BlocksModule {
 			.filter((b) => !b.isVariant && b.hasConfigMenu)
 			.map((v) => v.id);
 
+		const reduceBlocksWithConfig = (f) => {
+			return blocksWithConfig.reduce((acc, v) => acc + f(v), "");
+		};
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockConfigMenu", {
 			type: "replace",
 			from: "n.id===d.FilterRight&&(e.session.windows.building.filterConfig=!0,Al(e,k.FilterConfig))",
-			to: "~" + blocksWithConfig.map((id) => `,n.id===d.${id}&&(e.session.windows.building.${id}Config=!0,Al(e,k.${id}Config))`),
+			to: "~" + reduceBlocksWithConfig((id) => `,n.id===d.${id}&&(e.session.windows.building.${id}Config=!0,Al(e,k.${id}Config))`),
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockOpenConfig", {
 			type: "replace",
 			from: "t.type===o.Building?t.id===",
-			to: "~" + blocksWithConfig.map((id) => `d.${id}?((e.session.windows.building.${id}Config=!0),void Al(e,k.${id}Config)):t.id===`),
+			to: "~" + reduceBlocksWithConfig((id) => `d.${id}?((e.session.windows.building.${id}Config=!0),void Al(e,k.${id}Config)):t.id===`),
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockCloseConfig", {
 			type: "replace",
 			from: `(!e.session.windows.building.filterConfig||(e.session.windows.building.filterConfig=!1,Al(e,k.FilterConfig),e.session.windows.options.open))`,
-			to: "~" + blocksWithConfig.map((id) => `&&(!e.session.windows.building.${id}Config||(e.session.windows.building.${id}Config=!1,Al(e,k.${id}Config),e.session.windows.options.open))`),
+			to: "~" + reduceBlocksWithConfig((id) => `&&(!e.session.windows.building.${id}Config||(e.session.windows.building.${id}Config=!1,Al(e,k.${id}Config),e.session.windows.options.open))`),
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockDefaultMenus", {
 			type: "replace",
 			from: `e.session.windows.building.filterConfig=!1;`,
-			to: "~Al(e,k.FilterConfig);" + blocksWithConfig.map((id) => `e.session.windows.building.${id}Config=!1;Al(e,k.${id}Config);`),
+			to: "~Al(e,k.FilterConfig);" + reduceBlocksWithConfig((id) => `e.session.windows.building.${id}Config=!1;Al(e,k.${id}Config);`),
 			token: "~",
 		});
 
@@ -350,6 +346,17 @@ class BlocksModule {
 				updateWindow: Al,
 				specialUI: US, // I only know of `US.div`, which appears to be a special animated div
 				extra: {},
+				closeConfig: (config) => {
+					e.state.session.windows.building.__BLOCKID__Config = false;
+					e.state.session.windows.building.open = false;
+					e.state.store.options.__BLOCKID__Config = config;
+					e.state.session.building.activeStructureType = d.__BLOCKID__;
+					Al(e.state, k.__BLOCKID__Config);
+					Al(e.state, k.Management);
+					e.state.store.player.hotbar.activeSlotIndex = null;
+					e.state.store.player.action = null;
+					Al(e.state, k.Hotbar);
+				},
 			};
 			data.showWindow(data.state, k.__BLOCKID__Config);
 			let targetChecker = React.useRef(null);
@@ -370,8 +377,10 @@ class BlocksModule {
 					{
 						ref: targetChecker,
 						style: {
-							height: data.extra.height || 600,
-							width: data.extra.width || 300,
+							// Overflow is used if either height or width aren't provided
+							overflow: "auto",
+							height: data.extra.height,
+							width: data.extra.width,
 							transform: `scale(${data.scale(data.state)})`,
 							transformOrigin: "center",
 						},
@@ -394,7 +403,28 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockSetupReact", {
 			type: "replace",
 			from: `(0,bm.jsx)(HS,{state:e.state})`,
-			to: "~" + blocksWithConfig.map((id) => `,(0,bm.jsx)(globalThis["corelib:blockConfigCallback${id}"]=${configUIFunction.toString().replaceAll("__BLOCKID__", id)}, {})`),
+			to: "~" + reduceBlocksWithConfig((id) => `,(0,bm.jsx)(globalThis["corelib:blockConfigCallback${id}"]=${configUIFunction.toString().replaceAll("__BLOCKID__", id)}, {})`),
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockPlacedConfig", {
+			type: "replace",
+			from: `h.type===d.GloomEmitter&&(h.filter={density:1e4,mode:"allow"}),`,
+			to: "~" + reduceBlocksWithConfig((id) => `h.type===d.${id}&&(h.data=t.store.options.${id}Config),`),
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockCopy", {
+			type: "replace",
+			from: `t.filter?{filter:JSON.parse(JSON.stringify(t.filter))}:`,
+			to: `~t.data?{data:JSON.parse(JSON.stringify(t.data))}:`,
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockPaste", {
+			type: "replace",
+			from: `(i.copiedStructure.filter&&(h.filter=i.copiedStructure.filter)`,
+			to: `~,(i.copiedStructure.data&&(h.data=i.copiedStructure.data))`,
 			token: "~",
 		});
 	}

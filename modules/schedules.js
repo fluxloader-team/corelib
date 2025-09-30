@@ -46,7 +46,7 @@ class SchedulesModule {
 		log("info", "corelib", "Loading schedule patches");
 		let scheduleDefinitionString = "";
 
-		for (let [id, interval] of Object.keys(this.scheduleRegistry.definitions)) {
+		for (let [id, interval] of Object.entries(this.scheduleRegistry.definitions)) {
 			scheduleDefinitionString += `up[_["${id}"]]= {interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`;
 		}
 

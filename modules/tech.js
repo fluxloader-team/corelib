@@ -73,13 +73,13 @@ class TechModule {
 		data = res.data;
 
 		if (this.techRegistry.register(data.id, data)) {
-			this.enums.register(data.id);
+			corelib.enums.add("Tech", data.id);
 		}
 	}
 
 	unregister(id) {
 		if (this.techRegistry.unregister(id)) {
-			this.enums.unregister(id);
+			corelib.enums.remove("Tech", id);
 		}
 	}
 

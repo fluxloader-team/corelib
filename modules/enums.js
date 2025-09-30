@@ -4,7 +4,7 @@
 // all enums  (in main bundle) for double checking: n,t,d,q,r,s,o,a,l,u,c,h,f,p,g,y,v,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F
 class EnumsModule {
     registry = new DefinitionRegistry();
-    store = {main:{},sim:{},manager:{}};
+    store = {};
 
     schema = {
         id: {
@@ -17,10 +17,10 @@ class EnumsModule {
             type: "object",
             verifier: (v) => {
                 let bundles = ["main", "sim", "manager"];
-                if (!bundles.some((bundle) => Object.hasOwnProperty(v, bundle))) {
+                if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
                     return {
                             success: false,
-                            message: "map object in enum register must have a valid bundle identifier"
+                            message: `map object in enum register must have a valid bundle identifier, keys are ${Object.keys(v).join(", ")}, must be one of ${bundles.join(", ")}`
                         };
                 }
                 for (let key in v) {
@@ -51,9 +51,10 @@ class EnumsModule {
         if (!res.success) {
 			throw new Error(res.message);
 		}
-        res.values = [];
-        this.registry.register(res.id, res);
-        return res;
+        let out = res.data;
+        out.values = [];
+        this.registry.register(out.id, out);
+        return out;
 	}
 
     checkId(id) {
@@ -88,21 +89,13 @@ class EnumsModule {
             // we get their data
             let obj = this.registry.definitions[key];
             let data = obj.values;
-            // we loop through each bundle they have a map for
-            for (let bundle in obj.map) {
-                // we get the object storing numbers with their values -- google said bdl is an abbreviation for bundle
-                let bdl = store[bundle];
-                // if this id doesn't exist on the store, add it
-                bdl[key] ??= {};
-                let curr = bdl[key];
-                // we check for the start or the highest value, this could have weird values if the start somehow changes but that should never happen
-                // do -1 so it actually starts at the start
-                let next = Math.max(obj.start - 1, ...Object.values(curr));
-                for (let entry of data) {
-                    // cant use ??= because it still executes the right side
-                    if (!curr[entry]) {
-                        curr[entry] = ++next;
-                    }
+            store[key] ??= {};
+            let curr = store[key];
+            let next = Math.max(obj.start - 1, ...Object.values(curr));
+            for (let entry of data) {
+                // cant use ??= because it still executes the right side
+                if (!curr[entry]) {
+                    curr[entry] = ++next;
                 }
             }
         }
@@ -117,14 +110,15 @@ class EnumsModule {
         let texts = {main:"",sim:"",manager:""};
 
         // loop through bundles here
-        for (let bundle in this.store) {
-            // all registry id's exist under here because we always call updateStore before
-            for (let id in this.store[bundle]) {
-                let def = this.registry.definitions[id];
+        for (let id in this.store) {
+            let def = this.registry.definitions[id];
+            let vals = this.store[id];
+            // example output: _[_["Schedule"]=19]="Schedule";
+            for (let bundle in def.map) {
                 let vari = def.map[bundle];
-                let num = this.store[bundle][id];
-                // example output: _[_["Schedule"]=19]="Schedule";
-                texts[bundle] += `${vari}[${vari}["${id}"]=${num}]="${id}";`;
+                for (let [entry, num] of Object.entries(vals)) {
+                    texts[bundle] += `${vari}[${vari}["${entry}"]=${num}]="${entry}";`;
+                }
             }
         }
         // end of all enumerator chains
@@ -138,21 +132,21 @@ class EnumsModule {
 		fluxloaderAPI.setMappedPatch({"js/bundle.js":[texts.main, replaces.main],"js/336.bundle.js":[texts.sim, replaces.sim],"js/546.bundle.js":[texts.manager, replaces.manager]}, "corelib:addEnums", (text, replace) => ({
 			type: "replace",
 			from: replace,
-            // incase some insane man uses '~' or just something wack in an id -- the ';' in thje middle is for minfieid stuff so it does work chaining, this adds an extra ; to the main bundle but makes the rest work
+            // incase some insane man uses '~' or just something wack in an id -- the ';' in the middle is for minfied stuff so it does work chaining, this adds an extra ; to the main bundle but makes the rest work
 			to: replace + ";" + text
 		}));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveLoadHook", {
 			type: "replace",
 			from: `var r=JSON.parse(n.target.result);`,
-			to: `~globalThis.corelib.hooks.setupSave(r);`,
+			to: `~r=globalThis.corelib.hooks.setupSave(r);`,
 			token: `~`
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveCreateHook", {
 			type: "replace",
 			from: `KT(t,n)`,
-			to: `(store)=>{globalThis.corelib.hooks.setupSave(store);return store;}(~)`,
+			to: `((store)=>{globalThis.corelib.hooks.setupSave(store);return store;})(~)`,
 			token: `~`
 		});
 
@@ -162,7 +156,14 @@ class EnumsModule {
 			to: `~{globalThis.corelib.hooks.preSceneChange(e)}globalThis.corelib.hooks.doSceneChange=(e)=>`,
 			token: `~`
 		});
+        
+        // because we turn the function syntax "{...}" into a variable assignment of an anyonymous function, we need to close the variable assignment properly
+        fluxloaderAPI.setPatch("js/bundle.js", "corelib:endChangeSceneHookDefinition", {
+            type: "replace",
+            from: ".reload()}var w_",
+            to: ".reload()};var w_"
+        })
     }
 }
 
-globalThis.enumsModule = enumsModule;
+globalThis.EnumsModule = EnumsModule;

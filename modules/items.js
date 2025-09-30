@@ -1,7 +1,7 @@
 class ItemsModule {
 	itemRegistry = new DefinitionRegistry("Item", 25);
 	enums = corelib.enums.register({id:"Item", start: 25, map: {
-		main: "l", worker: "d", manager: "u"
+		main: "l", sim: "d", manager: "u"
 	}});
 
 	itemSchema = {

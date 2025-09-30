@@ -55,8 +55,8 @@ corelib.utils = {
 // get the schedules to register immediately so mods can start listening immediately
 let localRegistry = await fluxloaderAPI.invokeElectronIPC("corelib:getGameRegistries");
 // we don't need the ids so just get values
-for (let schedule of Object.values(localRegistry.schedules)) {
-	fluxloaderAPI.events.register(`corelib:schedule-${schedule.id}`);
+for (let schedule of Object.keys(localRegistry.schedules)) {
+	fluxloaderAPI.events.registerEvent(`corelib:schedule-${schedule}`);
 }
 
 let tickingIds = Object.values(localRegistry.blocks).filter((b) => b.interval > 0);
@@ -67,6 +67,7 @@ fluxloaderAPI.events.on("fl:scene-loaded", () => {
 	hasSceneLoaded = true;
 
 	let { store } = fluxloaderAPI.gameInstance.state;
+	store.corelibEnums = localRegistry.enumStore;
 	store.corelibCache ??= {};
 	for (let id of tickingIds) {
 		store.corelibCache[id] ??= {};
@@ -106,20 +107,25 @@ function disableScreen() {
 	document.body.appendChild(disable);
 }
 
+
+// archived -- not sure why this didnt work
 globalThis.corelib.hooks.setupSave = (store) => {
-	// we can always overwrite it
-	store.corelibEnums = data.enumStore;
+	return store;
+	// we can always overwrite it because we read from the save before loading it
+	// store.corelibEnums = localRegistry.enumStore;
+	// return store;
 };
 
 globalThis.corelib.hooks.preSceneChange = async (param) => {
 	// we're doing operations that might take time and the window will reload when we finish
 	disableScreen();
 	if (typeof param == "string" && param.includes("db_load")) { // means main menu loading game and not new game
-		url = param.substring(8); // "db_load="
+		let url = param.substring(8); // "db_load="
 		let results = await window.electron.load(url);
 		let data = results.data; // get results
-		let store = data?.corelibEnums ?? {main:{},sim:{},manager:{}};
-		// load the enums it has if triggered
+		let store = data?.corelibEnums ?? {};
+
+		// if we send electron an object it adds on all it's internals, and if we send it as {data:store} it just refuses to pass data for some reason
 		await fluxloaderAPI.invokeElectronIPC("corelib:saveEnumStore", store);
 	}
 	corelib.hooks.doSceneChange(param);

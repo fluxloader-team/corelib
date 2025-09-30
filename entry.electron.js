@@ -8,13 +8,22 @@ includeVMScript("modules/enums.js");
 
 class CoreLib {
 	constructor() {
+		this.enums = new EnumsModule();
+		this.blocks = null;
+		this.tech = null;
+		this.upgrades = null;
+		this.items = null;
+		this.events = null;
+		this.schedules = null;
+	}
+
+	initModules() {
 		this.blocks = new BlocksModule();
 		this.tech = new TechModule();
 		this.upgrades = new UpgradesModule();
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
-		this.enums = new EnumsModule();
 	}
 
 	async applyPatches() {
@@ -163,6 +172,7 @@ globalThis.DefinitionRegistry = DefinitionRegistry;
 globalThis.InputHandler = InputHandler;
 
 globalThis.corelib = new CoreLib();
+corelib.initModules();
 
 fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
 
@@ -170,14 +180,14 @@ fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPat
 fluxloaderAPI.handleGameIPC("corelib:getGameRegistries", () => {
 	// very modular so you can easily add on if you need to send anything else
 	let data = {};
-	data.schedules = corelib.schedules.schedulesRegistry.definitions;
-	data.blocks = corelib.blocks.blocksRegistry.definitions;
+	data.schedules = corelib.schedules.scheduleRegistry.definitions;
+	data.blocks = corelib.blocks.blockRegistry.definitions;
 	data.enums = corelib.enums.registry.definitions;
 	data.enumStore = corelib.enums.store;
 	return data;
 });
 
-fluxloaderAPI.handleGameIPC("corelib:saveEnumStore", (store) => {
+fluxloaderAPI.handleGameIPC("corelib:saveEnumStore", (internal, store) => {
 	// update also stores it
 	corelib.enums.updateStore(store);
 });

@@ -25,6 +25,7 @@ class CoreLib {
 		this.events.applyPatches();
 		this.schedules.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
+		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}
 
 	applyCorePatches() {
@@ -175,4 +176,5 @@ globalThis.InputHandler = InputHandler;
 
 globalThis.corelib = new CoreLib();
 
+fluxloaderAPI.events.registerEvent("cl:patches-applied");
 fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());

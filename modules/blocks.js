@@ -118,6 +118,17 @@ class BlocksModule {
 			type: "boolean",
 			default: false,
 		},
+		animationDelay: {
+			type: "number",
+			default: 500,
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v > 0,
+					message: `Parameter 'animationDelay' must be an integer greater than 0`,
+				};
+			},
+		},
+
 	};
 	register(data) {
 		let res = InputHandler(data, this.blockSchema);
@@ -179,6 +190,17 @@ class BlocksModule {
 			type: "string",
 			default: "", // Allows using the not provided image
 		},
+		animationDelay: {
+			type: "number",
+			default: 500,
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v > 0,
+					message: `Parameter 'animationDelay' must be an integer greater than 0`,
+				};
+			},
+		},
+
 	};
 	registerVariant(data) {
 		let res = InputHandler(data, this.variantSchema);
@@ -296,11 +318,24 @@ class BlocksModule {
 			type: "replace",
 			from: `if(n.type!==d.Collector)`,
 			to:
-				"if([" +
-				reduceBlocks((b) => `d.${b.id},` + reduceBlockVariants(b, (v) => `d.${v.id},`)) +
-				`].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/500)%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ~`,
+				reduceBlocks(
+					(b) =>
+						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
+							b.animationDelay || 500
+						})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
+						reduceBlockVariants(
+							b,
+							(v) =>
+								`if(n.type===d.${b.id}){l=t.session.rendering.images["${
+									v.fullImagePath
+								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
+									v.animationDelay || 500
+								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `
+						)
+				) + "~",
 			token: `~`,
 		});
+
 
 		let blocksWithConfig = Object.values(this.blockRegistry.definitions)
 			.filter((b) => !b.isVariant && b.hasConfigMenu)

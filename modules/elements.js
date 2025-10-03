@@ -32,36 +32,98 @@ class ElementsModule {
 			item.numericId = index + startingId;
 		});
 	}
+	elementSchema = {
+		id: {
+			type: "string",
+		},
+		name: {
+			type: "string",
+		},
+		hoverText: {
+			type: "string",
+		},
+		colors: {
+			type: "object",
+			verifier: (v) => {
+				return {
+					success: Array.isArray(v) && v.every(Array.isArray),
+					message: `Parameter 'colors' must be an array of rgba colors`,
+				};
+			},
+		},
+		density: {
+			type: "number",
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v > 0,
+					message: "Parameter 'density' must be an integer > 0",
+				};
+			},
+		},
+		matterType: {
+			type: "string",
+			verifier: (v) => {
+				return {
+					success: ["Solid", "Liquid", "Particle", "Gas", "Static", "Slushy", "Wisp"].includes(v),
+					message: `Parameter 'type' must be one of "Solid", "Liquid", "Particle", "Gas", "Static", "Slushy", "Wisp"`,
+				};
+			},
+		},
+		addToFilterList: {
+			type: "boolean",
+			default: true,
+		},
+	};
+	soilSchema = {
+		id: {
+			type: "string",
+		},
+		name: {
+			type: "string",
+		},
+		hoverText: {
+			type: "string",
+		},
+		colorHSL: {
+			type: "object",
+			verifier: (v) => {
+				return {
+					success: Array.isArray(v) && v.length == 3,
+					message: `Parameter 'colorHSL' must an HSL array`,
+				};
+			},
+		},
+		hp: {
+			type: "number",
+			default: 1,
+		},
+		outputElement: {
+			type: "string",
+		},
+		chanceForOutput: {
+			type: "number",
+			default: 1,
+		},
+	};
 
-	registerElement({ id, name, hoverText, colors, density, matterType, addToFilterList = true }) {
-		if (!(id && name && colors && density)) return log("error", "corelib", `Couldn't register element with id ${id}! Not all parameters are present`);
-		// if (!corelib.simulation.internal.matterTypes[matterType]) return log("error", "corelib", `matterType invalid for element ${id}, valid ones are ${corelib.simulation.internal.matterTypes}`);
-		const element = {
-			id,
-			name,
-			hoverText,
-			colors,
-			density,
-			matterType,
-			addToFilterList,
-			numericHash: this.#cyrb53(id),
-		};
-		this.elementRegistry[id] = element;
+	registerElement(inputs) {
+		let res = InputHandler(inputs, this.elementSchema);
+		if (!res.success) {
+			throw new Error(res.message);
+		}
+		let data = res.data;
+		data.numericHash = this.#cyrb53(data.id)
+		this.elementRegistry[data.id] = data;
 	}
 
-	registerSoil({ id, name, colorHSL, hoverText, hp, outputElement, chanceForOutput }) {
-		if (!(id && name && colorHSL)) return log("error", "corelib", `Couldn't register soil with id ${id}! Not all parameters are present`);
-		const soil = {
-			id,
-			name,
-			colorHSL, //single array of HSL
-			hoverText,
-			hp, //NaN for unbreakable like bedrock
-			outputElement,
-			chanceForOutput, //in decimal
-			numericHash: this.#cyrb53(id),
-		};
-		this.soilRegistry[id] = soil;
+	registerSoil(inputs) {
+		let res = InputHandler(inputs, this.soilSchema);
+		if (!res.success) {
+			throw new Error(res.message);
+		}
+		let data = res.data;
+		data.numericHash = this.#cyrb53(data.id)
+		this.soilRegistry[data.id] = data;
 	}
 	/*
 	registerBurnRecipe({id,elementOrSoil,result,chance = 1}) {

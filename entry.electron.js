@@ -132,7 +132,7 @@ const InputHandler = function (parameters, schema) {
 		}
 	}
 	for (const [parameter, data] of Object.entries(schema)) {
-		let value = parameters[parameter] || data.default;
+		let value = parameters[parameter] ?? data.default;
 		if (value === undefined) {
 			result.success = false;
 			result.errors[parameter] = {

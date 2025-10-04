@@ -1,3 +1,27 @@
+//adds a soil named TestingSoil
+corelib.elements.registerSoil({
+	id: "TestingSoil",
+ 	name: "TestingSoil",
+	hp: 10,
+	hoverText: "testing",
+	outputElement: "Gold",
+	chanceForOutput: 0.5,
+	colorHSL: [115, 5, 45]
+});
+//adds a liquid named SaltWater
+corelib.elements.registerElement({
+ 	id: "SaltWater",
+  	name: "SaltWater",
+ 	colors: [[71, 156, 209, 50]],
+ 	density: 110,
+ 	hoverText: "🚫",
+	matterType: "Liquid"
+});
+//When a sand pixel falls on the KSP it spawns gold with a 50% chance and wetsand
+corelib.elements.registerPressRecipe("Sand",["Gold",0.5],["WetSand",1])
+//When sand and spore touch they turn into gold and water
+corelib.elements.registerRecipe("Sand","Spore","Gold","Water")
+
 corelib.blocks.register({
 	sourceMod: "testmod",
 	id: "wedge",

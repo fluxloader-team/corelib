@@ -4,6 +4,7 @@ includeVMScript("modules/tech.js");
 includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
 includeVMScript("modules/schedules.js");
+includeVMScript("modules/elements.js");
 
 class CoreLib {
 	constructor() {
@@ -13,6 +14,7 @@ class CoreLib {
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
+		this.elements = new ElementsModule();
 	}
 
 	async applyPatches() {
@@ -24,6 +26,7 @@ class CoreLib {
 		this.items.applyPatches();
 		this.events.applyPatches();
 		this.schedules.applyPatches();
+		this.elements.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}
@@ -48,7 +51,7 @@ td,ed,Jh,Qh,Zh,Kh,qh,Yh,$h,zh,Qh,Bh,Lh,Nh,Fh,Dh,Ih,Rh,Ah,kh,Eh,Th,_h,bh,xh,vh,yh
 th,eh,Jc,Qc,qc,Yc,$c,Xc,Wc,Hc,Vc,Gc,Uc,jc,zc,Oc,Bc,Lc,Nc,Fc,Dc,Ic,Rc,Pc,Mc,Ac,kc,Ec,wc,bc,xc,yc,gc,
 mc,pc,fc,dc,hc,cc,uc,lc,tc,ec,Ju,Qu,Zu,Ku,$u,Hu,Vu,Uu,ju,zu,Ou,Lu,Nu,Fu,Du,Iu,Ru,Pu,ku,Eu,Tu,_u,Su,
 bu,xu,vu,yu,gu,pu,fu,du,lu,au,ou,ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
-Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,n,t,d,q,le};
+Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,q,le,t,n,r,s,o,a,l,u,c,h,d,f,p,m,g,y,v,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F,N,L,B,O,z,j,U,G,V,H,W,X,$,Y};
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
@@ -57,7 +60,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:expose", {
 			type: "replace",
 			from: `const O=function()`,
-			to: `globalThis.corelib.exposed={a,n,o,i,l,s,d,u,c},fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
+			to: `globalThis.corelib.exposed={a,n,s,o,i,l,d,u,c},fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});
 	}
@@ -129,7 +132,7 @@ const InputHandler = function (parameters, schema) {
 		}
 	}
 	for (const [parameter, data] of Object.entries(schema)) {
-		let value = parameters[parameter] || data.default;
+		let value = parameters[parameter] ?? data.default;
 		if (value === undefined) {
 			result.success = false;
 			result.errors[parameter] = {

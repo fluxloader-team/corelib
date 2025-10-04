@@ -89,7 +89,7 @@ class ElementsModule {
 			verifier: (v) => {
 				return {
 					success: Array.isArray(v) && v.length == 3,
-					message: `Parameter 'colorHSL' must an HSL array`,
+					message: `Parameter 'colorHSL' must be a HSL array`,
 				};
 			},
 		},
@@ -105,6 +105,48 @@ class ElementsModule {
 			default: 1,
 		},
 	};
+	recipeSchemas = {
+		basic: {
+			input1: {
+				type: "string",
+			},
+			input2: {
+				type: "string",
+			},
+			output1: {
+				type: "string",
+			},
+			output2: {
+				type: "string",
+			},
+		},
+		press: {
+			input: {
+				type: "string",
+			},
+			requiredVelocity: {
+				type: "number",
+				default: 200,
+			},
+			outputs: {
+				type: "object",
+				verifier: (v) => {
+					return {
+						//didn't know every had a value, thanks again chatgpt
+						success: Array.isArray(v) && v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
+						message: `Parameter 'outputs' must be an array of arrays with the output in the first and the chance in the second`,
+					};
+				},
+			},
+
+		},
+		burn: {
+
+		},
+		shake: {
+
+		}
+	}
 
 	registerElement(inputs) {
 		let res = InputHandler(inputs, this.elementSchema);
@@ -112,7 +154,7 @@ class ElementsModule {
 			throw new Error(res.message);
 		}
 		let data = res.data;
-		data.numericHash = this.#cyrb53(data.id)
+		data.numericHash = this.#cyrb53(data.id);
 		this.elementRegistry[data.id] = data;
 	}
 
@@ -122,7 +164,7 @@ class ElementsModule {
 			throw new Error(res.message);
 		}
 		let data = res.data;
-		data.numericHash = this.#cyrb53(data.id)
+		data.numericHash = this.#cyrb53(data.id);
 		this.soilRegistry[data.id] = data;
 	}
 	/*
@@ -137,18 +179,22 @@ class ElementsModule {
 	registerShakerRecipe(input, output1, output2) {}
 
 	registerShakerAllow(id) {}
-*/
+	*/
 	// you can input however many outputs you want, they should be in the form of ["output",chance]
 	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
-	registerPressRecipe(input, requiredVelocity = 200, ...outputArrays) {
-		const modifiedOutputs = outputArrays.map(([output, chance]) => [`n.RJ.${output}`, chance]);
-		this.elementReactions.press[`n.RJ.${input}`] = [requiredVelocity, modifiedOutputs];
+	registerPressRecipe(input, outputs, requiredVelocity) {
+		const schemaCheck = {input,requiredVelocity,outputs}
+		let res = InputHandler(schemaCheck, this.recipeSchemas.press);
+		if (!res.success) {
+			throw new Error(res.message);
+		}
+		this.elementReactions.press[res.data.input] = [res.data.requiredVelocity, res.data.outputs];
 	}
 
 	registerRecipe(input1, input2, output1, output2) {
 		const add = (from, to) => {
-			this.elementReactions.normal["n.RJ." + from] ??= [];
-			this.elementReactions.normal["n.RJ." + from].push(["n.RJ." + to, "n.RJ." + output1, "n.RJ." + output2]);
+			this.elementReactions.normal[from] ??= [];
+			this.elementReactions.normal[from].push([to,output1,output2]);
 		};
 		add(input1, input2);
 		add(input2, input1);
@@ -168,24 +214,25 @@ class ElementsModule {
 			this.elementReactions.normal[input1] = this.elementReactions.normal[input1].filter(([target]) => target !== input2);
 			if (this.elementReactions.normal[input1].length === 0) delete this.elementReactions.normal[input1];
 		};
-		removeRecipesBothWays("n.RJ." + element1, "n.RJ." + element2);
-		removeRecipesBothWays("n.RJ." + element2, "n.RJ." + element1);
+		removeRecipesBothWays(element1, element2);
+		removeRecipesBothWays(element2, element1);
 	}
 	unregisterPressRecipe(id) {
-		if (!this.elementReactions.press[`n.RJ.${id}`]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);
-		delete this.elementReactions.press[`n.RJ.${id}`];
+		if (!this.elementReactions.press[id]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);
+		delete this.elementReactions.press[id];
 	}
 
 	applyPatches() {
 		const reduceElements = (string, registry) => {
 			return Object.values(registry).reduce((acc, e) => acc + string(e), "");
 		};
-		const getRecipesToPatch = (registry, objectPrefix) => {
-			const listToReturn = [];
-			for (const key in registry) {
-				const contents = JSON.stringify(registry[key]).replace(/"/g, "");
-				listToReturn.push(`${objectPrefix}[${key}]=${contents}`);
-			}
+		//I wrote some of it then fed it into chatgpt to tell me what I did wrong
+		const getBasicRecipesToPatch = (registry, objectPrefix) => {
+			const listToReturn = Object.entries(registry).map(([key, values]) => `${objectPrefix}[n.RJ.${key}]=[` + values.map(v => `[${v.filter(Boolean).map(x => `n.RJ.${x}`).join(",")}]`).join(",") +`]`);
+			return listToReturn.join(",");
+		};
+		const getPressRecipesToPatch = (registry, objectPrefix) => {
+			const listToReturn = Object.entries(registry).map(([key, values]) => `${objectPrefix}[n.RJ.${key}]=[${values[0]},[${values[1].map(([output,chance]) => `[n.RJ.${output},${chance}]`).join(",")}]]`);
 			return listToReturn.join(",");
 		};
 		this.#sortRegistryIds(this.elementRegistry, 25);
@@ -197,7 +244,7 @@ class ElementsModule {
 			this.registerRecipe("Lava", "Water", "Steam", "Lava");
 			this.registerRecipe("Flame", "Water", "Steam", "Steam");
 			this.registerRecipe("Petalium", "Sandium", "Gloom", "Gloom");
-			this.registerPressRecipe("BurntSlag", 200, ["Spore", 1], ["Gold", 1]);
+			this.registerPressRecipe("BurntSlag", [["Spore", 1], ["Gold", 1]]);
 		}
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
@@ -281,7 +328,7 @@ class ElementsModule {
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:reactionsList", {
 			type: "replace",
 			from: `c=((i={})[n.RJ.Water]=[[n.RJ.Sand,n.RJ.WetSand],[n.RJ.Spore,n.RJ.WetSpore],[n.RJ.Lava,n.RJ.Steam],[n.RJ.Flame,n.RJ.Steam]],i[n.RJ.Sand]=[[n.RJ.Water,n.RJ.WetSand]],i[n.RJ.Spore]=[[n.RJ.Water,n.RJ.WetSpore]],i[n.RJ.Lava]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Flame]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Sandium]=[[n.RJ.Petalium,n.RJ.Gloom]],i[n.RJ.Petalium]=[[n.RJ.Sandium,n.RJ.Gloom]],i)`,
-			to: `c=((i={}),${getRecipesToPatch(this.elementReactions.normal, "i")},i)`,
+			to: `c=((i={}),${getBasicRecipesToPatch(this.elementReactions.normal, "i")},i)`,
 		});
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:reactionsFunctionChange", {
 			type: "replace",
@@ -300,14 +347,13 @@ class ElementsModule {
     		x=function(e,t,r,a){if(a=null!=a?a:(0,c.tT)(e.store,t,r),(0,c.ez)(a)){if((0,c.kw)(a,[i.vZ.Moss,i.vZ.Divider,i.vZ.GoldSoil,i.vZ.Petal])){var n=(0,s.n)(i.RJ.Flame,t,r);return n.skipPhysics=!0,n.data={output:{elementType:S[a]}},(0,c.Jx)(e,t,r,n),!0}(0,d.zT)(e,t,r,4)}return!1}}`
 		}); 
 		*/
-
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:Press", {
 			type: "replace",
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
-			to: `pressRecipes=(function(){var press={};${getRecipesToPatch(
+			to: `pressRecipes=(function(){var press={};${getPressRecipesToPatch(
 				this.elementReactions.press,
 				"press"
-			)};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];for(const[outputId,chance]of outputs){if(Math.random()<chance){h(e,t.x,t.y,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
+			)};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];let posY = outputs.length; for(const[outputId,chance]of outputs){if(Math.random()<chance){posY--;h(e,t.x,t.y+posY,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});
 	}
 }

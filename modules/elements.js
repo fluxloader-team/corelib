@@ -118,6 +118,7 @@ class ElementsModule {
 			},
 			output2: {
 				type: "string",
+				default: "",
 			},
 		},
 		press: {
@@ -192,12 +193,18 @@ class ElementsModule {
 	}
 
 	registerRecipe(input1, input2, output1, output2) {
+		const schemaCheck = {input1, input2, output1, output2}
+		let res = InputHandler(schemaCheck, this.recipeSchemas.basic);
+		if (!res.success) {
+			throw new Error(res.message);
+		}
+		let data = res.data
 		const add = (from, to) => {
 			this.elementReactions.normal[from] ??= [];
-			this.elementReactions.normal[from].push([to,output1,output2]);
+			this.elementReactions.normal[from].push([to,data.output1,data.output2]);
 		};
-		add(input1, input2);
-		add(input2, input1);
+		add(data.input1, data.input2);
+		add(data.input2, data.input1);
 	}
 
 	unregisterSoil(id) {

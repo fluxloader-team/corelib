@@ -11,11 +11,18 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.particles = corelib.exposed.i.RJ
 	corelib.simulation.internal.items = corelib.exposed.i.Np
 	corelib.simulation.internal.matterTypes = corelib.exposed.i.es
-	corelib.simulation.internal.jetpackZones = corelib.exposed.i.s0
 	corelib.simulation.internal.setCell = (x, y, data) => {
 		corelib.exposed.u.Jx(fluxloaderAPI.gameInstanceState, x, y, data);
 	};
+	corelib.utils = {
+		...corelib.exposed.o.A,
+	};
 });
+corelib.simulation = {
+	isEmpty: (x, y) => {
+		corelib.exposed.u.lV(fluxloaderAPI.gameInstanceState, x, y);
+	},
+};
 
 // Events are batched together because of how many are triggered
 // All batched data is sent when the worker receives the "RunUpdate" message

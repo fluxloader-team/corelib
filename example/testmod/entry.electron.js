@@ -18,7 +18,7 @@ corelib.elements.registerElement({
 	matterType: "Liquid"
 });
 //When a sand pixel falls on the KSP it spawns gold with a 50% chance and wetsand
-corelib.elements.registerPressRecipe("Sand",200,["Gold",0.5],["WetSand",1])
+corelib.elements.registerPressRecipe("Sand",["Gold",0.5],["WetSand",1])
 //When sand and spore touch they turn into gold and water
 corelib.elements.registerRecipe("Sand","Spore","Gold","Water")
 

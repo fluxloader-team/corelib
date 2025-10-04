@@ -112,6 +112,10 @@ class BlocksModule {
 			type: "boolean",
 			default: false,
 		},
+		hasHoverUI: {
+			type: "boolean",
+			default: false,
+		},
 		// Determines if a block should be given with no tech unlocked
 		// Keep off if you want this unlocked by tech; on if it's unlocked at the start of a new game
 		default: {
@@ -128,7 +132,6 @@ class BlocksModule {
 				};
 			},
 		},
-
 	};
 	register(data) {
 		let res = InputHandler(data, this.blockSchema);
@@ -190,6 +193,10 @@ class BlocksModule {
 			type: "string",
 			default: "", // Allows using the not provided image
 		},
+		hasHoverUI: {
+			type: "boolean",
+			default: false,
+		},
 		animationDelay: {
 			type: "number",
 			default: 500,
@@ -200,7 +207,6 @@ class BlocksModule {
 				};
 			},
 		},
-
 	};
 	registerVariant(data) {
 		let res = InputHandler(data, this.variantSchema);
@@ -336,7 +342,6 @@ class BlocksModule {
 			token: `~`,
 		});
 
-
 		let blocksWithConfig = Object.values(this.blockRegistry.definitions)
 			.filter((b) => !b.isVariant && b.hasConfigMenu)
 			.map((v) => v.id);
@@ -460,6 +465,28 @@ class BlocksModule {
 			type: "replace",
 			from: `(i.copiedStructure.filter&&(h.filter=i.copiedStructure.filter)`,
 			to: `~,(i.copiedStructure.data&&(h.data=i.copiedStructure.data))`,
+			token: "~",
+		});
+
+		let blocksWithHover = Object.values(this.blockRegistry.definitions)
+			.filter((b) => b.hasHoverUI)
+			.map((v) => v.id);
+
+		const reduceBlocksWithHover = (f) => {
+			return blocksWithHover.reduce((acc, v) => acc + f(v), "");
+		};
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockHover", {
+			type: "replace",
+			from: `n=hu[e.groundCellType];`,
+			to: "~" + reduceBlocksWithHover((b) => `else if(e.structure.type===d.${b}){return block${b}HoverUI(e)}`),
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockGrabberHover", {
+			type: "replace",
+			from: `z.type===d.FilterLeft||z.type===d.FilterRight`,
+			to: "~" + reduceBlocksWithHover((b) => `||z.type===d.${b}`),
 			token: "~",
 		});
 	}

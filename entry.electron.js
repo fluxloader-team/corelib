@@ -1,3 +1,5 @@
+const config = fluxloaderAPI.modConfig.get("corelib");
+
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
@@ -26,7 +28,7 @@ class CoreLib {
 		this.items.applyPatches();
 		this.events.applyPatches();
 		this.schedules.applyPatches();
-		this.elements.applyPatches();
+		if (config.enableElementPatches) this.elements.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}

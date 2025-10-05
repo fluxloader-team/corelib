@@ -9,5 +9,8 @@
 	"tags": ["lib"],
 	"electronEntrypoint": "entry.electron.js",
 	"gameEntrypoint": "entry.game.js",
-	"workerEntrypoint": "entry.worker.js"
+	"workerEntrypoint": "entry.worker.js",
+	"configSchema": {
+		"enableElementPatches": { "type": "boolean", "default": true, "description": "So I can test things with them off" }
+	}
 }

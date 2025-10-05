@@ -145,15 +145,22 @@ const InputHandler = function (parameters, schema) {
 			log("error", "corelib", result.errors[parameter].message);
 			continue;
 		}
-		if (data.type && typeof value !== data.type) {
-			result.success = false;
-			result.errors[parameter] = {
-				parameter,
-				message: `Parameter '${parameter}' is of type ${typeof arg}, but was expected to be of type ${data.type}`,
-				code: "type_mismatch",
-			};
-			log("error", "corelib", result.errors[parameter].message);
-			continue;
+		if (data.type) {
+			switch (data.type) {
+				case "array":
+					result.success = Array.isArray(value);
+				default:
+					result.success = typeof value === data.type;
+			}
+			if (!result.success) {
+				result.errors[parameter] = {
+					parameter,
+					message: `Parameter '${parameter}' is of type ${typeof arg}, but was expected to be of type ${data.type}`,
+					code: "type_mismatch",
+				};
+				log("error", "corelib", result.errors[parameter].message);
+				continue;
+			}
 		}
 		if (data.verifier) {
 			let verifierResult = data.verifier(value);

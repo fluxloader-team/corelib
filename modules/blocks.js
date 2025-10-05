@@ -301,7 +301,7 @@ class BlocksModule {
 						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
 						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
 						`],name:"${b.name}",description:"${b.description}",singleBuild:${b.singleBuild}}` +
-						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`)
+						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`),
 				),
 			token: `~`,
 		}));
@@ -336,8 +336,8 @@ class BlocksModule {
 									v.fullImagePath
 								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
 									v.animationDelay || 500
-								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `
-						)
+								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
+						),
 				) + "~",
 			token: `~`,
 		});
@@ -434,9 +434,9 @@ class BlocksModule {
 							className: "h-full bg-black bg-opacity-85 p-4 shadow-lg ui-box card-2 overflow-y-auto",
 						},
 						// use UI returned by mod
-						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined
-					)
-				)
+						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined,
+					),
+				),
 			);
 		};
 

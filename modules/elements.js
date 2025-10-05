@@ -31,7 +31,7 @@ class ElementsModule {
 		shaker: {},
 		burn: {},
 	};
-	
+
 	elementSchema = {
 		id: {
 			type: "string",
@@ -69,11 +69,21 @@ class ElementsModule {
 				};
 			},
 		},
+
 		addToFilterList: {
 			type: "boolean",
 			default: true,
 		},
 	};
+	registerElement(inputs) {
+		let res = InputHandler(inputs, this.elementSchema);
+		if (!res.success) {
+			throw new Error(res.message);
+		}
+		let data = res.data;
+		data.numericHash = cyrb53(data.id);
+		this.elementRegistry[data.id] = data;
+	}
 	soilSchema = {
 		id: {
 			type: "string",
@@ -105,6 +115,17 @@ class ElementsModule {
 			default: 1,
 		},
 	};
+
+	registerSoil(inputs) {
+		let res = InputHandler(inputs, this.soilSchema);
+		if (!res.success) {
+			throw new Error(res.message);
+		}
+		let data = res.data;
+		data.numericHash = cyrb53(data.id);
+		this.soilRegistry[data.id] = data;
+	}
+
 	recipeSchemas = {
 		basic: {
 			input1: {
@@ -144,25 +165,6 @@ class ElementsModule {
 		shake: {},
 	};
 
-	registerElement(inputs) {
-		let res = InputHandler(inputs, this.elementSchema);
-		if (!res.success) {
-			throw new Error(res.message);
-		}
-		let data = res.data;
-		data.numericHash = cyrb53(data.id);
-		this.elementRegistry[data.id] = data;
-	}
-
-	registerSoil(inputs) {
-		let res = InputHandler(inputs, this.soilSchema);
-		if (!res.success) {
-			throw new Error(res.message);
-		}
-		let data = res.data;
-		data.numericHash = cyrb53(data.id);
-		this.soilRegistry[data.id] = data;
-	}
 	/*
 	registerBurnRecipe({id,elementOrSoil,result,chance = 1}) {
 		if (elementOrSoil==="element") {
@@ -178,16 +180,7 @@ class ElementsModule {
 	*/
 	// you can input however many outputs you want, they should be in the form of ["output",chance]
 	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
-	registerPressRecipe(input, outputs, requiredVelocity) {
-		const schemaCheck = { input, requiredVelocity, outputs };
-		let res = InputHandler(schemaCheck, this.recipeSchemas.press);
-		if (!res.success) {
-			throw new Error(res.message);
-		}
-		this.elementReactions.press[res.data.input] = [res.data.requiredVelocity, res.data.outputs];
-	}
-
-	registerRecipe(input1, input2, output1, output2) {
+	registerBasicRecipe(input1, input2, output1, output2) {
 		const schemaCheck = { input1, input2, output1, output2 };
 		let res = InputHandler(schemaCheck, this.recipeSchemas.basic);
 		if (!res.success) {
@@ -202,6 +195,15 @@ class ElementsModule {
 		add(data.input2, data.input1);
 	}
 
+	registerPressRecipe(input, outputs, requiredVelocity) {
+		const schemaCheck = { input, requiredVelocity, outputs };
+		let res = InputHandler(schemaCheck, this.recipeSchemas.press);
+		if (!res.success) {
+			throw new Error(res.message);
+		}
+		this.elementReactions.press[res.data.input] = [res.data.requiredVelocity, res.data.outputs];
+	}
+
 	unregisterSoil(id) {
 		if (!this.soilRegistry[id]) return log("error", "corelib", `Soil with id "${id}" not found! Unable to unregister.`);
 		delete this.soilRegistry[id];
@@ -210,7 +212,7 @@ class ElementsModule {
 		if (!this.elementRegistry[id]) return log("error", "corelib", `Element with id "${id}" not found! Unable to unregister.`);
 		delete this.elementRegistry[id];
 	}
-	unregisterRecipe(element1, element2) {
+	unregisterBasicRecipe(element1, element2) {
 		const removeRecipesBothWays = (input1, input2) => {
 			if (!this.elementReactions.normal[input1]) return log("error", "corelib", `Could not unregister recipe between ${element1} and ${element2}! The reaction doesn't exist.`);
 			this.elementReactions.normal[input1] = this.elementReactions.normal[input1].filter(([target]) => target !== input2);
@@ -242,12 +244,15 @@ class ElementsModule {
 		sortRegistryIds(this.elementRegistry, 25);
 		sortRegistryIds(this.soilRegistry, 31);
 		//re-adds the base recipes
-		this.registerRecipe("Sand", "Water", "WetSand", "WetSand");
-		this.registerRecipe("Spore", "Water", "WetSpore");
-		this.registerRecipe("Lava", "Water", "Steam", "Lava");
-		this.registerRecipe("Flame", "Water", "Steam", "Steam");
-		this.registerRecipe("Petalium", "Sandium", "Gloom", "Gloom");
-		this.registerPressRecipe("BurntSlag", [["Spore", 1], ["Gold", 1]]);
+		this.registerBasicRecipe("Sand", "Water", "WetSand", "WetSand");
+		this.registerBasicRecipe("Spore", "Water", "WetSpore");
+		this.registerBasicRecipe("Lava", "Water", "Steam", "Lava");
+		this.registerBasicRecipe("Flame", "Water", "Steam", "Steam");
+		this.registerBasicRecipe("Petalium", "Sandium", "Gloom", "Gloom");
+		this.registerPressRecipe("BurntSlag", [
+			["Spore", 1],
+			["Gold", 1],
+		]);
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
 			type: "replace",

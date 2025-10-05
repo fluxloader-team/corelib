@@ -1,3 +1,27 @@
+function cyrb53(str, seed = 0) {
+	let h1 = 0xdeadbeef ^ seed,
+		h2 = 0x41c6ce57 ^ seed;
+	for (let i = 0, ch; i < str.length; i++) {
+		ch = str.charCodeAt(i);
+		h1 = Math.imul(h1 ^ ch, 2654435761);
+		h2 = Math.imul(h2 ^ ch, 1597334677);
+	}
+	h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+	h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+	h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+	h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+	return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+
+function sortRegistryIds(registry, startingId) {
+	const items = Object.values(registry);
+	items.sort((a, b) => a.numericHash - b.numericHash);
+	items.forEach((item, index) => {
+		item.numericId = index + startingId;
+	});
+}
+
 class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
@@ -7,31 +31,7 @@ class ElementsModule {
 		shaker: {},
 		burn: {},
 	};
-	addTheNormalRecipes = true;
-	//found this online somewhere, it's a hashing function
-	#cyrb53(str, seed = 0) {
-		let h1 = 0xdeadbeef ^ seed,
-			h2 = 0x41c6ce57 ^ seed;
-		for (let i = 0, ch; i < str.length; i++) {
-			ch = str.charCodeAt(i);
-			h1 = Math.imul(h1 ^ ch, 2654435761);
-			h2 = Math.imul(h2 ^ ch, 1597334677);
-		}
-		h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
-		h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-		h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
-		h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-
-		return 4294967296 * (2097151 & h2) + (h1 >>> 0);
-	}
-	//chatgpt is great for simple tasks like these
-	#sortRegistryIds(registry, startingId) {
-		const items = Object.values(registry);
-		items.sort((a, b) => a.numericHash - b.numericHash);
-		items.forEach((item, index) => {
-			item.numericId = index + startingId;
-		});
-	}
+	
 	elementSchema = {
 		id: {
 			type: "string",
@@ -139,15 +139,10 @@ class ElementsModule {
 					};
 				},
 			},
-
 		},
-		burn: {
-
-		},
-		shake: {
-
-		}
-	}
+		burn: {},
+		shake: {},
+	};
 
 	registerElement(inputs) {
 		let res = InputHandler(inputs, this.elementSchema);
@@ -155,7 +150,7 @@ class ElementsModule {
 			throw new Error(res.message);
 		}
 		let data = res.data;
-		data.numericHash = this.#cyrb53(data.id);
+		data.numericHash = cyrb53(data.id);
 		this.elementRegistry[data.id] = data;
 	}
 
@@ -165,7 +160,7 @@ class ElementsModule {
 			throw new Error(res.message);
 		}
 		let data = res.data;
-		data.numericHash = this.#cyrb53(data.id);
+		data.numericHash = cyrb53(data.id);
 		this.soilRegistry[data.id] = data;
 	}
 	/*
@@ -184,7 +179,7 @@ class ElementsModule {
 	// you can input however many outputs you want, they should be in the form of ["output",chance]
 	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
 	registerPressRecipe(input, outputs, requiredVelocity) {
-		const schemaCheck = {input,requiredVelocity,outputs}
+		const schemaCheck = { input, requiredVelocity, outputs };
 		let res = InputHandler(schemaCheck, this.recipeSchemas.press);
 		if (!res.success) {
 			throw new Error(res.message);
@@ -193,15 +188,15 @@ class ElementsModule {
 	}
 
 	registerRecipe(input1, input2, output1, output2) {
-		const schemaCheck = {input1, input2, output1, output2}
+		const schemaCheck = { input1, input2, output1, output2 };
 		let res = InputHandler(schemaCheck, this.recipeSchemas.basic);
 		if (!res.success) {
 			throw new Error(res.message);
 		}
-		let data = res.data
+		let data = res.data;
 		const add = (from, to) => {
 			this.elementReactions.normal[from] ??= [];
-			this.elementReactions.normal[from].push([to,data.output1,data.output2]);
+			this.elementReactions.normal[from].push([to, data.output1, data.output2]);
 		};
 		add(data.input1, data.input2);
 		add(data.input2, data.input1);
@@ -235,24 +230,24 @@ class ElementsModule {
 		};
 		//I wrote some of it then fed it into chatgpt to tell me what I did wrong
 		const getBasicRecipesToPatch = (registry, objectPrefix) => {
+			// prettier-ignore
 			const listToReturn = Object.entries(registry).map(([key, values]) => `${objectPrefix}[n.RJ.${key}]=[` + values.map(v => `[${v.filter(Boolean).map(x => `n.RJ.${x}`).join(",")}]`).join(",") +`]`);
 			return listToReturn.join(",");
 		};
 		const getPressRecipesToPatch = (registry, objectPrefix) => {
+			// prettier-ignore
 			const listToReturn = Object.entries(registry).map(([key, values]) => `${objectPrefix}[n.RJ.${key}]=[${values[0]},[${values[1].map(([output,chance]) => `[n.RJ.${output},${chance}]`).join(",")}]]`);
 			return listToReturn.join(",");
 		};
-		this.#sortRegistryIds(this.elementRegistry, 25);
-		this.#sortRegistryIds(this.soilRegistry, 31);
+		sortRegistryIds(this.elementRegistry, 25);
+		sortRegistryIds(this.soilRegistry, 31);
 		//re-adds the base recipes
-		if (this.addTheNormalRecipes) {
-			this.registerRecipe("Sand", "Water", "WetSand", "WetSand");
-			this.registerRecipe("Spore", "Water", "WetSpore");
-			this.registerRecipe("Lava", "Water", "Steam", "Lava");
-			this.registerRecipe("Flame", "Water", "Steam", "Steam");
-			this.registerRecipe("Petalium", "Sandium", "Gloom", "Gloom");
-			this.registerPressRecipe("BurntSlag", [["Spore", 1], ["Gold", 1]]);
-		}
+		this.registerRecipe("Sand", "Water", "WetSand", "WetSand");
+		this.registerRecipe("Spore", "Water", "WetSpore");
+		this.registerRecipe("Lava", "Water", "Steam", "Lava");
+		this.registerRecipe("Flame", "Water", "Steam", "Steam");
+		this.registerRecipe("Petalium", "Sandium", "Gloom", "Gloom");
+		this.registerPressRecipe("BurntSlag", [["Spore", 1], ["Gold", 1]]);
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
 			type: "replace",

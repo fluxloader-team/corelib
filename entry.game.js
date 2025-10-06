@@ -12,6 +12,11 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
 	corelib.simulation.internal.setCell = corelib.exposed.Od;
 	corelib.simulation.internal.getSelectedItem = corelib.exposed.Ef;
+	corelib.simulation.internal.notifySomethingThatUIHasChanged = corelib.exposed.Al;
+	corelib.simulation.internal.convertHSLtoRGBA = corelib.exposed.pu;
+	corelib.simulation.internal.getStructureAtPos = corelib.exposed.Oc; 
+	corelib.simulation.internal.getChunkAtPos = corelib.exposed.Oc; 
+	corelib.simulation.internal.checkIfTechUnlocked = corelib.exposed.Xf; 
 });
 
 corelib.simulation = {
@@ -59,6 +64,6 @@ corelib.utils = {
 		return corelib.simulation.internal.solids[type] != undefined ? corelib.simulation.internal.solids[type] : null;
 	},
 	getSelectedItem() {
-		return corelib.simulation.internal.getSelectedItem(fluxloaderAPI.gameInstance.state)
-	}
+		return corelib.simulation.internal.getSelectedItem(fluxloaderAPI.gameInstance.state);
+	},
 };

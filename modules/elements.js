@@ -177,7 +177,9 @@ class ElementsModule {
 	registerShakerRecipe(input, output1, output2) {}
 
 	registerShakerAllow(id) {}
-	*/
+	
+	registerPlanterAllow(id) {}*/
+	
 	// you can input however many outputs you want, they should be in the form of ["output",chance]
 	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
 	registerBasicRecipe(input1, input2, output1, output2) {

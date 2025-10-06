@@ -11,6 +11,7 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.createParticle = corelib.exposed.Fh;
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
 	corelib.simulation.internal.setCell = corelib.exposed.Od;
+	corelib.simulation.internal.getSelectedItem = corelib.exposed.Ef;
 });
 
 corelib.simulation = {
@@ -57,4 +58,7 @@ corelib.utils = {
 	getSolidNameByType: (type) => {
 		return corelib.simulation.internal.solids[type] != undefined ? corelib.simulation.internal.solids[type] : null;
 	},
+	getSelectedItem() {
+		return corelib.simulation.internal.getSelectedItem(fluxloaderAPI.gameInstance.state)
+	}
 };

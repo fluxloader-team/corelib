@@ -197,8 +197,8 @@ class ElementsModule {
 			this.elementReactions.normal[from] ??= [];
 			this.elementReactions.normal[from].push([to, data.output1, data.output2]);
 		};
-		add(data.input1, data.input2);
-		if (data.addBothWays) add(data.input2, data.input1);
+		if (data.addBothWays) add(data.input1, data.input2);
+		add(data.input2, data.input1);
 	}
 
 	registerPressRecipe(input, outputs, requiredVelocity) {

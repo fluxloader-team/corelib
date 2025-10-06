@@ -1,7 +1,7 @@
 {
 	"modID": "corelib",
 	"name": "Core Lib",
-	"version": "1.3.0",
+	"version": "1.100.0",
 	"author": "Fluxloader Team",
 	"fluxloaderVersion": "^2.2.4",
 	"shortDescription": "A core library for modifying Sandustry",

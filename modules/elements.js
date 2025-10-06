@@ -43,7 +43,7 @@ class ElementsModule {
 			type: "string",
 		},
 		colors: {
-			type: "object",
+			type: "array",
 			verifier: (v) => {
 				return {
 					success: Array.isArray(v) && v.every(Array.isArray),
@@ -95,7 +95,7 @@ class ElementsModule {
 			type: "string",
 		},
 		colorHSL: {
-			type: "object",
+			type: "array",
 			verifier: (v) => {
 				return {
 					success: Array.isArray(v) && v.length == 3,
@@ -141,6 +141,10 @@ class ElementsModule {
 				type: "string",
 				default: "",
 			},
+			addBothWays: {
+				type: "boolean",
+				default: true,
+			},
 		},
 		press: {
 			input: {
@@ -151,7 +155,7 @@ class ElementsModule {
 				default: 200,
 			},
 			outputs: {
-				type: "object",
+				type: "array",
 				verifier: (v) => {
 					return {
 						//didn't know every had a value, thanks again chatgpt
@@ -179,11 +183,11 @@ class ElementsModule {
 	registerShakerAllow(id) {}
 	
 	registerPlanterAllow(id) {}*/
-	
+
 	// you can input however many outputs you want, they should be in the form of ["output",chance]
 	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
-	registerBasicRecipe(input1, input2, output1, output2) {
-		const schemaCheck = { input1, input2, output1, output2 };
+	registerBasicRecipe(input1, input2, output1, output2, addBothWays) {
+		const schemaCheck = { input1, input2, output1, output2, addBothWays };
 		let res = InputHandler(schemaCheck, this.recipeSchemas.basic);
 		if (!res.success) {
 			throw new Error(res.message);
@@ -194,7 +198,7 @@ class ElementsModule {
 			this.elementReactions.normal[from].push([to, data.output1, data.output2]);
 		};
 		add(data.input1, data.input2);
-		add(data.input2, data.input1);
+		if (data.addBothWays) add(data.input2, data.input1);
 	}
 
 	registerPressRecipe(input, outputs, requiredVelocity) {
@@ -214,14 +218,14 @@ class ElementsModule {
 		if (!this.elementRegistry[id]) return log("error", "corelib", `Element with id "${id}" not found! Unable to unregister.`);
 		delete this.elementRegistry[id];
 	}
-	unregisterBasicRecipe(element1, element2) {
+	unregisterBasicRecipe(element1, element2, wasAddedBothWays = true) {
 		const removeRecipesBothWays = (input1, input2) => {
 			if (!this.elementReactions.normal[input1]) return log("error", "corelib", `Could not unregister recipe between ${element1} and ${element2}! The reaction doesn't exist.`);
 			this.elementReactions.normal[input1] = this.elementReactions.normal[input1].filter(([target]) => target !== input2);
 			if (this.elementReactions.normal[input1].length === 0) delete this.elementReactions.normal[input1];
 		};
 		removeRecipesBothWays(element1, element2);
-		removeRecipesBothWays(element2, element1);
+		if (wasAddedBothWays) removeRecipesBothWays(element2, element1);
 	}
 	unregisterPressRecipe(id) {
 		if (!this.elementReactions.press[id]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);

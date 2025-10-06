@@ -1,8 +1,14 @@
 class TechModule {
 	techRegistry = new DefinitionRegistry("Tech");
-	enums = corelib.enums.register({id: "Tech", start: 38, map: {
-		main: "w", sim: "b", manager: "R"
-	}});
+	enums = corelib.enums.register({
+		id: "Tech",
+		start: 38,
+		map: {
+			main: "w",
+			sim: "b",
+			manager: "R",
+		},
+	});
 	baseTechs = {};
 
 	constructor() {

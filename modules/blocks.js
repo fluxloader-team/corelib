@@ -1,8 +1,14 @@
 class BlocksModule {
 	blockRegistry = new DefinitionRegistry("Block");
-	enums = corelib.enums.register({id:"Block", start: 99, map: {
-		main: "d", sim: "h", manager: "h"
-	}});
+	enums = corelib.enums.register({
+		id: "Block",
+		start: 99,
+		map: {
+			main: "d",
+			sim: "h",
+			manager: "h",
+		},
+	});
 
 	validateInput() {
 		let res = InputHandler(data, {
@@ -145,7 +151,7 @@ class BlocksModule {
 		data = res.data;
 		if (data.interval > 0) {
 			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
-			corelib.schedules.register({id:`_tickingBlock-${data.id}`, interval: data.interval});
+			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
 		}
 		let fullImagePath = this._getFullImagePath(data.sourceMod, data.id, data.imagePath);
 		if (this.blockRegistry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data })) {
@@ -240,7 +246,7 @@ class BlocksModule {
 	unregister(id) {
 		// manually check here since we don't unregister until we unregister variants
 		if (!this.blockRegistry.definitions[id]) {
-			return log("error", "corelib", `Block with id "${id}" does not exist!`)
+			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
 		if (this.blockRegistry.definitions[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
@@ -510,22 +516,22 @@ class BlocksModule {
 		// get ticking blocks
 		let reduceTicking = (f) => {
 			return Object.values(this.blockRegistry.definitions)
-			.filter((t) => t.interval > 0)
-			.reduce((acc, t) => acc + f(t.id), "");
-		}
-		
+				.filter((t) => t.interval > 0)
+				.reduce((acc, t) => acc + f(t.id), "");
+		};
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
 			type: "replace",
 			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
 			to: `~${reduceTicking((id) => `,(r.type===d[${id}])&&(n.store.corelibCache[${id}]=n.store.corelibCache[${id}].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
-			token: "~"
+			token: "~",
 		});
-		
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
 			type: "replace",
 			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
 			to: `~${reduceTicking((id) => `,h.type===d[${id}]&&t.store.corelibCache[${id}].push({x:h.x,y:h.y})`)}`,
-			token: "~"
+			token: "~",
 		});
 	}
 }

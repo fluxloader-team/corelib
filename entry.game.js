@@ -81,7 +81,6 @@ fluxloaderAPI.events.on("fl:scene-loaded", () => {
 	}
 });
 
-
 // add converted handlers for ticking blocks
 for (let id of tickingIds) {
 	fluxloaderAPI.events.register(`corelib:block-${id}`);
@@ -108,12 +107,11 @@ for (let id of tickingIds) {
 
 // so the user can't click again while we're reading the save and before we continue to load the game -- confirmed you get ~1-2 seconds as we're reading the file early
 function disableScreen() {
-	let disable = document.createElement('div');
+	let disable = document.createElement("div");
 	disable.id = "interactibility-nuker";
 	disable.className = "fixed inset-0 z-[99999] bg-black/0 cursor-wait";
 	document.body.appendChild(disable);
 }
-
 
 // archived -- not sure why this didnt work
 globalThis.corelib.hooks.setupSave = (store) => {
@@ -126,7 +124,8 @@ globalThis.corelib.hooks.setupSave = (store) => {
 globalThis.corelib.hooks.preSceneChange = async (param) => {
 	// we're doing operations that might take time and the window will reload when we finish
 	disableScreen();
-	if (typeof param == "string" && param.includes("db_load")) { // means main menu loading game and not new game
+	if (typeof param == "string" && param.includes("db_load")) {
+		// means main menu loading game and not new game
 		let url = param.substring(8); // "db_load="
 		let results = await window.electron.load(url);
 		let data = results.data; // get results
@@ -136,7 +135,4 @@ globalThis.corelib.hooks.preSceneChange = async (param) => {
 		await fluxloaderAPI.invokeElectronIPC("corelib:saveEnumStore", store);
 	}
 	corelib.hooks.doSceneChange(param);
-}
-
-
-
+};

@@ -1,8 +1,14 @@
 class SchedulesModule {
 	scheduleRegistry = new DefinitionRegistry("Schedule");
-	enums = corelib.enums.register({id:"Schedule", start:19,map: {
-		main: "_", sim: "w", manager: "w"
-	}});
+	enums = corelib.enums.register({
+		id: "Schedule",
+		start: 19,
+		map: {
+			main: "_",
+			sim: "w",
+			manager: "w",
+		},
+	});
 
 	scheduleSchema = {
 		id: {

@@ -468,6 +468,13 @@ class BlocksModule {
 			token: "~",
 		});
 
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockPlacementData", {
+			type: "replace",
+			from: "var l=null!==(s=i.structureConfig)&&void 0!==s?s:Cd(i.structureType,null!==(o=i.angle)&&void 0!==o?o:void 0);",
+			to: "~var blockData=i.copiedStructure?.data??t.store.options[d[l.structureType]+'Config'];",
+			token: "~",
+		});
+
 		let blocksWithHover = Object.values(this.blockRegistry.definitions)
 			.filter((b) => b.hasHoverUI)
 			.map((v) => v.id);

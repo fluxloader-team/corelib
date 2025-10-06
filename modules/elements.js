@@ -39,8 +39,9 @@ class ElementsModule {
 		name: {
 			type: "string",
 		},
-		hoverText: {
-			type: "string",
+		interactsWithHoverText: {
+			type: "array",
+			default: [""],
 		},
 		colors: {
 			type: "array",
@@ -62,6 +63,7 @@ class ElementsModule {
 		},
 		matterType: {
 			type: "string",
+			default: "Solid",
 			verifier: (v) => {
 				return {
 					success: ["Solid", "Liquid", "Particle", "Gas", "Static", "Slushy", "Wisp"].includes(v),
@@ -91,8 +93,9 @@ class ElementsModule {
 		name: {
 			type: "string",
 		},
-		hoverText: {
-			type: "string",
+		interactsWithHoverText: {
+			type: "array",
+			default: [""],
 		},
 		colorHSL: {
 			type: "array",
@@ -139,7 +142,7 @@ class ElementsModule {
 			},
 			output2: {
 				type: "string",
-				default: "",
+				default: "Empty",
 			},
 			addBothWays: {
 				type: "boolean",
@@ -263,7 +266,7 @@ class ElementsModule {
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
 			type: "replace",
 			from: `${l0}[${l1}.Basalt]={name:"Cinder",interactions:["🔥"],density:50,matterType:${l2}.Solid},`,
-			to: `~` + reduceElements((e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],density:${e.density},matterType:${l2}.${e.matterType}},`, this.elementRegistry),
+			to: `~` + reduceElements((e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${l2}.${e.matterType}},`, this.elementRegistry),
 			token: "~",
 		}));
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["$"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:elementIdRegistry`, (l0) => ({
@@ -331,7 +334,7 @@ class ElementsModule {
 			to:
 				`~` +
 				reduceElements(
-					(e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:["${e.hoverText}"],hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
+					(e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
 					this.soilRegistry
 				),
 			token: "~",

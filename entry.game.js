@@ -12,11 +12,13 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
 	corelib.simulation.internal.setCell = corelib.exposed.Od;
 	corelib.simulation.internal.getSelectedItem = corelib.exposed.Ef;
-	corelib.simulation.internal.notifySomethingThatUIHasChanged = corelib.exposed.Al;
-	corelib.simulation.internal.convertHSLtoRGBA = corelib.exposed.pu;
-	corelib.simulation.internal.getStructureAtPos = corelib.exposed.Oc; 
-	corelib.simulation.internal.getChunkAtPos = corelib.exposed.Oc; 
-	corelib.simulation.internal.checkIfTechUnlocked = corelib.exposed.Xf; 
+
+	corelib.namedFunctions = {};
+	corelib.namedFunctions.notifySomethingThatUIHasChanged = corelib.exposed.Al;
+	corelib.namedFunctions.convertHSLtoRGBA = corelib.exposed.pu;
+	corelib.namedFunctions.getStructureAtPos = corelib.exposed.Oc;
+	corelib.namedFunctions.getChunkAtPos = corelib.exposed.Oc;
+	corelib.namedFunctions.checkIfTechUnlocked = corelib.exposed.Xf;
 });
 
 corelib.simulation = {

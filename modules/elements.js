@@ -21,7 +21,7 @@ function sortRegistryIds(registry, startingId) {
 		item.numericId = index + startingId;
 	});
 }
-
+const saveHasNewStorageType = false;
 class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
@@ -368,6 +368,19 @@ class ElementsModule {
 				"press"
 			)};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];let posY = outputs.length; for(const[outputId,chance]of outputs){if(Math.random()<chance){posY--;h(e,t.x,t.y+posY,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});
+
+		if (saveHasNewStorageType) {
+			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {
+				type: "replace",
+				from: `e>=100?Fh(e-100,n,t)`,
+				to: `e<0?Fh(-e,n,t)`,
+			});
+			fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveNegitiveValuesInSavedata", {
+				type: "replace",
+				from: `e.type+100`,
+				to: `-e.type`,
+			});
+		}
 	}
 }
 

@@ -35,8 +35,15 @@ corelib.simulation = {
 		if (blockType === undefined) return log("error", "corelib", `Block type ${type} does not exist!`);
 		corelib.simulation.internal.createBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
 	},
+	// The game only deals with deleting blocks in a specific area
+	deleteBlocks: (x1, y1, x2, y2) => {
+		corelib.exposed.ed(fluxloaderAPI.gameInstance.state, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
+	},
 	revealFog: (x, y) => {
 		fluxloaderAPI.gameInstance.state.environment.multithreading.simulation.postAll(fluxloaderAPI.gameInstance.state, [14, x, y]);
+	},
+	isEmpty: (x, y) => {
+		return corelib.exposed.tf(fluxloaderAPI.gameInstance.state, x, y);
 	},
 };
 

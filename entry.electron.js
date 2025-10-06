@@ -37,6 +37,7 @@ class CoreLib {
 		this.schedules.applyPatches();
 		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
+		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}
 
 	applyCorePatches() {
@@ -63,6 +64,13 @@ Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,le,n,t,d,q,r,s,o,
 ,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F};
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
+			token: `~`,
+		});
+
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:expose", {
+			type: "replace",
+			from: `const O=function()`,
+			to: `globalThis.corelib.exposed={a,n,o,i,l,s,d,u,c},fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});
 	}
@@ -126,7 +134,7 @@ const InputHandler = function (parameters, schema) {
 		}
 	}
 	for (const [parameter, data] of Object.entries(schema)) {
-		let value = parameters[parameter] || data.default;
+		let value = parameters[parameter] ?? data.default;
 		if (value === undefined) {
 			result.success = false;
 			result.errors[parameter] = {
@@ -137,15 +145,27 @@ const InputHandler = function (parameters, schema) {
 			log("error", "corelib", result.errors[parameter].message);
 			continue;
 		}
-		if (data.type && typeof value !== data.type) {
-			result.success = false;
-			result.errors[parameter] = {
-				parameter,
-				message: `Parameter '${parameter}' is of type ${typeof arg}, but was expected to be of type ${data.type}`,
-				code: "type_mismatch",
-			};
-			log("error", "corelib", result.errors[parameter].message);
-			continue;
+		if (data.type) {
+			// Generic error if we don't know the type
+			let error = `Parameter '${parameter}' was expected to be of type ${data.type}, but was not`;
+			switch (data.type) {
+				case "array":
+					result.success = Array.isArray(value);
+					break;
+				default:
+					result.success = typeof value === data.type;
+					error = `Parameter '${parameter}' is of type ${typeof value}, but was expected to be of type ${data.type}`;
+					break;
+			}
+			if (!result.success) {
+				result.errors[parameter] = {
+					parameter,
+					message: error,
+					code: "type_mismatch",
+				};
+				log("error", "corelib", result.errors[parameter].message);
+				continue;
+			}
 		}
 		if (data.verifier) {
 			let verifierResult = data.verifier(value);
@@ -174,6 +194,7 @@ globalThis.InputHandler = InputHandler;
 globalThis.corelib = new CoreLib();
 corelib.initModules();
 
+fluxloaderAPI.events.registerEvent("cl:patches-applied");
 fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
 
 // register schedules top level to allow early listening; old method never let you start listening right away

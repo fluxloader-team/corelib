@@ -114,10 +114,26 @@ class BlocksModule {
 			type: "boolean",
 			default: false,
 		},
-		interval: {
+		hasHoverUI: {
+			type: "boolean",
+			default: false,
+		},
+		// Determines if a block should be given with no tech unlocked
+		// Keep off if you want this unlocked by tech; on if it's unlocked at the start of a new game
+		default: {
+			type: "boolean",
+			default: false,
+		},
+		animationDelay: {
 			type: "number",
-			default: 0 // means no ticking 
-		}
+			default: 500,
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v > 0,
+					message: `Parameter 'animationDelay' must be an integer greater than 0`,
+				};
+			},
+		},
 	};
 	register(data) {
 		let res = InputHandler(data, this.blockSchema);
@@ -185,6 +201,20 @@ class BlocksModule {
 			type: "string",
 			default: "", // Allows using the not provided image
 		},
+		hasHoverUI: {
+			type: "boolean",
+			default: false,
+		},
+		animationDelay: {
+			type: "number",
+			default: 500,
+			verifier: (v) => {
+				return {
+					success: Number.isInteger(v) && v > 0,
+					message: `Parameter 'animationDelay' must be an integer greater than 0`,
+				};
+			},
+		},
 	};
 	registerVariant(data) {
 		let res = InputHandler(data, this.variantSchema);
@@ -249,6 +279,21 @@ class BlocksModule {
 			return b.variants.reduce((acc, v) => acc + f(v), "");
 		};
 
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["V"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, "corelib:blockTypes", (v1) => ({
+			type: "replace",
+			from: `${v1}[${v1}.GloomEmitter=27]="GloomEmitter"`,
+			to: `~` + reduceBlocks((b) => `,${v1}[${v1}.${b.id}=${this.idMap[b.id]}]="${b.id}"` + reduceBlockVariants(b, (v) => `,${v1}[${v1}.${v.id}=${this.idMap[v.id]}]="${v.id}"`)),
+			token: `~`,
+		}));
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
+			type: "replace",
+			from: `d.Foundation,d.Collector`,
+			// Only include blocks that have the `default` property
+			to: `~` + reduceBlocks((b) => (b.default ? `,d.${b.id}` : "")),
+			token: `~`,
+		});
+
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [], "js/515.bundle.js": [] }, "corelib:blockShapes", (v) => ({
 			type: "replace",
 			from: `"grower":[[12,12,12,12],[0,0,0,0],[0,0,0,0],[0,0,0,0]]`,
@@ -266,7 +311,7 @@ class BlocksModule {
 						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
 						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
 						`],name:"${b.name}",description:"${b.description}",singleBuild:${b.singleBuild}}` +
-						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`)
+						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`),
 				),
 			token: `~`,
 		}));
@@ -274,22 +319,7 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to:
-				`~` +
-				reduceBlocks(
-					(b) =>
-						`,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true,size: {
-                width: 4 * e.cellSize,
-                height: 4 * e.cellSize
-            }}` +
-						reduceBlockVariants(
-							b,
-							(v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true,size: {
-                width: 4 * e.cellSize,
-                height: 4 * e.cellSize
-            }}`
-						)
-				),
+			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}` + reduceBlockVariants(b, (v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true}`)),
 			token: `~`,
 		});
 
@@ -304,9 +334,21 @@ class BlocksModule {
 			type: "replace",
 			from: `if(n.type!==d.Collector)`,
 			to:
-				"if([" +
-				reduceBlocks((b) => `d.${b.id},` + reduceBlockVariants(b, (v) => `d.${v.id},`)) +
-				`].includes(n.type)){f=zf[n.type];l=t.session.rendering.images[f.imageName],(u=e.snapGridCellSize * e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(t.shared.conveyorBeltsAnimationIndex[0]%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ~`,
+				reduceBlocks(
+					(b) =>
+						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
+							b.animationDelay || 500
+						})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
+						reduceBlockVariants(
+							b,
+							(v) =>
+								`if(n.type===d.${b.id}){l=t.session.rendering.images["${
+									v.fullImagePath
+								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
+									v.animationDelay || 500
+								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
+						),
+				) + "~",
 			token: `~`,
 		});
 
@@ -314,31 +356,35 @@ class BlocksModule {
 			.filter((b) => !b.isVariant && b.hasConfigMenu)
 			.map((v) => v.id);
 
+		const reduceBlocksWithConfig = (f) => {
+			return blocksWithConfig.reduce((acc, v) => acc + f(v), "");
+		};
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockConfigMenu", {
 			type: "replace",
 			from: "n.id===d.FilterRight&&(e.session.windows.building.filterConfig=!0,Al(e,k.FilterConfig))",
-			to: "~" + blocksWithConfig.map((id) => `,n.id===d.${id}&&(e.session.windows.building.${id}Config=!0,Al(e,k.${id}Config))`),
+			to: "~" + reduceBlocksWithConfig((id) => `,n.id===d.${id}&&(e.session.windows.building.${id}Config=!0,Al(e,k.${id}Config))`),
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockOpenConfig", {
 			type: "replace",
 			from: "t.type===o.Building?t.id===",
-			to: "~" + blocksWithConfig.map((id) => `d.${id}?((e.session.windows.building.${id}Config=!0),void Al(e,k.${id}Config)):t.id===`),
+			to: "~" + reduceBlocksWithConfig((id) => `d.${id}?((e.session.windows.building.${id}Config=!0),void Al(e,k.${id}Config)):t.id===`),
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockCloseConfig", {
 			type: "replace",
 			from: `(!e.session.windows.building.filterConfig||(e.session.windows.building.filterConfig=!1,Al(e,k.FilterConfig),e.session.windows.options.open))`,
-			to: "~" + blocksWithConfig.map((id) => `&&(!e.session.windows.building.${id}Config||(e.session.windows.building.${id}Config=!1,Al(e,k.${id}Config),e.session.windows.options.open))`),
+			to: "~" + reduceBlocksWithConfig((id) => `&&(!e.session.windows.building.${id}Config||(e.session.windows.building.${id}Config=!1,Al(e,k.${id}Config),e.session.windows.options.open))`),
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockDefaultMenus", {
 			type: "replace",
 			from: `e.session.windows.building.filterConfig=!1;`,
-			to: "~Al(e,k.FilterConfig);" + blocksWithConfig.map((id) => `e.session.windows.building.${id}Config=!1;Al(e,k.${id}Config);`),
+			to: "~Al(e,k.FilterConfig);" + reduceBlocksWithConfig((id) => `e.session.windows.building.${id}Config=!1;Al(e,k.${id}Config);`),
 			token: "~",
 		});
 
@@ -350,6 +396,17 @@ class BlocksModule {
 				updateWindow: Al,
 				specialUI: US, // I only know of `US.div`, which appears to be a special animated div
 				extra: {},
+				closeConfig: (config) => {
+					e.state.session.windows.building.__BLOCKID__Config = false;
+					e.state.session.windows.building.open = false;
+					e.state.store.options.__BLOCKID__Config = config;
+					e.state.session.building.activeStructureType = d.__BLOCKID__;
+					Al(e.state, k.__BLOCKID__Config);
+					Al(e.state, k.Management);
+					e.state.store.player.hotbar.activeSlotIndex = null;
+					e.state.store.player.action = null;
+					Al(e.state, k.Hotbar);
+				},
 			};
 			data.showWindow(data.state, k.__BLOCKID__Config);
 			let targetChecker = React.useRef(null);
@@ -370,8 +427,10 @@ class BlocksModule {
 					{
 						ref: targetChecker,
 						style: {
-							height: data.extra.height || 600,
-							width: data.extra.width || 300,
+							// Overflow is used if either height or width aren't provided
+							overflow: "auto",
+							height: data.extra.height,
+							width: data.extra.width,
 							transform: `scale(${data.scale(data.state)})`,
 							transformOrigin: "center",
 						},
@@ -385,16 +444,66 @@ class BlocksModule {
 							className: "h-full bg-black bg-opacity-85 p-4 shadow-lg ui-box card-2 overflow-y-auto",
 						},
 						// use UI returned by mod
-						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined
-					)
-				)
+						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined,
+					),
+				),
 			);
 		};
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockSetupReact", {
 			type: "replace",
 			from: `(0,bm.jsx)(HS,{state:e.state})`,
-			to: "~" + blocksWithConfig.map((id) => `,(0,bm.jsx)(globalThis["corelib:blockConfigCallback${id}"]=${configUIFunction.toString().replaceAll("__BLOCKID__", id)}, {})`),
+			to: "~" + reduceBlocksWithConfig((id) => `,(0,bm.jsx)(globalThis["corelib:blockConfigCallback${id}"]=${configUIFunction.toString().replaceAll("__BLOCKID__", id)}, {})`),
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockPlacedConfig", {
+			type: "replace",
+			from: `h.type===d.GloomEmitter&&(h.filter={density:1e4,mode:"allow"}),`,
+			to: "~" + reduceBlocksWithConfig((id) => `h.type===d.${id}&&(h.data=t.store.options.${id}Config),`),
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockCopy", {
+			type: "replace",
+			from: `t.filter?{filter:JSON.parse(JSON.stringify(t.filter))}:`,
+			to: `~t.data?{data:JSON.parse(JSON.stringify(t.data))}:`,
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockPaste", {
+			type: "replace",
+			from: `(i.copiedStructure.filter&&(h.filter=i.copiedStructure.filter)`,
+			to: `~,(i.copiedStructure.data&&(h.data=i.copiedStructure.data))`,
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockPlacementData", {
+			type: "replace",
+			from: "var l=null!==(s=i.structureConfig)&&void 0!==s?s:Cd(i.structureType,null!==(o=i.angle)&&void 0!==o?o:void 0);",
+			to: "~var blockData=i.copiedStructure?.data??t.store.options[d[l.structureType]+'Config'];",
+			token: "~",
+		});
+
+		let blocksWithHover = Object.values(this.blockRegistry.definitions)
+			.filter((b) => b.hasHoverUI)
+			.map((v) => v.id);
+
+		const reduceBlocksWithHover = (f) => {
+			return blocksWithHover.reduce((acc, v) => acc + f(v), "");
+		};
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockHover", {
+			type: "replace",
+			from: `n=hu[e.groundCellType];`,
+			to: "~" + reduceBlocksWithHover((b) => `else if(e.structure.type===d.${b}){return block${b}HoverUI(e)}`),
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockGrabberHover", {
+			type: "replace",
+			from: `z.type===d.FilterLeft||z.type===d.FilterRight`,
+			to: "~" + reduceBlocksWithHover((b) => `||z.type===d.${b}`),
 			token: "~",
 		});
 

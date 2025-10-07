@@ -31,6 +31,11 @@ class ElementsModule {
 		shaker: {},
 		burn: {},
 	};
+	otherFeatures = {
+		planterAllows: [],
+		shakerAllows: [],
+		conveyorBeltIgnores: [],
+	}
 
 	elementSchema = {
 		id: {
@@ -183,9 +188,7 @@ class ElementsModule {
 
 	registerShakerRecipe(input, output1, output2) {}
 
-	registerShakerAllow(id) {}
-	
-	registerPlanterAllow(id) {}*/
+	*/
 
 	// you can input however many outputs you want, they should be in the form of ["output",chance]
 	// eg. registerPressRecipe("Sand", 200, ["BurntSlag",0.3],["WetSand",1])
@@ -213,6 +216,16 @@ class ElementsModule {
 		this.elementReactions.press[res.data.input] = [res.data.requiredVelocity, res.data.outputs];
 	}
 
+
+	registerShakerAllow(id) {}
+	
+	registerPlanterAllow(id) {}
+	
+	registerConveyorBeltIgnores(id) {
+		this.otherFeatures.conveyorBeltIgnores.push(id)
+	}
+
+
 	unregisterSoil(id) {
 		if (!this.soilRegistry[id]) return log("error", "corelib", `Soil with id "${id}" not found! Unable to unregister.`);
 		delete this.soilRegistry[id];
@@ -227,8 +240,8 @@ class ElementsModule {
 			this.elementReactions.normal[input1] = this.elementReactions.normal[input1].filter(([target]) => target !== input2);
 			if (this.elementReactions.normal[input1].length === 0) delete this.elementReactions.normal[input1];
 		};
-		removeRecipesBothWays(element1, element2);
-		if (wasAddedBothWays) removeRecipesBothWays(element2, element1);
+		if (wasAddedBothWays) removeRecipesBothWays(element1, element2);
+		removeRecipesBothWays(element2, element1);
 	}
 	unregisterPressRecipe(id) {
 		if (!this.elementReactions.press[id]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);
@@ -250,6 +263,9 @@ class ElementsModule {
 			const listToReturn = Object.entries(registry).map(([key, values]) => `${objectPrefix}[n.RJ.${key}]=[${values[0]},[${values[1].map(([output,chance]) => `[n.RJ.${output},${chance}]`).join(",")}]]`);
 			return listToReturn.join(",");
 		};
+		const simpleAppend = (array, prefix) => {
+			return array.map(value=>prefix+value).join(', ')
+		}
 		sortRegistryIds(this.elementRegistry, 25);
 		sortRegistryIds(this.soilRegistry, 31);
 		//re-adds the base recipes
@@ -371,6 +387,13 @@ class ElementsModule {
 				"press"
 			)};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];let posY = outputs.length; for(const[outputId,chance]of outputs){if(Math.random()<chance){posY--;h(e,t.x,t.y+posY,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});
+		
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:conveyorBeltIgnores", {
+				type: "replace",
+				from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,
+				to: `~` + `,${simpleAppend(this.otherFeatures.conveyorBeltIgnores, "a.RJ.")}`,
+				token: `~`,
+			});
 
 		if (saveHasNewStorageType) {
 			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {

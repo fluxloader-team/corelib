@@ -23,6 +23,21 @@ function sortRegistryIds(registry, startingId) {
 }
 const saveHasNewStorageType = false;
 class ElementsModule {
+	constructor() {
+		this.registerBasicRecipe("Sand", "Water", "WetSand", "WetSand");
+		this.registerBasicRecipe("Spore", "Water", "WetSpore");
+		this.registerBasicRecipe("Lava", "Water", "Steam", "Lava");
+		this.registerBasicRecipe("Flame", "Water", "Steam", "Steam");
+		this.registerBasicRecipe("Petalium", "Sandium", "Gloom", "Gloom");
+		this.registerPressRecipe("BurntSlag", [
+			["Spore", 1],
+			["Gold", 1],
+		]);
+		this.registerConveyorBeltIgnores("Water")
+		this.registerConveyorBeltIgnores("Steam")
+		this.registerConveyorBeltIgnores("Lava")
+		this.registerConveyorBeltIgnores("Fire")
+	}
 	elementRegistry = {};
 	soilRegistry = {};
 	elementReactions = {
@@ -35,7 +50,7 @@ class ElementsModule {
 		planterAllows: [],
 		shakerAllows: [],
 		conveyorBeltIgnores: [],
-	}
+	};
 
 	elementSchema = {
 		id: {
@@ -216,15 +231,13 @@ class ElementsModule {
 		this.elementReactions.press[res.data.input] = [res.data.requiredVelocity, res.data.outputs];
 	}
 
-
 	registerShakerAllow(id) {}
-	
-	registerPlanterAllow(id) {}
-	
-	registerConveyorBeltIgnores(id) {
-		this.otherFeatures.conveyorBeltIgnores.push(id)
-	}
 
+	registerPlanterAllow(id) {}
+
+	registerConveyorBeltIgnores(id) {
+		this.otherFeatures.conveyorBeltIgnores.push(id);
+	}
 
 	unregisterSoil(id) {
 		if (!this.soilRegistry[id]) return log("error", "corelib", `Soil with id "${id}" not found! Unable to unregister.`);
@@ -264,20 +277,10 @@ class ElementsModule {
 			return listToReturn.join(",");
 		};
 		const simpleAppend = (array, prefix) => {
-			return array.map(value=>prefix+value).join(', ')
-		}
+			return array.map((value) => prefix + value).join(", ");
+		};
 		sortRegistryIds(this.elementRegistry, 25);
 		sortRegistryIds(this.soilRegistry, 31);
-		//re-adds the base recipes
-		this.registerBasicRecipe("Sand", "Water", "WetSand", "WetSand");
-		this.registerBasicRecipe("Spore", "Water", "WetSpore");
-		this.registerBasicRecipe("Lava", "Water", "Steam", "Lava");
-		this.registerBasicRecipe("Flame", "Water", "Steam", "Steam");
-		this.registerBasicRecipe("Petalium", "Sandium", "Gloom", "Gloom");
-		this.registerPressRecipe("BurntSlag", [
-			["Spore", 1],
-			["Gold", 1],
-		]);
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
 			type: "replace",
@@ -350,7 +353,10 @@ class ElementsModule {
 			to:
 				`~` +
 				reduceElements(
-					(e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(e.colorHSL)}},`,
+					(e) =>
+						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
+							e.colorHSL
+						)}},`,
 					this.soilRegistry
 				),
 			token: "~",
@@ -387,13 +393,12 @@ class ElementsModule {
 				"press"
 			)};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];let posY = outputs.length; for(const[outputId,chance]of outputs){if(Math.random()<chance){posY--;h(e,t.x,t.y+posY,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});
-		
+
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:conveyorBeltIgnores", {
-				type: "replace",
-				from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,
-				to: `~` + `,${simpleAppend(this.otherFeatures.conveyorBeltIgnores, "a.RJ.")}`,
-				token: `~`,
-			});
+			type: "replace",
+			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,
+			to: `d=[${simpleAppend(this.otherFeatures.conveyorBeltIgnores, "a.RJ.")}`,
+		});
 
 		if (saveHasNewStorageType) {
 			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {

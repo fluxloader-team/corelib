@@ -11,6 +11,7 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.blocks = corelib.exposed.i.ev;
 	corelib.simulation.internal.particles = corelib.exposed.i.RJ;
 	corelib.simulation.internal.items = corelib.exposed.i.Np;
+	corelib.simulation.internal.createParticle = corelib.exposed.c.n
 	corelib.simulation.internal.setCell = (x, y, data) => {
 		corelib.exposed.u.Jx(fluxloaderAPI.gameInstanceState, x, y, data);
 	};

@@ -33,10 +33,10 @@ class ElementsModule {
 			["Spore", 1],
 			["Gold", 1],
 		]);
-		this.registerConveyorBeltIgnores("Water")
-		this.registerConveyorBeltIgnores("Steam")
-		this.registerConveyorBeltIgnores("Lava")
-		this.registerConveyorBeltIgnores("Fire")
+		this.registerConveyorBeltIgnores("Water");
+		this.registerConveyorBeltIgnores("Steam");
+		this.registerConveyorBeltIgnores("Lava");
+		this.registerConveyorBeltIgnores("Fire");
 	}
 	elementRegistry = {};
 	soilRegistry = {};
@@ -182,7 +182,7 @@ class ElementsModule {
 				verifier: (v) => {
 					return {
 						//didn't know every had a value, thanks again chatgpt
-						success:  v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
+						success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
 						message: `Parameter 'outputs' must be an array of arrays with the output in the first and the chance in the second`,
 					};
 				},
@@ -230,11 +230,11 @@ class ElementsModule {
 		}
 		this.elementReactions.press[res.data.input] = [res.data.requiredVelocity, res.data.outputs];
 	}
-
+	/*
 	registerShakerAllow(id) {}
 
 	registerPlanterAllow(id) {}
-
+*/
 	registerConveyorBeltIgnores(id) {
 		this.otherFeatures.conveyorBeltIgnores.push(id);
 	}
@@ -260,6 +260,12 @@ class ElementsModule {
 		if (!this.elementReactions.press[id]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);
 		delete this.elementReactions.press[id];
 	}
+	unregisterConveyorBeltIgnores(id) {
+		const index = this.otherFeatures.conveyorBeltIgnores.indexOf(id);
+		if (index > -1) {
+			array.splice(index, 1);
+		}
+	}
 
 	applyPatches() {
 		const reduceElements = (string, registry) => {
@@ -277,7 +283,8 @@ class ElementsModule {
 			return listToReturn.join(",");
 		};
 		const simpleAppend = (array, prefix) => {
-			return array.map((value) => prefix + value).join(", ");
+			//thanks ChatGPT
+			return array.reduce((previousOutputs, currentValue, index) => previousOutputs + (index ? ", " : "") + prefix + currentValue, "");
 		};
 		sortRegistryIds(this.elementRegistry, 25);
 		sortRegistryIds(this.soilRegistry, 31);
@@ -335,25 +342,11 @@ class ElementsModule {
 		});
 
 		fluxloaderAPI.setMappedPatch({ "js/336.bundle.js": [], "js/546.bundle.js": [] }, `corelib:elements:soils-repeated3Times`, () => ({
-				type: "regex",
-				pattern: `,(\\w+).vZ.Crackstone`,
-				replace: `,\$1.vZ.Crackstone` + reduceElements((e) => `,\$1.vZ.${e.id}`, this.soilRegistry),
-				expectedMatches: 3,
-			}));
-		//Doing the same thing three times is either because of lantto or the minifier
-		/*
-		for (const loop of [
-			["a", "a"],
-			["r", "n"],
-			["i", "o"],
-		]) {
-			fluxloaderAPI.setMappedPatch({ "js/336.bundle.js": [`${loop[1]}`], "js/546.bundle.js": [`${loop[0]}`] }, `corelib:elements:soils-repeated3Times${loop[0]}`, (l) => ({
-				type: "replace",
-				from: `,${l}.vZ.Crackstone`,
-				to: `~` + reduceElements((e) => `,${l}.vZ.${e.id}`, this.soilRegistry),
-				token: "~",
-			}));
-		}*/
+			type: "regex",
+			pattern: `,(\\w+).vZ.Crackstone`,
+			replace: `,\$1.vZ.Crackstone` + reduceElements((e) => `,\$1.vZ.${e.id}`, this.soilRegistry),
+			expectedMatches: 3,
+		}));
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Jl", "t", "n"], "js/515.bundle.js": ["i", "n.vZ", "n.RJ"] }, `corelib:elements:soilRegistry`, (l0, l1, l2) => ({
 			type: "replace",

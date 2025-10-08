@@ -8,7 +8,7 @@ includeVMScript("modules/enums.js");
 
 class CoreLib {
 	constructor() {
-		this.enums = new EnumsModule();
+		this.enums = null
 		this.blocks = null;
 		this.tech = null;
 		this.upgrades = null;
@@ -18,6 +18,7 @@ class CoreLib {
 	}
 
 	initModules() {
+		this.enums = new EnumsModule()
 		this.blocks = new BlocksModule();
 		this.tech = new TechModule();
 		this.upgrades = new UpgradesModule();
@@ -74,60 +75,76 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 			token: `~`,
 		});
 	}
+
+	setupEventsAndMessaging() {
+		fluxloaderAPI.events.registerEvent("cl:patches-applied");
+		fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
+
+		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
+			let data = {};
+			data.schedules = corelib.schedules.registry.entries;
+			data.blocks = corelib.blocks.registry.entries;
+			data.enums = corelib.enums.registry.entries;
+			data.enumGameStore = corelib.enums.gameStore;
+			return data;
+		});
+
+		fluxloaderAPI.handleGameIPC("corelib:saveenumGameStore", (internal, store) => {
+			// update also stores it
+			corelib.enums.updateStore(store);
+		});
+	}
 }
 
-class DefinitionRegistry {
-	moduleType = "";
-
+class SafeMap {
+	name = "";
 	definitions = {};
 
-	constructor(moduleType) {
-		this.moduleType = moduleType;
+	constructor(name) {
+		this.name = name;
 	}
 
 	register(id, data) {
-		if (this.definitions.hasOwnProperty(id)) {
-			log("error", "corelib", `${this.moduleType} with id "${id}" already exists!`);
+		if (this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} with id "${id}" already exists!`);
 			return false;
 		}
-		this.definitions[id] = data;
+		this.entries[id] = data;
 		return true;
 	}
 
 	unregister(id) {
-		if (!this.definitions.hasOwnProperty(id)) {
-			log("error", "corelib", `${this.moduleType} with id "${id}" already exists!`);
+		if (!this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} with id "${id}" already exists!`);
 			return false;
 		}
-		delete this.definitions[id];
+		delete this.entries[id];
 		return true;
 	}
 }
 
-// args should be an object of any:any (should match schema keys, and have valid values)
-// schema should be an object which maps keys of arguments to expected data
-//   schema items without `default` will be assumed to be required parameters
-//   type is a basic `typeof` check to ensure inputs pass basic type checks
-//   verifier is an optional function to provide extra checks for what values are valid
-// Example:
-//	InputHandler(
-//		{ example: 50 },
-//		{
-// 		example: {
-// 			default: 10,
-// 			type: "number",
-//			// verifier MUST return an object with { success: bool, message: string }
-// 			verifier: (v) => { success: Number.isInteger(v), message: "Parameter 'example' must be an integer" }
-// 		},
-//	}
-// );
+function InputHandler(parameters, schema) {
+	// args should be an object of any:any (should match schema keys, and have valid values)
+	// schema should be an object which maps keys of arguments to expected data
+	// - schema items without `default` will be assumed to be required parameters
+	// - type is a basic `typeof` check to ensure inputs pass basic type checks
+	// - verifier is an optional function to provide extra checks for what values are valid
+	//
+	// Example:
+	//	InputHandler(
+	//		{ example: 50 },
+	//		{
+	// 		example: {
+	// 			default: 10,
+	// 			type: "number",
+	//			// verifier MUST return an object with { success: bool, message: string }
+	// 			verifier: (v) => { success: Number.isInteger(v), message: "Parameter 'example' must be an integer" }
+	// 		},
+	//	}
+	// );
 
-const InputHandler = function (parameters, schema) {
-	let result = {
-		success: true,
-		data: {},
-		errors: {},
-	};
+	let result = { success: true, data: {}, errors: {} };
+
 	for (const parameter of Object.keys(parameters)) {
 		if (!schema.hasOwnProperty(parameter)) {
 			log("warn", "corelib", `Parameter '${parameter}' is unexpected - ignoring`);
@@ -185,30 +202,13 @@ const InputHandler = function (parameters, schema) {
 		}
 		result.data[parameter] = value;
 	}
+
 	return result;
 };
 
-globalThis.DefinitionRegistry = DefinitionRegistry;
+globalThis.SafeMap = SafeMap;
 globalThis.InputHandler = InputHandler;
 
 globalThis.corelib = new CoreLib();
 corelib.initModules();
-
-fluxloaderAPI.events.registerEvent("cl:patches-applied");
-fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
-
-// register schedules top level to allow early listening; old method never let you start listening right away
-fluxloaderAPI.handleGameIPC("corelib:getGameRegistries", () => {
-	// very modular so you can easily add on if you need to send anything else
-	let data = {};
-	data.schedules = corelib.schedules.scheduleRegistry.definitions;
-	data.blocks = corelib.blocks.blockRegistry.definitions;
-	data.enums = corelib.enums.registry.definitions;
-	data.enumStore = corelib.enums.store;
-	return data;
-});
-
-fluxloaderAPI.handleGameIPC("corelib:saveEnumStore", (internal, store) => {
-	// update also stores it
-	corelib.enums.updateStore(store);
-});
+corelib.setupEventsAndMessaging();

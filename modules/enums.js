@@ -1,9 +1,28 @@
-// I decided this would benefit from not strictly being strictly a singleton, I am ready to call yall crazy if you say this shouldn't be like this
-// doing it like this for elements since soils and base elements have different enums
+class ModuleEnumRegistry {
+	constructor(id, start, bundleMap) {
+		this.id = id;
+		this.start = start;
+		this.bundleMap = bundleMap;
+		this.stringIds = [];
+	}
 
-// all enums  (in main bundle) for double checking: n,t,d,q,r,s,o,a,l,u,c,h,f,p,g,y,v,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F
+	add(value) {
+		if (this.stringIds.includes(value)) {
+			throw new Error(`Value "${value}" already exists under id "${this.id}"`);
+		}
+		this.stringIds.push(value);
+	}
+
+	remove(value) {
+		if (!this.stringIds.includes(value)) {
+			throw new Error(`Value "${value}" does not exist under id "${this.id}"`);
+		}
+		this.stringIds.splice(this.stringIds.indexOf(value), 1);
+	}
+}
+
 class EnumsModule {
-	registry = new DefinitionRegistry();
+	registry = new SafeMap("enums");
 	store = {};
 
 	schema = {
@@ -13,21 +32,21 @@ class EnumsModule {
 		start: {
 			type: "number",
 		},
-		map: {
+		bundleMap: {
 			type: "object",
 			verifier: (v) => {
 				let bundles = ["main", "sim", "manager"];
 				if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
 					return {
 						success: false,
-						message: `map object in enum register must have a valid bundle identifier, keys are ${Object.keys(v).join(", ")}, must be one of ${bundles.join(", ")}`,
+						message: `bundleMap when registering a module enum registry must have a valid bundle identifier, keys are ${Object.keys(v).join(", ")}, must be one of ${bundles.join(", ")}`,
 					};
 				}
 				for (let key in v) {
 					if (!bundles.includes(key)) {
 						return {
 							success: false,
-							message: `unexpected key "${key}" in map object for enum, must be one of ${bundles.join(", ")}`,
+							message: `unexpected key "${key}" in bundleMap object for module enum registry, must be one of ${bundles.join(", ")}`,
 						};
 					}
 					// this should NOT be what you directly replace in the enumerator, it should be the variable used to access the enumerator
@@ -35,7 +54,7 @@ class EnumsModule {
 					if (typeof v[key] != "string") {
 						return {
 							success: false,
-							message: "map object in enum register must have only string variable names",
+							message: "bundleMap object in module enum registry must have only string variable names",
 						};
 					}
 				}
@@ -48,91 +67,67 @@ class EnumsModule {
 
 	register(data) {
 		let res = InputHandler(data, this.schema);
-		if (!res.success) {
-			throw new Error(res.message);
-		}
+		if (!res.success) throw new Error(res.message);
 		let out = res.data;
-		out.values = [];
-		this.registry.register(out.id, out);
-		return out;
+		const registry = new ModuleEnumRegistry(out.id, out.start, out.bundleMap);
+		this.registry.register(out.id, registry);
+		return registry;
 	}
 
-	checkId(id) {
-		return this.registry.definitions.hasOwnProperty(id);
-	}
+	updateStore(gameStore) {
+		// For each module with an enum registry
+		for (let moduleName in this.registry.entries) {
+			let enumRegistry = this.registry.entries[moduleName];
+			gameStore[moduleName] ??= {};
+			let moduleGameStore = gameStore[moduleName];
 
-	add(id, value) {
-		if (!this.checkId(id)) {
-			throw new Error(`Id "${id}" does not exist with the enums registry`);
-		}
-		let obj = this.registry.definitions[id];
-		if (obj.values.includes(value)) {
-			throw new Error(`Value "${value}" already exists under id "${id}" in the enums registry`);
-		}
-		obj.values.push(value);
-	}
-
-	remove(id, value) {
-		if (!this.checkId(id)) {
-			throw new Error(`Id "${id}" does not exist with the enums registry`);
-		}
-		let obj = this.registry.definitions[id];
-		if (!obj.values.includes(value)) {
-			throw new Error(`Value "${value}" does not exist under id "${id}" in the enums registry`);
-		}
-		obj.values.splice(obj.values.indexOf(value), 1);
-	}
-
-	updateStore(store) {
-		// we get each definition
-		for (let key in this.registry.definitions) {
-			// we get their data
-			let obj = this.registry.definitions[key];
-			let data = obj.values;
-			store[key] ??= {};
-			let curr = store[key];
-			let next = Math.max(obj.start - 1, ...Object.values(curr));
-			for (let entry of data) {
-				// cant use ??= because it still executes the right side
-				if (!curr[entry]) {
-					curr[entry] = ++next;
+			// Put every registered enum value into the store
+			let latestId = Math.max(enumRegistry.start - 1, ...Object.values(moduleGameStore));
+			for (let stringId of enumRegistry.stringIds) {
+				if (!moduleGameStore[stringId]) {
+					moduleGameStore[stringId] = ++latestId;
 				}
 			}
 		}
-		// we already check all our definitions so if this is a fresh store or from the game it still merges properly
-		this.store = store;
+
+		// If we receive the store from the game keep our internal copy updated
+		this.gameStore = gameStore;
 	}
 
 	applyPatches() {
-		// ensure this store is up to date
-		this.updateStore(this.store);
+		this.updateStore(this.gameStore);
 
-		let texts = { main: "", sim: "", manager: "" };
+		let reducedEnumStrings = { main: "", sim: "", manager: "" };
 
 		// loop through bundles here
-		for (let id in this.store) {
-			let def = this.registry.definitions[id];
-			let vals = this.store[id];
+		for (let moduleName in this.gameStore) {
+			let enumRegistry = this.registry.entries[moduleName];
+			let storeValues = this.gameStore[moduleName];
+
 			// example output: _[_["Schedule"]=19]="Schedule";
-			for (let bundle in def.map) {
-				let vari = def.map[bundle];
-				for (let [entry, num] of Object.entries(vals)) {
-					texts[bundle] += `${vari}[${vari}["${entry}"]=${num}]="${entry}";`;
+			for (let bundle in enumRegistry.bundleMap) {
+				let identifier = enumRegistry.bundleMap[bundle];
+				for (let [stringId, intId] of Object.entries(storeValues)) {
+					reducedEnumStrings[bundle] += `${identifier}[${identifier}["${stringId}"]=${intId}]="${stringId}";`;
 				}
 			}
 		}
-		// end of all enumerator chains
-		let replaces = {
+
+		// This is at the end of each enumerator chain in the code
+		let bundlePatchFroms = {
 			main: "(F||(F={}))",
 			sim: "(L||(L={}))",
 			manager: "(J||(J={}))",
 		};
 
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [texts.main, replaces.main], "js/336.bundle.js": [texts.sim, replaces.sim], "js/546.bundle.js": [texts.manager, replaces.manager] }, "corelib:addEnums", (text, replace) => ({
+		fluxloaderAPI.setMappedPatch({
+			"js/bundle.js": [reducedEnumStrings.main, bundlePatchFroms.main],
+			"js/336.bundle.js": [reducedEnumStrings.sim, bundlePatchFroms.sim],
+			"js/546.bundle.js": [reducedEnumStrings.manager, bundlePatchFroms.manager]
+		}, "corelib:addEnums", (text, bundleFrom) => ({
 			type: "replace",
-			from: replace,
-			// incase some insane man uses '~' or just something wack in an id -- the ';' in the middle is for minfied stuff so it does work chaining, this adds an extra ; to the main bundle but makes the rest work
-			to: replace + ";" + text,
+			from: bundleFrom,
+			to: `${bundleFrom};${text}`, // Account for bad characters like '~' in enum ids by seperating with ';'
 		}));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveLoadHook", {

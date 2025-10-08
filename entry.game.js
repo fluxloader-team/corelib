@@ -60,13 +60,14 @@ corelib.utils = {
 };
 
 // get the schedules to register immediately so mods can start listening immediately
-let localRegistry = await fluxloaderAPI.invokeElectronIPC("corelib:getGameRegistries");
+let registrations = await fluxloaderAPI.invokeElectronIPC("corelib:getModuleRegistrations");
+
 // we don't need the ids so just get values
-for (let schedule of Object.keys(localRegistry.schedules)) {
+for (let schedule of Object.keys(registrations.schedules)) {
 	fluxloaderAPI.events.registerEvent(`corelib:schedule-${schedule}`);
 }
 
-let tickingIds = Object.values(localRegistry.blocks).filter((b) => b.interval > 0);
+let tickingIds = Object.values(registrations.blocks).filter((b) => b.interval > 0);
 
 // only allow running after scene loading to ensure state and store exist properly; debating making this a part of corelib's api because it could be a bit useful
 let hasSceneLoaded = false;
@@ -74,7 +75,7 @@ fluxloaderAPI.events.on("fl:scene-loaded", () => {
 	hasSceneLoaded = true;
 
 	let { store } = fluxloaderAPI.gameInstance.state;
-	store.corelibEnums = localRegistry.enumStore;
+	store.corelibEnums = registrations.enumGameStore;
 	store.corelibCache ??= {};
 	for (let id of tickingIds) {
 		store.corelibCache[id] ??= {};
@@ -117,7 +118,7 @@ function disableScreen() {
 globalThis.corelib.hooks.setupSave = (store) => {
 	return store;
 	// we can always overwrite it because we read from the save before loading it
-	// store.corelibEnums = localRegistry.enumStore;
+	// store.corelibEnums = registrations.enumGameStore;
 	// return store;
 };
 
@@ -132,7 +133,7 @@ globalThis.corelib.hooks.preSceneChange = async (param) => {
 		let store = data?.corelibEnums ?? {};
 
 		// if we send electron an object it adds on all it's internals, and if we send it as {data:store} it just refuses to pass data for some reason
-		await fluxloaderAPI.invokeElectronIPC("corelib:saveEnumStore", store);
+		await fluxloaderAPI.invokeElectronIPC("corelib:saveenumGameStore", store);
 	}
 	corelib.hooks.doSceneChange(param);
 };

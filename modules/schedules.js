@@ -1,9 +1,9 @@
 class SchedulesModule {
-	scheduleRegistry = new DefinitionRegistry("Schedule");
+	registry = new SafeMap("Schedule");
 	enums = corelib.enums.register({
 		id: "Schedule",
 		start: 19,
-		map: {
+		bundleMap: {
 			main: "_",
 			sim: "w",
 			manager: "w",
@@ -37,14 +37,14 @@ class SchedulesModule {
 		// Use processed data, which includes defaults
 		let data = res.data;
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
-		if (this.scheduleRegistry.register(data.id, data.interval)) {
-			corelib.enums.add("Schedule", data.id);
+		if (this.registry.register(data.id, data.interval)) {
+			this.enums.add(data.id);
 		}
 	}
 
 	unregister(id) {
-		if (this.scheduleRegistry.unregister(id)) {
-			corelib.enums.remove("Schedule", id);
+		if (this.registry.unregister(id)) {
+			this.enums.remove(id);
 		}
 	}
 
@@ -52,7 +52,7 @@ class SchedulesModule {
 		log("info", "corelib", "Loading schedule patches");
 		let scheduleDefinitionString = "";
 
-		for (let [id, interval] of Object.entries(this.scheduleRegistry.definitions)) {
+		for (let [id, interval] of Object.entries(this.registry.entries)) {
 			scheduleDefinitionString += `up[_["${id}"]]= {interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`;
 		}
 

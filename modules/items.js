@@ -1,9 +1,9 @@
 class ItemsModule {
-	itemRegistry = new DefinitionRegistry("Item", 25);
+	registry = new SafeMap("Item", 25);
 	enums = corelib.enums.register({
 		id: "Item",
 		start: 25,
-		map: {
+		bundleMap: {
 			main: "l",
 			sim: "d",
 			manager: "u",
@@ -46,14 +46,14 @@ class ItemsModule {
 			log("warn", "corelib", `Item type "Consumable" is not fully supported yet; you should use "Tool" or "Weapon" instead.`);
 		}
 
-		if (this.itemRegistry.register(data.id, data)) {
-			this.enums.add("Item", data.id);
+		if (this.registry.register(data.id, data)) {
+			this.enums.add(data.id);
 		}
 	}
 
 	unregister(id) {
-		if (this.itemRegistry.unregister(id)) {
-			this.enums.remove("Item", id);
+		if (this.registry.unregister(id)) {
+			this.enums.remove(id);
 		}
 	}
 
@@ -61,7 +61,7 @@ class ItemsModule {
 		log("debug", "corelib", "Loading item patches");
 
 		let itemDefinitionString = "";
-		for (const item of Object.values(this.itemRegistry.definitions)) {
+		for (const item of Object.values(this.registry.entries)) {
 			itemDefinitionString += `DF[l.${item.id}]= function() {
 				return {
 					id: l.${item.id},

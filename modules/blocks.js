@@ -1,9 +1,9 @@
 class BlocksModule {
-	blockRegistry = new DefinitionRegistry("Block");
+	registry = new SafeMap("Block");
 	enums = corelib.enums.register({
 		id: "Block",
 		start: 99,
-		map: {
+		bundleMap: {
 			main: "d",
 			sim: "h",
 			manager: "h",
@@ -154,8 +154,8 @@ class BlocksModule {
 			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
 		}
 		let fullImagePath = this._getFullImagePath(data.sourceMod, data.id, data.imagePath);
-		if (this.blockRegistry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data })) {
-			corelib.enums.add("Block", data.id);
+		if (this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data })) {
+			this.enums.add(data.id);
 		}
 	}
 
@@ -235,31 +235,32 @@ class BlocksModule {
 		}
 
 		let id = data.parentId + data.suffix;
-		let parentBlock = this.blockRegistry.definitions[this.idMap[data.parentId]];
+		let parentBlock = this.registry.entries[this.idMap[data.parentId]];
 		let fullImagePath = this._getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
-		if (this.blockRegistry.register(data.id, { isVariant: true, fullImagePath, ...data })) {
-			corelib.enums.add("Block", data.id);
+		if (this.registry.register(data.id, { isVariant: true, fullImagePath, ...data })) {
+			this.enums.add(data.id);
 			parentBlock.variants.push({ fullImagePath, ...data });
 		}
 	}
 
 	unregister(id) {
 		// manually check here since we don't unregister until we unregister variants
-		if (!this.blockRegistry.definitions[id]) {
+		if (!this.registry.entries[id]) {
 			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
-		if (this.blockRegistry.definitions[id].isVariant) {
+		if (this.registry.entries[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
-		for (let variant of this.blockRegistry.definitions[id].variants) {
-			this.blockRegistry.unregister(id);
-			// the variants will always be registered and can't fail to unregister
-			this.enums.unregister(id);
+		for (let variant of this.registry.entries[id].variants) {
+			// unregister each variant entry (they are registered under their own id)
+			this.registry.unregister(variant.id);
+			// remove from enums registry
+			this.enums.remove(variant.id);
 		}
 
-		this.blockRegistry.unregister(id);
-		this.enums.remove("Block", id);
+		this.registry.unregister(id);
+		this.enums.remove(id);
 	}
 
 	_getFullImagePath = function (sourceMod, id, imagePath) {
@@ -276,7 +277,7 @@ class BlocksModule {
 		log("info", "corelib", "Loading block patches");
 
 		const reduceBlocks = (f) => {
-			return Object.values(this.blockRegistry.definitions)
+			return Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 		};
@@ -358,7 +359,7 @@ class BlocksModule {
 			token: `~`,
 		});
 
-		let blocksWithConfig = Object.values(this.blockRegistry.definitions)
+		let blocksWithConfig = Object.values(this.registry.entries)
 			.filter((b) => !b.isVariant && b.hasConfigMenu)
 			.map((v) => v.id);
 
@@ -491,7 +492,7 @@ class BlocksModule {
 			token: "~",
 		});
 
-		let blocksWithHover = Object.values(this.blockRegistry.definitions)
+		let blocksWithHover = Object.values(this.registry.entries)
 			.filter((b) => b.hasHoverUI)
 			.map((v) => v.id);
 
@@ -515,7 +516,7 @@ class BlocksModule {
 
 		// get ticking blocks
 		let reduceTicking = (f) => {
-			return Object.values(this.blockRegistry.definitions)
+			return Object.values(this.registry.entries)
 				.filter((t) => t.interval > 0)
 				.reduce((acc, t) => acc + f(t.id), "");
 		};

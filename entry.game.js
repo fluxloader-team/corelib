@@ -12,6 +12,13 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.createParticle = corelib.exposed.Fh;
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
 	corelib.simulation.internal.setCell = corelib.exposed.Od;
+	corelib.simulation.internal.getSelectedItem = corelib.exposed.Ef;
+
+	corelib.namedFunctions = {};
+	corelib.namedFunctions.notifyUIChange = corelib.exposed.Al;
+	corelib.namedFunctions.convertHSLtoRGBA = corelib.exposed.pu;
+	corelib.namedFunctions.getStructureAtPos = corelib.exposed.Oc;
+	corelib.namedFunctions.checkIfTechUnlocked = corelib.exposed.Xf;
 });
 
 corelib.simulation = {
@@ -55,7 +62,10 @@ corelib.utils = {
 	getParticleNameByType: (type) => {
 		return corelib.simulation.internal.particles[type] != undefined ? corelib.simulation.internal.particles[type] : null;
 	},
-	getSolidNameByType: (type) => {
+	getSoilNameByType: (type) => {
 		return corelib.simulation.internal.soils[type] != undefined ? corelib.simulation.internal.soils[type] : null;
+	},
+	getSelectedItem() {
+		return corelib.simulation.internal.getSelectedItem(fluxloaderAPI.gameInstance.state);
 	},
 };

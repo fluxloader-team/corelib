@@ -24,6 +24,22 @@ corelib.simulation = {
 	isEmpty: (x, y) => {
 		corelib.exposed.u.lV(fluxloaderAPI.gameInstanceState, x, y);
 	},
+	spawnParticle: (x, y, type, data = {}) => {
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+		const particle = corelib.simulation.internal.createParticle(particleType, x, y, data);
+		corelib.simulation.internal.setCell(x, y, particle);
+	},
+	spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+		const innerParticle = corelib.simulation.internal.createParticle(particleType, x, y, data);
+		const outerParticle = corelib.simulation.internal.createParticle(corelib.simulation.internal.particles.Particle, x, y, {
+			element: innerParticle,
+			velocity: { x: vx, y: vy },
+		});
+		corelib.simulation.internal.setCell(x, y, outerParticle);
+	},
 };
 
 // Events are batched together because of how many are triggered

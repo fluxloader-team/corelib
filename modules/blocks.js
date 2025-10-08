@@ -10,62 +10,6 @@ class BlocksModule {
 		},
 	});
 
-	validateInput() {
-		let res = InputHandler(data, {
-			sourceMod: { type: "string" },
-			id: { type: "string" },
-			name: { type: "string" },
-			description: { type: "string" },
-			shape: {
-				type: "object",
-				// Ensure shape is a 4x4 matrix of integers
-				verifier: (v) => {
-					let valid = true;
-					valid &&= v.length === 4;
-					if (!valid) return false;
-					for (const i of v) {
-						valid &&= i.length === 4;
-						for (const j of i) {
-							valid &&= Number.isInteger(j);
-						}
-					}
-					return valid;
-				},
-			},
-			angles: {
-				type: "object",
-				default: [],
-				// Ensure angles is an array of integers
-				verifier: (v) => {
-					let valid = true;
-					for (const i of v) {
-						valid &&= Number.isInteger(i);
-					}
-					return valid;
-				},
-			},
-			imagePath: {
-				type: "string",
-			},
-			singleBuild: {
-				type: "boolean",
-				default: false,
-			},
-			hasConfigMenu: {
-				type: "boolean",
-				default: false,
-			},
-		});
-		if (!res.success) {
-			let message = res.error.message;
-			if (res.error.argument === "shape" && res.error.message.includes("verifier")) message = "Parameter 'shape' must be a 4x4 matrix of integers";
-			if (res.error.argument === "angles") message = "Parameter 'angles' must be an array of integers";
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(message);
-		}
-		return res.data;
-	}
-
 	blockSchema = {
 		sourceMod: { type: "string" },
 		id: { type: "string" },
@@ -141,14 +85,21 @@ class BlocksModule {
 			},
 		},
 	};
-	register(data) {
-		let res = InputHandler(data, this.blockSchema);
+
+	validateInput() {
+		let res = validateInput(data, blockSchema);
 		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
+			let message = res.error.message;
+			if (res.error.argument === "shape" && res.error.message.includes("verifier")) message = "Parameter 'shape' must be a 4x4 matrix of integers";
+			if (res.error.argument === "angles") message = "Parameter 'angles' must be an array of integers";
+			throw new Error(message);
 		}
-		// Use processed data, which includes defaults
-		data = res.data;
+		return res.data;
+	}
+
+	register(data) {
+		data = validateInput(data, this.blockSchema, true).data;
+		
 		if (data.interval > 0) {
 			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
 			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
@@ -222,14 +173,10 @@ class BlocksModule {
 			},
 		},
 	};
+
 	registerVariant(data) {
-		let res = InputHandler(data, this.variantSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+		data = validateInput(data, this.variantSchema, true).data;
+
 		if (!this.idMap.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block id: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
 		}

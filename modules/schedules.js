@@ -26,16 +26,8 @@ class SchedulesModule {
 		},
 	};
 	register(id, interval) {
-		log("debug", "corelib", `Adding Schedule "${id}"`); // Using unverified id..
-		// This could be done with more basic checks, but this ensures both parameters
-		// are checked and logged, and that it follows how other modules are handling input
-		let res = InputHandler({ id, interval }, this.scheduleSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		let data = res.data;
+		data = validateInput({ id, interval }, this.scheduleSchema, true).data;
+
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 		if (this.registry.register(data.id, data.interval)) {
 			this.enums.add(data.id);

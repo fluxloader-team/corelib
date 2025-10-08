@@ -66,9 +66,7 @@ class EnumsModule {
 	};
 
 	register(data) {
-		let res = InputHandler(data, this.schema);
-		if (!res.success) throw new Error(res.message);
-		let out = res.data;
+		data = validateInput(data, this.schema, true).data;
 		const registry = new ModuleEnumRegistry(out.id, out.start, out.bundleMap);
 		this.registry.register(out.id, registry);
 		return registry;

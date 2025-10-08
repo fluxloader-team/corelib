@@ -71,14 +71,7 @@ class TechModule {
 	};
 
 	register(data) {
-		log("debug", "corelib", `Adding Tech "${data.id}"`); // Using unverified id..
-
-		let res = InputHandler(data, this.techSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		data = res.data;
+		data = validateInput(data, this.techSchema, true).data;
 
 		if (this.registry.register(data.id, data)) {
 			this.enums.add(data.id);

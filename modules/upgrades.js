@@ -42,16 +42,9 @@ class UpgradesModule {
 			},
 		},
 	};
-	registerTab(data) {
-		log("debug", "corelib", `Adding upgrade tab "${data.id}"`); // Using unverified id..
 
-		let res = InputHandler(data, this.tabSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+	registerTab(data) {
+		data = validateInput(data, this.tabSchema, true).data;
 
 		if (Object.keys(data.requirement).length === 0) delete data.requirement;
 
@@ -80,16 +73,9 @@ class UpgradesModule {
 			},
 		},
 	};
-	registerCategory(data) {
-		log("debug", "corelib", `Adding upgrade category "${data.id}" under tab "${data.tabID}"`); // Using unverified ids..
 
-		let res = InputHandler(data, this.categorySchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+	registerCategory(data) {
+		data = validateInput(data, this.categorySchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
@@ -160,16 +146,9 @@ class UpgradesModule {
 			default: false,
 		},
 	};
-	registerUpgrade(data) {
-		log("debug", "corelib", `Adding upgrade "${data.id}" under category "${data.categoryID}", tab "${data.tabID}"`); // Using unverified ids..
 
-		let res = InputHandler(data, this.upgradeSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+	registerUpgrade(data) {
+		data = validateInput(data, this.upgradeSchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
@@ -224,6 +203,7 @@ class UpgradesModule {
 
 	applyPatches() {
 		let nestedUpgradeDefinitions = [];
+
 		// Merged into game's upgrades data to add new upgrades even in old saves
 		let updates = {};
 		for (let tab of Object.values(this.upgrades)) {
@@ -240,6 +220,7 @@ class UpgradesModule {
 		}
 		updates.shovel.momentum = { level: 1, availableLevel: 1 }; // Really lantto?
 		updates.digger.gravity = { level: 1, availableLevel: 1 }; // ANOTHER??
+
 		// This is the inverse of what we do to the raw string in the constructor
 		let upgradeDefinitionString = JSON.stringify(nestedUpgradeDefinitions);
 		upgradeDefinitionString = upgradeDefinitionString.replace(new RegExp(`"tech":"([a-zA-Z0-9_]+)"`, "g"), `"tech":w.$1`);

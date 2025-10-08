@@ -31,15 +31,7 @@ class ItemsModule {
 		},
 	};
 	register(data) {
-		log("debug", "corelib", `Adding Item "${data.id}"`); // Using unverified id..
-
-		let res = InputHandler(data, this.itemSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+		data = validateInput(data, this.itemSchema, true).data;
 
 		if (data.type === "Consumable") {
 			// For now just silently continue but with a warning

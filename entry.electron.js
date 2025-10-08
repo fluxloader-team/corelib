@@ -123,7 +123,7 @@ class SafeMap {
 	}
 }
 
-function InputHandler(parameters, schema) {
+function validateInput(parameters, schema, throwOnFail = false) {
 	// args should be an object of any:any (should match schema keys, and have valid values)
 	// schema should be an object which maps keys of arguments to expected data
 	// - schema items without `default` will be assumed to be required parameters
@@ -131,7 +131,7 @@ function InputHandler(parameters, schema) {
 	// - verifier is an optional function to provide extra checks for what values are valid
 	//
 	// Example:
-	//	InputHandler(
+	//	validateInput(
 	//		{ example: 50 },
 	//		{
 	// 		example: {
@@ -150,6 +150,7 @@ function InputHandler(parameters, schema) {
 			log("warn", "corelib", `Parameter '${parameter}' is unexpected - ignoring`);
 		}
 	}
+
 	for (const [parameter, data] of Object.entries(schema)) {
 		let value = parameters[parameter] ?? data.default;
 		if (value === undefined) {
@@ -162,6 +163,7 @@ function InputHandler(parameters, schema) {
 			log("error", "corelib", result.errors[parameter].message);
 			continue;
 		}
+
 		if (data.type) {
 			// Generic error if we don't know the type
 			let error = `Parameter '${parameter}' was expected to be of type ${data.type}, but was not`;
@@ -184,6 +186,7 @@ function InputHandler(parameters, schema) {
 				continue;
 			}
 		}
+
 		if (data.verifier) {
 			let verifierResult = data.verifier(value);
 			if (!verifierResult.success) {
@@ -200,14 +203,19 @@ function InputHandler(parameters, schema) {
 				continue;
 			}
 		}
+
 		result.data[parameter] = value;
+	}
+
+	if (throwOnFail && !result.success) {
+		throw new Error(`Input handling failed: ${Object.values(result.errors).map((e) => e.message).join("; ")}`);
 	}
 
 	return result;
 };
 
 globalThis.SafeMap = SafeMap;
-globalThis.InputHandler = InputHandler;
+globalThis.validateInput = validateInput;
 
 globalThis.corelib = new CoreLib();
 corelib.initModules();

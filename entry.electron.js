@@ -28,7 +28,7 @@ class CoreLib {
 		this.items.applyPatches();
 		this.events.applyPatches();
 		this.schedules.applyPatches();
-		if (config.enableElementPatches) this.elements.applyPatches();
+		this.elements.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}

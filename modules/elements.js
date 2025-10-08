@@ -67,7 +67,7 @@ class ElementsModule {
 			type: "array",
 			verifier: (v) => {
 				return {
-					success: Array.isArray(v) && v.every(Array.isArray),
+					success: v.every(Array.isArray),
 					message: `Parameter 'colors' must be an array of rgba colors`,
 				};
 			},
@@ -121,7 +121,7 @@ class ElementsModule {
 			type: "array",
 			verifier: (v) => {
 				return {
-					success: Array.isArray(v) && v.length == 3,
+					success: v.length == 3,
 					message: `Parameter 'colorHSL' must be a HSL array`,
 				};
 			},
@@ -182,7 +182,7 @@ class ElementsModule {
 				verifier: (v) => {
 					return {
 						//didn't know every had a value, thanks again chatgpt
-						success: Array.isArray(v) && v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
+						success:  v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
 						message: `Parameter 'outputs' must be an array of arrays with the output in the first and the chance in the second`,
 					};
 				},
@@ -247,13 +247,13 @@ class ElementsModule {
 		if (!this.elementRegistry[id]) return log("error", "corelib", `Element with id "${id}" not found! Unable to unregister.`);
 		delete this.elementRegistry[id];
 	}
-	unregisterBasicRecipe(element1, element2, wasAddedBothWays = true) {
+	unregisterBasicRecipe(element1, element2, removeBothWays = true) {
 		const removeRecipesBothWays = (input1, input2) => {
 			if (!this.elementReactions.normal[input1]) return log("error", "corelib", `Could not unregister recipe between ${element1} and ${element2}! The reaction doesn't exist.`);
 			this.elementReactions.normal[input1] = this.elementReactions.normal[input1].filter(([target]) => target !== input2);
 			if (this.elementReactions.normal[input1].length === 0) delete this.elementReactions.normal[input1];
 		};
-		if (wasAddedBothWays) removeRecipesBothWays(element1, element2);
+		if (removeBothWays) removeRecipesBothWays(element1, element2);
 		removeRecipesBothWays(element2, element1);
 	}
 	unregisterPressRecipe(id) {
@@ -333,7 +333,15 @@ class ElementsModule {
 			token: "~",
 			expectedMatches: 2,
 		});
+
+		fluxloaderAPI.setMappedPatch({ "js/336.bundle.js": [], "js/546.bundle.js": [] }, `corelib:elements:soils-repeated3Times`, () => ({
+				type: "regex",
+				pattern: `,(\\w+).vZ.Crackstone`,
+				replace: `,\$1.vZ.Crackstone` + reduceElements((e) => `,\$1.vZ.${e.id}`, this.soilRegistry),
+				expectedMatches: 3,
+			}));
 		//Doing the same thing three times is either because of lantto or the minifier
+		/*
 		for (const loop of [
 			["a", "a"],
 			["r", "n"],
@@ -345,7 +353,7 @@ class ElementsModule {
 				to: `~` + reduceElements((e) => `,${l}.vZ.${e.id}`, this.soilRegistry),
 				token: "~",
 			}));
-		}
+		}*/
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Jl", "t", "n"], "js/515.bundle.js": ["i", "n.vZ", "n.RJ"] }, `corelib:elements:soilRegistry`, (l0, l1, l2) => ({
 			type: "replace",

@@ -14,10 +14,9 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.getSelectedItem = corelib.exposed.Ef;
 
 	corelib.namedFunctions = {};
-	corelib.namedFunctions.notifySomethingThatUIHasChanged = corelib.exposed.Al;
+	corelib.namedFunctions.notifyUIChange = corelib.exposed.Al;
 	corelib.namedFunctions.convertHSLtoRGBA = corelib.exposed.pu;
 	corelib.namedFunctions.getStructureAtPos = corelib.exposed.Oc;
-	corelib.namedFunctions.getChunkAtPos = corelib.exposed.Oc;
 	corelib.namedFunctions.checkIfTechUnlocked = corelib.exposed.Xf;
 });
 

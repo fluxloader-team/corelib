@@ -133,7 +133,7 @@ globalThis.corelib.hooks.preSceneChange = async (param) => {
 		let store = data?.corelibEnums ?? {};
 
 		// if we send electron an object it adds on all it's internals, and if we send it as {data:store} it just refuses to pass data for some reason
-		await fluxloaderAPI.invokeElectronIPC("corelib:saveenumGameStore", store);
+		await fluxloaderAPI.invokeElectronIPC("corelib:updateEnumsGameStore", store);
 	}
 	corelib.hooks.doSceneChange(param);
 };

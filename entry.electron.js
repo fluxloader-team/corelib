@@ -89,7 +89,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 			return data;
 		});
 
-		fluxloaderAPI.handleGameIPC("corelib:saveenumGameStore", (internal, store) => {
+		fluxloaderAPI.handleGameIPC("corelib:updateEnumsGameStore", (internal, store) => {
 			// update also stores it
 			corelib.enums.updateStore(store);
 		});

@@ -145,6 +145,82 @@ class ElementsModule {
 			//thanks ChatGPT
 			return array.reduce((previousOutputs, currentValue, index) => previousOutputs + (index ? ", " : "") + prefix + currentValue, "");
 		};
+		sortRegistryIds(this.elementRegistry, 25);
+		sortRegistryIds(this.soilRegistry, 31);
+
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
+			type: "replace",
+			from: `${l0}[${l1}.Basalt]={name:"Cinder",interactions:["🔥"],density:50,matterType:${l2}.Solid},`,
+			to: `~` + reduceElements((e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${l2}.${e.matterType}},`, this.elementRegistry),
+			token: "~",
+		}));
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["$"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:elementIdRegistry`, (l0) => ({
+			type: "replace",
+			from: `,${l0}[${l0}.Basalt=20]="Basalt"`,
+			to: `~` + reduceElements((e) => `,${l0}[${l0}.${e.id}=${e.numericId}]="${e.id}"`, this.elementRegistry),
+			token: "~",
+		}));
+		// Why did lantto do this, it seems useless
+		fluxloaderAPI.addMappedPatch({ "js/bundle.js": ["o", "n", "k", "r"], "js/336.bundle.js": ["s", "n.RJ", "B", "e"], "js/546.bundle.js": ["s", "a.RJ", "B", "e"] }, (l0, l1, l2, l3) => ({
+			type: "replace",
+			from: `[0]:${l0}.type===${l1}.Basalt?(${l2}=${l3}.session.colors.scheme.element[${l1}.Basalt])`,
+			to: `~` + reduceElements((e) => `[0]:${l0}.type===${l1}.${e.id}?(${l2}=${l3}.session.colors.scheme.element[${l1}.${e.id}])`, this.elementRegistry),
+			token: "~",
+		}));
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:filterlist`, {
+			type: "replace",
+			from: `,n.Basalt`,
+			to:
+				"~" +
+				reduceElements((e) => {
+					if (!e.addToFilterList) return "";
+					return `,n.${e.id}`;
+				}, this.elementRegistry),
+			token: "~",
+		});
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:particleColors`, {
+			type: "replace",
+			from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,
+			to: `~` + reduceElements((e) => `,e[n.${e.id}]=${JSON.stringify(e.colors)}`, this.elementRegistry),
+			token: "~",
+		});
+
+		//soils
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Y"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, `corelib:elements:soils-idRegistry`, (l) => ({
+			type: "replace",
+			from: `${l}[${l}.Crackstone=30]="Crackstone"`,
+			to: `~` + reduceElements((e) => `,${l}[${l}.${e.id}=${e.numericId}]="${e.id}"`, this.soilRegistry),
+			token: "~",
+		}));
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:soils-BreaksWithoutIt`, {
+			type: "replace",
+			from: `n,t.Crackstone`,
+			to: `~` + reduceElements((e) => `,t.${e.id}`, this.soilRegistry),
+			token: "~",
+			expectedMatches: 2,
+		});
+
+		fluxloaderAPI.setMappedPatch({ "js/336.bundle.js": [], "js/546.bundle.js": [] }, `corelib:elements:soils-repeated3Times`, () => ({
+			type: "regex",
+			pattern: `,(\\w+).vZ.Crackstone`,
+			replace: `,\$1.vZ.Crackstone` + reduceElements((e) => `,\$1.vZ.${e.id}`, this.soilRegistry),
+			expectedMatches: 3,
+		}));
+
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Jl", "t", "n"], "js/515.bundle.js": ["i", "n.vZ", "n.RJ"] }, `corelib:elements:soilRegistry`, (l0, l1, l2) => ({
+			type: "replace",
+			from: `${l0}[${l1}.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:${l2}.Basalt,chance:1},colorHSL:[0,100,15]},`,
+			to:
+				`~` +
+				reduceElements(
+					(e) =>
+						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
+							e.colorHSL,
+						)}},`,
+					this.soilRegistry,
+				),
+			token: "~",
+		}));
 
 		//reactions
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:basicReactionsList", {
@@ -163,6 +239,7 @@ class ElementsModule {
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
 			to: `pressRecipes=(function(){var press={};${getPressRecipesToPatch(
 				this.elementReactions.press,
+				"press",
 				"press",
 			)};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];let posY = outputs.length; for(const[outputId,chance]of outputs){if(Math.random()<chance){posY--;h(e,t.x,t.y+posY,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});

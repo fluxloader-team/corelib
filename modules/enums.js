@@ -39,7 +39,7 @@ class EnumsModule {
 				if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
 					return {
 						success: false,
-						message: `parameter 'bundleMap' does not contain all the required bundles, found '${Object.keys(v).join(", ")}' but needed each of '${bundles.join(", ")}'`,
+						message: `Parameter 'bundleMap' does not contain all the required bundles, found '${Object.keys(v).join(", ")}' but needed each of '${bundles.join(", ")}'`,
 					};
 				}
 				for (let key in v) {

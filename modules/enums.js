@@ -1,3 +1,43 @@
+const moduleEnumSchema = {
+	id: {
+		type: "string",
+	},
+	start: {
+		type: "number",
+	},
+	bundleMap: {
+		type: "object",
+		verifier: (v) => {
+			let bundles = ["main", "sim", "manager"];
+			if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
+				return {
+					success: false,
+					message: `Parameter 'bundleMap' does not contain all the required bundles, found [${Object.keys(v).join(", ")}] but needed each of [${bundles.join(", ")}]`,
+				};
+			}
+			for (let key in v) {
+				if (!bundles.includes(key)) {
+					return {
+						success: false,
+						message: `Parameter 'bundleMap' contains invalid bundle '${key}' must be one of [${bundles.join(", ")}]`,
+					};
+				}
+				// this should NOT be what you directly replace in the enumerator, it should be the variable used to access the enumerator
+				// may be typeof undefined
+				if (typeof v[key] != "string") {
+					return {
+						success: false,
+						message: "Parameter 'bundleMap' must have only string variable names",
+					};
+				}
+			}
+			return {
+				success: true,
+			};
+		},
+	},
+};
+
 class ModuleEnumRegistry {
 	constructor(id, start, bundleMap) {
 		this.id = id;
@@ -25,47 +65,7 @@ class EnumsModule {
 	registry = new SafeMap("enums");
 	enumMapping = {};
 
-	schema = {
-		id: {
-			type: "string",
-		},
-		start: {
-			type: "number",
-		},
-		bundleMap: {
-			type: "object",
-			verifier: (v) => {
-				let bundles = ["main", "sim", "manager"];
-				if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
-					return {
-						success: false,
-						message: `Parameter 'bundleMap' does not contain all the required bundles, found [${Object.keys(v).join(", ")}] but needed each of [${bundles.join(", ")}]`,
-					};
-				}
-				for (let key in v) {
-					if (!bundles.includes(key)) {
-						return {
-							success: false,
-							message: `Parameter 'bundleMap' contains invalid bundle '${key}' must be one of [${bundles.join(", ")}]`,
-						};
-					}
-					// this should NOT be what you directly replace in the enumerator, it should be the variable used to access the enumerator
-					// may be typeof undefined
-					if (typeof v[key] != "string") {
-						return {
-							success: false,
-							message: "Parameter 'bundleMap' must have only string variable names",
-						};
-					}
-				}
-				return {
-					success: true,
-				};
-			},
-		},
-	};
-
-	register(data) {
+	register(data /* moduleEnumSchema */) {
 		data = validateInput(data, this.schema, true).data;
 		const registry = new ModuleEnumRegistry(out.id, out.start, out.bundleMap);
 		this.registry.register(out.id, registry);

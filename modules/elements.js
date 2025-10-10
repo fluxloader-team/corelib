@@ -1,4 +1,63 @@
+const recipeSchemas = {
+	basic: {
+		input1: {
+			type: "string",
+		},
+		input2: {
+			type: "string",
+		},
+		output1: {
+			type: "string",
+		},
+		output2: {
+			type: "string",
+			default: "Empty",
+		},
+		addBothWays: {
+			type: "boolean",
+			default: true,
+		},
+	},
+	press: {
+		input: {
+			type: "string",
+		},
+		requiredVelocity: {
+			type: "number",
+			default: 200,
+		},
+		outputs: {
+			type: "array",
+			verifier: (v) => {
+				return {
+					//didn't know every had a value, thanks again chatgpt
+					success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
+					message: `Parameter 'outputs' must be an array of arrays with the output in the first and the chance in the second`,
+				};
+			},
+		},
+	},
+	burn: {},
+	shake: {},
+};
+
 class ElementsModule {
+	elementRegistry = {};
+	soilRegistry = {};
+
+	elementReactions = {
+		normal: {},
+		press: {},
+		shaker: {},
+		burn: {},
+	};
+
+	otherFeatures = {
+		planterAllows: [],
+		shakerAllows: [],
+		conveyorBeltIgnores: [],
+	};
+
 	constructor() {
 		this.registerBasicRecipe("Sand", "Water", "WetSand", "WetSand");
 		this.registerBasicRecipe("Spore", "Water", "WetSpore");
@@ -14,70 +73,10 @@ class ElementsModule {
 		this.registerConveyorBeltIgnores("Lava");
 		this.registerConveyorBeltIgnores("Fire");
 	}
-	elementRegistry = {};
-	soilRegistry = {};
-	elementReactions = {
-		normal: {},
-		press: {},
-		shaker: {},
-		burn: {},
-	};
-	otherFeatures = {
-		planterAllows: [],
-		shakerAllows: [],
-		conveyorBeltIgnores: [],
-	};
 
-	recipeSchemas = {
-		basic: {
-			input1: {
-				type: "string",
-			},
-			input2: {
-				type: "string",
-			},
-			output1: {
-				type: "string",
-			},
-			output2: {
-				type: "string",
-				default: "Empty",
-			},
-			addBothWays: {
-				type: "boolean",
-				default: true,
-			},
-		},
-		press: {
-			input: {
-				type: "string",
-			},
-			requiredVelocity: {
-				type: "number",
-				default: 200,
-			},
-			outputs: {
-				type: "array",
-				verifier: (v) => {
-					return {
-						//didn't know every had a value, thanks again chatgpt
-						success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
-						message: `Parameter 'outputs' must be an array of arrays with the output in the first and the chance in the second`,
-					};
-				},
-			},
-		},
-		burn: {},
-		shake: {},
-	};
-
-	registerBasicRecipe(input1, input2, output1, output2, addBothWays) {
+	registerBasicRecipe(input1, input2, output1, output2, addBothWays /* recipeSchema.basic */) {
 		const schemaCheck = { input1, input2, output1, output2, addBothWays };
-		let res = InputHandler(schemaCheck, this.recipeSchemas.basic);
-		if (!res.success) {
-			throw new Error(res.message);
-		}
-		let data = res.data;
+		data = validateInput(schemaCheck, this.recipeSchemas.basic, true).data;
 		const add = (from, to) => {
 			this.elementReactions.normal[from] ??= [];
 			this.elementReactions.normal[from].push([to, data.output1, data.output2]);
@@ -86,13 +85,10 @@ class ElementsModule {
 		add(data.input2, data.input1);
 	}
 
-	registerPressRecipe(input, outputs, requiredVelocity) {
-		const schemaCheck = { input, requiredVelocity, outputs };
-		let res = InputHandler(schemaCheck, this.recipeSchemas.press);
-		if (!res.success) {
-			throw new Error(res.message);
-		}
-		this.elementReactions.press[res.data.input] = [res.data.requiredVelocity, res.data.outputs];
+	registerPressRecipe(input, outputs, requiredVelocity /* recipeSchema.press */) {
+		const schemaCheck = { input, outputs, requiredVelocity };
+		data = validateInput(schemaCheck, this.recipeSchemas.press, true).data;
+		this.elementReactions.press[data.input] = [data.requiredVelocity, data.outputs];
 	}
 
 	registerConveyorBeltIgnores(id) {
@@ -108,10 +104,12 @@ class ElementsModule {
 		if (removeBothWays) removeBasicRecipe(element1, element2);
 		removeBasicRecipe(element2, element1);
 	}
+
 	unregisterPressRecipe(id) {
 		if (!this.elementReactions.press[id]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);
 		delete this.elementReactions.press[id];
 	}
+
 	unregisterConveyorBeltIgnores(id) {
 		const index = this.otherFeatures.conveyorBeltIgnores.indexOf(id);
 		if (index > -1) {

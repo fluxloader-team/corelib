@@ -1,3 +1,105 @@
+const tabSchema = {
+	id: {
+		type: "string",
+	},
+	name: {
+		type: "string",
+	},
+	requirement: {
+		type: "object",
+		default: {},
+		verifier: (v) => {
+			return {
+				success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+				message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
+			};
+		},
+	},
+};
+
+const categorySchema = {
+	tabID: {
+		type: "string",
+	},
+	id: {
+		type: "string",
+	},
+	name: {
+		type: "string",
+	},
+	requirement: {
+		type: "object",
+		default: {},
+		verifier: (v) => {
+			return {
+				success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+				message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
+			};
+		},
+	},
+};
+
+// Upgrades under specific categories (e.g. Weapons -> Gun -> Speed, Bullets )
+// - costs is an array of integers representing the cost, in fluxite, for each level of the upgrade
+// - maxLevel is an integer that must be one more than the length of costs (highest level of the upgrade)
+// - oneOff is a boolean representing if the upgrade can only be bought once (creates a checkbox in game)
+const upgradeSchema = {
+	tabID: {
+		type: "string",
+	},
+	categoryID: {
+		type: "string",
+	},
+	id: {
+		type: "string",
+	},
+	name: {
+		type: "string",
+	},
+	description: {
+		type: "string",
+	},
+	requirement: {
+		type: "object",
+		default: {},
+		verifier: (v) => {
+			return {
+				success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
+				message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
+			};
+		},
+	},
+	maxLevel: {
+		type: "number",
+		verifier: (v) => {
+			return {
+				success: Number.isInteger(v) && v > 0,
+				message: "Parameter 'maxLevel' must be an integer > 0",
+			};
+		},
+	},
+	costs: {
+		type: "object",
+		verifier: (v) => {
+			let valid = Array.isArray(v);
+			if (valid) {
+				for (const x of v) {
+					valid &&= Number.isInteger(x) && x >= 0;
+				}
+			}
+			return {
+				success: valid,
+				message: "Parameter 'cost' must be an array of integers >= 0",
+			};
+		},
+	},
+	oneOff: {
+		type: "boolean",
+		default: false,
+	},
+};
+
+
 class UpgradesModule {
 	upgrades = {};
 
@@ -23,27 +125,7 @@ class UpgradesModule {
 		}
 	}
 
-	// Tabs on the left (e.g. Tools, Weapons, etc.)
-	tabSchema = {
-		id: {
-			type: "string",
-		},
-		name: {
-			type: "string",
-		},
-		requirement: {
-			type: "object",
-			default: {},
-			verifier: (v) => {
-				return {
-					success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
-					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
-				};
-			},
-		},
-	};
-
-	registerTab(data) {
+	registerTab(data /* tabSchema */) {
 		data = validateInput(data, this.tabSchema, true).data;
 
 		if (Object.keys(data.requirement).length === 0) delete data.requirement;
@@ -51,30 +133,7 @@ class UpgradesModule {
 		this.upgrades[data.id] = { ...data, items: {} };
 	}
 
-	// Sections inside the tabs (e.g. Weapons -> Shovel, Gun, etc.)
-	categorySchema = {
-		tabID: {
-			type: "string",
-		},
-		id: {
-			type: "string",
-		},
-		name: {
-			type: "string",
-		},
-		requirement: {
-			type: "object",
-			default: {},
-			verifier: (v) => {
-				return {
-					success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
-					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
-				};
-			},
-		},
-	};
-
-	registerCategory(data) {
+	registerCategory(data /* categorySchema */) {
 		data = validateInput(data, this.categorySchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
@@ -87,67 +146,8 @@ class UpgradesModule {
 		this.upgrades[data.tabID].items[data.id] = { ...data, upgrades: {} };
 	}
 
-	// Upgrades under specific categories (e.g. Weapons -> Gun -> Speed, Bullets )
-	// - costs is an array of integers representing the cost, in fluxite, for each level of the upgrade
-	// - maxLevel is an integer that must be one more than the length of costs (highest level of the upgrade)
-	// - oneOff is a boolean representing if the upgrade can only be bought once (creates a checkbox in game)
-	upgradeSchema = {
-		tabID: {
-			type: "string",
-		},
-		categoryID: {
-			type: "string",
-		},
-		id: {
-			type: "string",
-		},
-		name: {
-			type: "string",
-		},
-		description: {
-			type: "string",
-		},
-		requirement: {
-			type: "object",
-			default: {},
-			verifier: (v) => {
-				return {
-					success: Object.keys(v).length === 0 || Object.keys(v).includes("tech") || Object.keys(v).includes("item") || Object.keys(v).includes("building"),
-					message: "Parameter 'requirement' must have at least one key of ['tech', 'item', 'building']",
-				};
-			},
-		},
-		maxLevel: {
-			type: "number",
-			verifier: (v) => {
-				return {
-					success: Number.isInteger(v) && v > 0,
-					message: "Parameter 'maxLevel' must be an integer > 0",
-				};
-			},
-		},
-		costs: {
-			type: "object",
-			verifier: (v) => {
-				let valid = Array.isArray(v);
-				if (valid) {
-					for (const x of v) {
-						valid &&= Number.isInteger(x) && x >= 0;
-					}
-				}
-				return {
-					success: valid,
-					message: "Parameter 'cost' must be an array of integers >= 0",
-				};
-			},
-		},
-		oneOff: {
-			type: "boolean",
-			default: false,
-		},
-	};
 
-	registerUpgrade(data) {
+	registerUpgrade(data /* upgradeSchema */) {
 		data = validateInput(data, this.upgradeSchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {

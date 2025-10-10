@@ -1,3 +1,25 @@
+
+const itemSchema = {
+	id: {
+		type: "string",
+	},
+	type: {
+		type: "string",
+		verifier: (v) => {
+			return {
+				success: ["Tool", "Weapon", "Consumable"].includes(v),
+				message: `Parameter 'type' must be one of "Tool", "Weapon", "Consumable"`,
+			};
+		},
+	},
+	name: {
+		type: "string",
+	},
+	description: {
+		type: "string",
+	},
+};
+
 class ItemsModule {
 	registry = new SafeMap("Item", 25);
 	enums = corelib.enums.register({
@@ -10,27 +32,7 @@ class ItemsModule {
 		},
 	});
 
-	itemSchema = {
-		id: {
-			type: "string",
-		},
-		type: {
-			type: "string",
-			verifier: (v) => {
-				return {
-					success: ["Tool", "Weapon", "Consumable"].includes(v),
-					message: `Parameter 'type' must be one of "Tool", "Weapon", "Consumable"`,
-				};
-			},
-		},
-		name: {
-			type: "string",
-		},
-		description: {
-			type: "string",
-		},
-	};
-	register(data) {
+	register(data /* itemSchema */) {
 		data = validateInput(data, this.itemSchema, true).data;
 
 		if (data.type === "Consumable") {

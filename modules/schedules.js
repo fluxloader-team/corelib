@@ -1,3 +1,19 @@
+const scheduleSchema = {
+	id: {
+		type: "string",
+	},
+	interval: {
+		type: "number",
+		verifier: (v) => {
+			return {
+				// I think an interval of 0 will cause issues..
+				success: Number.isInteger(v) && v > 0,
+				message: "Parameter 'interval' must be an integer > 0",
+			};
+		},
+	},
+};
+
 class SchedulesModule {
 	registry = new SafeMap("Schedule");
 	enums = corelib.enums.register({
@@ -10,22 +26,7 @@ class SchedulesModule {
 		},
 	});
 
-	scheduleSchema = {
-		id: {
-			type: "string",
-		},
-		interval: {
-			type: "number",
-			verifier: (v) => {
-				return {
-					// I think an interval of 0 will cause issues..
-					success: Number.isInteger(v) && v > 0,
-					message: "Parameter 'interval' must be an integer > 0",
-				};
-			},
-		},
-	};
-	register(id, interval) {
+	register(id, interval /* scheduleSchema */) {
 		data = validateInput({ id, interval }, this.scheduleSchema, true).data;
 
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event

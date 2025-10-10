@@ -20,6 +20,11 @@ class CoreLib {
 		this.schedules = null;
 	}
 
+	init() {
+		this.initModules();
+		this.setupInternals();
+	}
+
 	initModules() {
 		this.enums = new EnumsModule();
 		this.blocks = new BlocksModule();
@@ -59,7 +64,7 @@ class CoreLib {
 			type: "replace",
 			from: `e.fps;function Af`,
 			to: `
-globalThis.corelib.exposed = {
+globalThis.corelib.exposed.raw = {
 kf,Cf,Ef,Tf,_f,Sf,wf,bf,xf,vf,gf,df,hf,cf,uf,lf,af,of,sf,rf,nf,tf,ef,Jd,Qd,Zd,Kd,qd,Yd,$d,Xd,Wd,Hd,
 Vd,Gd,Ud,jd,zd,Od,Bd,Ld,Nd,Fd,Dd,Id,Rd,Pd,Md,Ad,kd,Cd,Td,_d,Sd,wd,bd,xd,vd,yd,gd,ld,ad,od,sd,id,rd,
 td,ed,Jh,Qh,Zh,Kh,qh,Yh,$h,zh,Qh,Bh,Lh,Nh,Fh,Dh,Ih,Rh,Ah,kh,Eh,Th,_h,bh,xh,vh,yh,gh,ch,lh,ah,ih,nh,
@@ -68,21 +73,23 @@ mc,pc,fc,dc,hc,cc,uc,lc,tc,ec,Ju,Qu,Zu,Ku,$u,Hu,Vu,Uu,ju,zu,Ou,Lu,Nu,Fu,Du,Iu,Ru
 bu,xu,vu,yu,gu,pu,fu,du,lu,au,ou,ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
 Mu,_,z,U,o,A,G,l,mu,y,N,j,M,O,x,g,nd,oc,P,S,Y,Yu,Xu,B,I,R,h,f,d,Au,Wu,Wh,T,s,p,L,q,v,Al,b,Hh,D,Ed,wh,
 Gu,wu,n,V,vc,Xh,m,w,F,t,jh,k,le,a,hu,C,Ml,r,c,E,H,W,u,X,$,Gh};
-fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
-~`,
+fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});
 
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:expose", {
 			type: "replace",
 			from: `const O=function()`,
-			to: `globalThis.corelib.exposed={a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L},fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
+			to: `globalThis.corelib.exposed.raw = {
+a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L},
+fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});
 	}
 
-	setupEventsAndMessaging() {
+	setupInternals() {
 		fluxloaderAPI.events.registerEvent("cl:patches-applied");
+
 		fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
 
 		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
@@ -94,7 +101,6 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 		});
 
 		fluxloaderAPI.handleGameIPC("corelib:updateEnumMapping", (internal, enumMapping) => {
-			// update also stores it
 			corelib.enums.updateEnumMapping(enumMapping);
 		});
 	}
@@ -226,5 +232,4 @@ globalThis.SafeMap = SafeMap;
 globalThis.validateInput = validateInput;
 
 globalThis.corelib = new CoreLib();
-corelib.initModules();
-corelib.setupEventsAndMessaging();
+corelib.init();

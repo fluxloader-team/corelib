@@ -8,6 +8,7 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.soils = corelib.exposed.t;
 	corelib.simulation.internal.particles = corelib.exposed.n;
 	corelib.simulation.internal.blocks = corelib.exposed.d;
+	corelib.simulation.internal.matterTypes = corelib.exposed.h;
 	corelib.simulation.internal.createParticle = corelib.exposed.Fh;
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
 	corelib.simulation.internal.setCell = corelib.exposed.Od;

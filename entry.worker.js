@@ -12,6 +12,7 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	corelib.simulation.internal.particles = corelib.exposed.i.RJ;
 	corelib.simulation.internal.items = corelib.exposed.i.Np;
 	corelib.simulation.internal.createParticle = corelib.exposed.c.n;
+  corelib.simulation.internal.matterTypes = corelib.exposed.i.es;
 	corelib.simulation.internal.setCell = (x, y, data) => {
 		corelib.exposed.u.Jx(fluxloaderAPI.gameInstanceState, x, y, data);
 	};
@@ -19,7 +20,6 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 		...corelib.exposed.o.A,
 	};
 });
-
 corelib.simulation = {
 	isEmpty: (x, y) => {
 		corelib.exposed.u.lV(fluxloaderAPI.gameInstanceState, x, y);
@@ -45,7 +45,7 @@ corelib.simulation = {
 // Events are batched together because of how many are triggered
 // All batched data is sent when the worker receives the "RunUpdate" message
 let batchData = {};
-const events = ["cell-change", "fog-reveal"];
+const events = ["cell-change", "fog-reveal", "soil-dig"];
 
 for (let event of events) {
 	fluxloaderAPI.events.registerEvent(`cl:${event}`);
@@ -80,6 +80,11 @@ corelib.events.processCellChange = (worker, x, y, from, to) => {
 	data.toBlockType = data.toCellType == 15 && typeof data.raw.to === "object" ? data.raw.to.type : null;
 
 	batchData["cell-change"].push(data);
+
+	if (data.fromCellType && data.fromCellType !== 1) {
+		data.cellFromName = corelib.simulation.internal.soils[data.fromCellType];
+		batchData["soil-dig"].push(data);
+	}
 };
 
 corelib.events.processFogReveal = (x, y) => {

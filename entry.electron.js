@@ -1,9 +1,12 @@
+const config = fluxloaderAPI.modConfig.get("corelib");
+
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
 includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
 includeVMScript("modules/schedules.js");
+includeVMScript("modules/elements.js");
 
 class CoreLib {
 	constructor() {
@@ -13,6 +16,7 @@ class CoreLib {
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
+		this.elements = new ElementsModule();
 	}
 
 	async applyPatches() {
@@ -24,6 +28,7 @@ class CoreLib {
 		this.items.applyPatches();
 		this.events.applyPatches();
 		this.schedules.applyPatches();
+		this.elements.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}

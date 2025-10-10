@@ -4,12 +4,14 @@ fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
 
 fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	log("info", "corelib", "Setting up corelib raw API");
+	console.log(corelib.exposed);
 	corelib.simulation.internal = {};
 	corelib.simulation.internal.soils = corelib.exposed.i.vZ;
 	corelib.simulation.internal.tech = corelib.exposed.i.xQ;
 	corelib.simulation.internal.blocks = corelib.exposed.i.ev;
 	corelib.simulation.internal.particles = corelib.exposed.i.RJ;
 	corelib.simulation.internal.items = corelib.exposed.i.Np;
+	corelib.simulation.internal.createParticle = corelib.exposed.c.n;
 	corelib.simulation.internal.matterTypes = corelib.exposed.i.es;
 	corelib.simulation.internal.setCell = (x, y, data) => {
 		corelib.exposed.u.Jx(fluxloaderAPI.gameInstanceState, x, y, data);
@@ -21,6 +23,22 @@ fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 corelib.simulation = {
 	isEmpty: (x, y) => {
 		corelib.exposed.u.lV(fluxloaderAPI.gameInstanceState, x, y);
+	},
+	spawnParticle: (x, y, type, data = {}) => {
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+		const particle = corelib.simulation.internal.createParticle(particleType, x, y, data);
+		corelib.simulation.internal.setCell(x, y, particle);
+	},
+	spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
+		const particleType = Number.isInteger(type) ? type : corelib.simulation.internal.particles[type];
+		if (particleType === undefined || !corelib.simulation.internal.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+		const innerParticle = corelib.simulation.internal.createParticle(particleType, x, y, data);
+		const outerParticle = corelib.simulation.internal.createParticle(corelib.simulation.internal.particles.Particle, x, y, {
+			element: innerParticle,
+			velocity: { x: vx, y: vy },
+		});
+		corelib.simulation.internal.setCell(x, y, outerParticle);
 	},
 };
 

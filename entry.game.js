@@ -65,6 +65,45 @@ corelib.utils = {
 	getSoilNameByType: (type) => {
 		return corelib.simulation.internal.soils[type] != undefined ? corelib.simulation.internal.soils[type] : null;
 	},
+	// Used internally in the tech UI to fix the line drawing
+	// counts how many techs are at the very bottom, to get the width
+	_countTechLeaves: (tech) => {
+		let children = 0;
+		// If there are no children, increment leaf count
+		// Otherwise, count leaves of children
+		if (!tech.children || tech.children.length === 0) {
+			return 1;
+		} else {
+			for (let child of tech.children) {
+				children += corelib.utils._countTechLeaves(child);
+			}
+		}
+		return children;
+	},
+	// Used internally in the tech UI to fix the line drawing
+	_getLineStyle: (tech) => {
+		const nodeWidth = 96;
+		const gap = 32; // Technically based on 2rem, so be careful
+
+		let totalLeaves = corelib.utils._countTechLeaves(tech);
+		// Get leaf count of first child
+		let firstLeaves = corelib.utils._countTechLeaves(tech.children[0]);
+		// Get leaf count of last child
+		let lastLeaves = corelib.utils._countTechLeaves(tech.children[tech.children.length - 1]);
+		// Calculate leaves between the first and last nodes
+		let middleLeaves = totalLeaves - (firstLeaves + lastLeaves);
+
+		let firstWidth = firstLeaves * nodeWidth + (firstLeaves - 1) * gap;
+		let middleWidth = middleLeaves * nodeWidth + (middleLeaves + 1) * gap;
+		let lastWidth = lastLeaves * nodeWidth + (lastLeaves - 1) * gap;
+		let finalWidth = firstWidth / 2 + middleWidth + lastWidth / 2;
+		return {
+			width: `${finalWidth}px`,
+			// I'm not 100% sure this margin checks works in all cases tbh..
+			// But it works in at least a simple test with several techs added
+			marginLeft: `${middleWidth + firstWidth - finalWidth}px`,
+		};
+	},
 	getSelectedItem() {
 		return corelib.simulation.internal.getSelectedItem(fluxloaderAPI.gameInstance.state);
 	},

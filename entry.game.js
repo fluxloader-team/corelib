@@ -108,3 +108,82 @@ corelib.utils = {
 		return corelib.simulation.internal.getSelectedItem(fluxloaderAPI.gameInstance.state);
 	},
 };
+
+// get the schedules to register immediately so mods can start listening immediately
+let registrations = await fluxloaderAPI.invokeElectronIPC("corelib:getModuleRegistrations");
+
+// we don't need the ids so just get values
+for (let schedule of Object.keys(registrations.schedules)) {
+	fluxloaderAPI.events.registerEvent(`corelib:schedule-${schedule}`);
+}
+
+let tickingIds = Object.values(registrations.blocks).filter((b) => b.interval > 0);
+
+// only allow running after scene loading to ensure state and store exist properly; debating making this a part of corelib's api because it could be a bit useful
+let hasSceneLoaded = false;
+fluxloaderAPI.events.on("fl:scene-loaded", () => {
+	hasSceneLoaded = true;
+
+	let { store } = fluxloaderAPI.gameInstance.state;
+	store.corelibEnumMapping = registrations.enumMapping;
+	store.corelibCache ??= {};
+	for (let id of tickingIds) {
+		store.corelibCache[id] ??= {};
+	}
+});
+
+// add converted handlers for ticking blocks
+for (let id of tickingIds) {
+	fluxloaderAPI.events.register(`corelib:block-${id}`);
+	fluxloaderAPI.events.on(`corelib:schedules-_tickingBlock-${id}`, () => {
+		if (!hasSceneLoaded) return;
+		let { store } = fluxloaderAPI.gameInstance.state;
+		let { structures } = fluxloaderAPI.gameInstance.state.session.cache.structures;
+
+		// use for...in instead of for...of so we can right away remove it, could use indexOf but this is better
+		for (let blockIndex in store.corelibCache[id]) {
+			let block = store.corelibCache[id][blockIndex];
+			const realBlock = structures?.[block.y]?.[block.x];
+
+			if (!realBlock) {
+				store.corelibCache[id].splice(blockIndex, 1);
+				continue;
+			}
+			fluxloaderAPI.events.trigger(`corelib:block-${id}`, realBlock);
+		}
+	});
+}
+
+// load enums
+
+// so the user can't click again while we're reading the save and before we continue to load the game -- confirmed you get ~1-2 seconds as we're reading the file early
+function disableScreen() {
+	let disable = document.createElement("div");
+	disable.id = "interactibility-nuker";
+	disable.className = "fixed inset-0 z-[99999] bg-black/0 cursor-wait";
+	document.body.appendChild(disable);
+}
+
+// archived -- not sure why this didnt work
+globalThis.corelib.hooks.setupSave = (store) => {
+	return store;
+	// we can always overwrite it because we read from the save before loading it
+	// store.corelibEnumMapping = registrations.enumMapping;
+	// return store;
+};
+
+globalThis.corelib.hooks.preSceneChange = async (param) => {
+	// we're doing operations that might take time and the window will reload when we finish
+	disableScreen();
+	if (typeof param == "string" && param.includes("db_load")) {
+		// means main menu loading game and not new game
+		let url = param.substring(8); // "db_load="
+		let results = await window.electron.load(url);
+		let data = results.data; // get results
+		let enumMapping = data?.corelibEnumMapping ?? {};
+
+		// if we send electron an object it adds on all it's internals, and if we send it as {data:store} it just refuses to pass data for some reason
+		await fluxloaderAPI.invokeElectronIPC("corelib:updateEnumMapping", enumMapping);
+	}
+	corelib.hooks.doSceneChange(param);
+};

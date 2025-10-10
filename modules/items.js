@@ -1,6 +1,14 @@
 class ItemsModule {
-	itemRegistry = new DefinitionRegistry("Item", 25);
-	idMap = {};
+	registry = new SafeMap("Item", 25);
+	enums = corelib.enums.register({
+		id: "Item",
+		start: 25,
+		bundleMap: {
+			main: "l",
+			sim: "d",
+			manager: "u",
+		},
+	});
 
 	itemSchema = {
 		id: {
@@ -23,41 +31,29 @@ class ItemsModule {
 		},
 	};
 	register(data) {
-		log("debug", "corelib", `Adding Item "${data.id}"`); // Using unverified id..
-
-		let res = InputHandler(data, this.itemSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+		data = validateInput(data, this.itemSchema, true).data;
 
 		if (data.type === "Consumable") {
 			// For now just silently continue but with a warning
 			log("warn", "corelib", `Item type "Consumable" is not fully supported yet; you should use "Tool" or "Weapon" instead.`);
 		}
 
-		this.idMap[id] = this.itemRegistry.register({ idNumber, ...data });
+		if (this.registry.register(data.id, data)) {
+			this.enums.add(data.id);
+		}
 	}
 
 	unregister(id) {
-		if (!this.idMap.hasOwnProperty(id)) {
-			return log("error", "corelib", `Item with id "${id}" not found! Unable to unregister.`);
+		if (this.registry.unregister(id)) {
+			this.enums.remove(id);
 		}
-
-		let numericID = this.idMap[id];
-		delete this.idMap[id];
-		this.itemRegistry.unregister(numericID);
 	}
 
 	applyPatches() {
 		log("debug", "corelib", "Loading item patches");
 
-		let itemIDString = "";
 		let itemDefinitionString = "";
-		for (const item of Object.values(this.itemRegistry.definitions)) {
-			itemIDString += `,H[H.${item.id}=${item.idNumber}]="${item.id}"`;
+		for (const item of Object.values(this.registry.entries)) {
 			itemDefinitionString += `DF[l.${item.id}]= function() {
 				return {
 					id: l.${item.id},
@@ -68,13 +64,6 @@ class ItemsModule {
 			}
 			`;
 		}
-
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:itemIDs", {
-			type: "replace",
-			from: `H[H.Cryoblaster=15]="Cryoblaster",`,
-			to: `~${itemIDString}`,
-			token: "~",
-		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:itemDefinitions", {
 			type: "replace",

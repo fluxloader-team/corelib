@@ -7,9 +7,21 @@ includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
 includeVMScript("modules/schedules.js");
 includeVMScript("modules/elements.js");
+includeVMScript("modules/enums.js");
 
 class CoreLib {
 	constructor() {
+		this.enums = null;
+		this.blocks = null;
+		this.tech = null;
+		this.upgrades = null;
+		this.items = null;
+		this.events = null;
+		this.schedules = null;
+	}
+
+	initModules() {
+		this.enums = new EnumsModule();
 		this.blocks = new BlocksModule();
 		this.tech = new TechModule();
 		this.upgrades = new UpgradesModule();
@@ -29,6 +41,7 @@ class CoreLib {
 		this.events.applyPatches();
 		this.schedules.applyPatches();
 		this.elements.applyPatches();
+		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}
@@ -53,7 +66,8 @@ td,ed,Jh,Qh,Zh,Kh,qh,Yh,$h,zh,Qh,Bh,Lh,Nh,Fh,Dh,Ih,Rh,Ah,kh,Eh,Th,_h,bh,xh,vh,yh
 th,eh,Jc,Qc,qc,Yc,$c,Xc,Wc,Hc,Vc,Gc,Uc,jc,zc,Oc,Bc,Lc,Nc,Fc,Dc,Ic,Rc,Pc,Mc,Ac,kc,Ec,wc,bc,xc,yc,gc,
 mc,pc,fc,dc,hc,cc,uc,lc,tc,ec,Ju,Qu,Zu,Ku,$u,Hu,Vu,Uu,ju,zu,Ou,Lu,Nu,Fu,Du,Iu,Ru,Pu,ku,Eu,Tu,_u,Su,
 bu,xu,vu,yu,gu,pu,fu,du,lu,au,ou,ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
-Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Gf,Xu,Xf,Wu,Gu,Mu,Au,wu,mu,hu,q,le,t,n,r,s,o,a,l,u,c,h,d,f,p,m,g,y,v,x,b,w};
+Mu,_,z,U,o,A,G,l,mu,y,N,j,M,O,x,g,nd,oc,P,S,Y,Yu,Xu,B,I,R,h,f,d,Au,Wu,Wh,T,s,p,L,q,v,Al,b,Hh,D,Ed,wh,
+Gu,wu,n,V,vc,Xh,m,w,F,t,jh,k,le,a,hu,C,Ml,r,c,E,H,W,u,X,$,Gh};
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
@@ -66,73 +80,81 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 			token: `~`,
 		});
 	}
+
+	setupEventsAndMessaging() {
+		fluxloaderAPI.events.registerEvent("cl:patches-applied");
+		fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
+
+		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
+			let data = {};
+			data.schedules = corelib.schedules.registry.entries;
+			data.blocks = corelib.blocks.registry.entries;
+			data.enumMapping = corelib.enums.enumMapping;
+			return data;
+		});
+
+		fluxloaderAPI.handleGameIPC("corelib:updateEnumMapping", (internal, enumMapping) => {
+			// update also stores it
+			corelib.enums.updateEnumMapping(enumMapping);
+		});
+	}
 }
 
-class DefinitionRegistry {
-	moduleType = "";
-
+class SafeMap {
+	name = "";
 	definitions = {};
-	freeIDs = [];
-	nextIDNumber = 0;
 
-	constructor(moduleType, startCount = 0) {
-		this.moduleType = moduleType;
-		this.nextIDNumber = startCount;
+	constructor(name) {
+		this.name = name;
 	}
 
-	nextID() {
-		// Use available free IDs first
-		if (this.freeIDs.length > 0) {
-			return this.freeIDs.pop();
+	register(id, data) {
+		if (this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} with id "${id}" already exists!`);
+			return false;
 		}
-		return this.nextIDNumber++;
-	}
-
-	register(data) {
-		let id = this.nextID();
-		if (this.definitions.hasOwnProperty(id)) {
-			log("error", "corelib", `${this.moduleType} with id "${id}" already exists!`);
-			return;
-		}
-		this.definitions[id] = data;
-		return id;
+		this.entries[id] = data;
+		return true;
 	}
 
 	unregister(id) {
-		this.freeIDs.push(id);
-		delete this.definitions[id];
+		if (!this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} with id "${id}" already exists!`);
+			return false;
+		}
+		delete this.entries[id];
+		return true;
 	}
 }
 
-// args should be an object of any:any (should match schema keys, and have valid values)
-// schema should be an object which maps keys of arguments to expected data
-//   schema items without `default` will be assumed to be required parameters
-//   type is a basic `typeof` check to ensure inputs pass basic type checks
-//   verifier is an optional function to provide extra checks for what values are valid
-// Example:
-//	InputHandler(
-//		{ example: 50 },
-//		{
-// 		example: {
-// 			default: 10,
-// 			type: "number",
-//			// verifier MUST return an object with { success: bool, message: string }
-// 			verifier: (v) => { success: Number.isInteger(v), message: "Parameter 'example' must be an integer" }
-// 		},
-//	}
-// );
+function validateInput(parameters, schema, throwOnFail = false) {
+	// args should be an object of any:any (should match schema keys, and have valid values)
+	// schema should be an object which maps keys of arguments to expected data
+	// - schema items without `default` will be assumed to be required parameters
+	// - type is a basic `typeof` check to ensure inputs pass basic type checks
+	// - verifier is an optional function to provide extra checks for what values are valid
+	//
+	// Example:
+	//	validateInput(
+	//		{ example: 50 },
+	//		{
+	// 		example: {
+	// 			default: 10,
+	// 			type: "number",
+	//			// verifier MUST return an object with { success: bool, message: string }
+	// 			verifier: (v) => { success: Number.isInteger(v), message: "Parameter 'example' must be an integer" }
+	// 		},
+	//	}
+	// );
 
-const InputHandler = function (parameters, schema) {
-	let result = {
-		success: true,
-		data: {},
-		errors: {},
-	};
+	let result = { success: true, data: {}, errors: {} };
+
 	for (const parameter of Object.keys(parameters)) {
 		if (!schema.hasOwnProperty(parameter)) {
 			log("warn", "corelib", `Parameter '${parameter}' is unexpected - ignoring`);
 		}
 	}
+
 	for (const [parameter, data] of Object.entries(schema)) {
 		let value = parameters[parameter] ?? data.default;
 		if (value === undefined) {
@@ -145,6 +167,7 @@ const InputHandler = function (parameters, schema) {
 			log("error", "corelib", result.errors[parameter].message);
 			continue;
 		}
+
 		if (data.type) {
 			// Generic error if we don't know the type
 			let error = `Parameter '${parameter}' was expected to be of type ${data.type}, but was not`;
@@ -167,6 +190,7 @@ const InputHandler = function (parameters, schema) {
 				continue;
 			}
 		}
+
 		if (data.verifier) {
 			let verifierResult = data.verifier(value);
 			if (!verifierResult.success) {
@@ -183,15 +207,24 @@ const InputHandler = function (parameters, schema) {
 				continue;
 			}
 		}
+
 		result.data[parameter] = value;
 	}
-	return result;
-};
 
-globalThis.DefinitionRegistry = DefinitionRegistry;
-globalThis.InputHandler = InputHandler;
+	if (throwOnFail && !result.success) {
+		throw new Error(
+			`Input handling failed: ${Object.values(result.errors)
+				.map((e) => e.message)
+				.join("; ")}`,
+		);
+	}
+
+	return result;
+}
+
+globalThis.SafeMap = SafeMap;
+globalThis.validateInput = validateInput;
 
 globalThis.corelib = new CoreLib();
-
-fluxloaderAPI.events.registerEvent("cl:patches-applied");
-fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
+corelib.initModules();
+corelib.setupEventsAndMessaging();

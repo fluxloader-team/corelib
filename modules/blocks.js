@@ -1,62 +1,14 @@
 class BlocksModule {
-	blockRegistry = new DefinitionRegistry("Block", 99);
-	idMap = {};
-
-	validateInput() {
-		let res = InputHandler(data, {
-			sourceMod: { type: "string" },
-			id: { type: "string" },
-			name: { type: "string" },
-			description: { type: "string" },
-			shape: {
-				type: "object",
-				// Ensure shape is a 4x4 matrix of integers
-				verifier: (v) => {
-					let valid = true;
-					valid &&= v.length === 4;
-					if (!valid) return false;
-					for (const i of v) {
-						valid &&= i.length === 4;
-						for (const j of i) {
-							valid &&= Number.isInteger(j);
-						}
-					}
-					return valid;
-				},
-			},
-			angles: {
-				type: "object",
-				default: [],
-				// Ensure angles is an array of integers
-				verifier: (v) => {
-					let valid = true;
-					for (const i of v) {
-						valid &&= Number.isInteger(i);
-					}
-					return valid;
-				},
-			},
-			imagePath: {
-				type: "string",
-			},
-			singleBuild: {
-				type: "boolean",
-				default: false,
-			},
-			hasConfigMenu: {
-				type: "boolean",
-				default: false,
-			},
-		});
-		if (!res.success) {
-			let message = res.error.message;
-			if (res.error.argument === "shape" && res.error.message.includes("verifier")) message = "Parameter 'shape' must be a 4x4 matrix of integers";
-			if (res.error.argument === "angles") message = "Parameter 'angles' must be an array of integers";
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(message);
-		}
-		return res.data;
-	}
+	registry = new SafeMap("Block");
+	enums = corelib.enums.register({
+		id: "Block",
+		start: 99,
+		bundleMap: {
+			main: "d",
+			sim: "h",
+			manager: "h",
+		},
+	});
 
 	blockSchema = {
 		sourceMod: { type: "string" },
@@ -133,16 +85,18 @@ class BlocksModule {
 			},
 		},
 	};
+
 	register(data) {
-		let res = InputHandler(data, this.blockSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
+		data = validateInput(data, this.blockSchema, true).data;
+
+		if (data.interval > 0) {
+			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
+			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
 		}
-		// Use processed data, which includes defaults
-		data = res.data;
 		let fullImagePath = this._getFullImagePath(data.sourceMod, data.id, data.imagePath);
-		this.idMap[data.id] = this.blockRegistry.register({ isVariant: false, variants: [], fullImagePath, ...data });
+		if (this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data })) {
+			this.enums.add(data.id);
+		}
 	}
 
 	variantSchema = {
@@ -208,42 +162,41 @@ class BlocksModule {
 			},
 		},
 	};
+
 	registerVariant(data) {
-		let res = InputHandler(data, this.variantSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+		data = validateInput(data, this.variantSchema, true).data;
+
 		if (!this.idMap.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block id: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
 		}
 
 		let id = data.parentId + data.suffix;
-		let parentBlock = this.blockRegistry.definitions[this.idMap[data.parentId]];
+		let parentBlock = this.registry.entries[this.idMap[data.parentId]];
 		let fullImagePath = this._getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
-		this.idMap[id] = this.blockRegistry.register({ isVariant: true, fullImagePath, ...data });
-
-		parentBlock.variants.push({ fullImagePath, ...data });
+		if (this.registry.register(data.id, { isVariant: true, fullImagePath, ...data })) {
+			this.enums.add(data.id);
+			parentBlock.variants.push({ fullImagePath, ...data });
+		}
 	}
 
 	unregister(id) {
-		if (!this.idMap.hasOwnProperty(id)) {
-			return log("error", "corelib", `Block with id "${id}" not found! Unable to unregister.`);
+		// manually check here since we don't unregister until we unregister variants
+		if (!this.registry.entries[id]) {
+			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
-
-		if (this.blockRegistry.definitions[this.idMap[id]].isVariant) {
+		if (this.registry.entries[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
-		for (let variant of this.blockRegistry.definitions[this.idMap[id]].variants) {
-			this.blockRegistry.unregister(this.idMap[variant.id]);
-			delete this.idMap[variant.id];
+		for (let variant of this.registry.entries[id].variants) {
+			// unregister each variant entry (they are registered under their own id)
+			this.registry.unregister(variant.id);
+			// remove from enums registry
+			this.enums.remove(variant.id);
 		}
 
-		this.blockRegistry.unregister(this.idMap[id]);
-		delete this.idMap[id];
+		this.registry.unregister(id);
+		this.enums.remove(id);
 	}
 
 	_getFullImagePath = function (sourceMod, id, imagePath) {
@@ -260,7 +213,7 @@ class BlocksModule {
 		log("info", "corelib", "Loading block patches");
 
 		const reduceBlocks = (f) => {
-			return Object.values(this.blockRegistry.definitions)
+			return Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 		};
@@ -342,7 +295,7 @@ class BlocksModule {
 			token: `~`,
 		});
 
-		let blocksWithConfig = Object.values(this.blockRegistry.definitions)
+		let blocksWithConfig = Object.values(this.registry.entries)
 			.filter((b) => !b.isVariant && b.hasConfigMenu)
 			.map((v) => v.id);
 
@@ -475,7 +428,7 @@ class BlocksModule {
 			token: "~",
 		});
 
-		let blocksWithHover = Object.values(this.blockRegistry.definitions)
+		let blocksWithHover = Object.values(this.registry.entries)
 			.filter((b) => b.hasHoverUI)
 			.map((v) => v.id);
 
@@ -494,6 +447,27 @@ class BlocksModule {
 			type: "replace",
 			from: `z.type===d.FilterLeft||z.type===d.FilterRight`,
 			to: "~" + reduceBlocksWithHover((b) => `||z.type===d.${b}`),
+			token: "~",
+		});
+
+		// get ticking blocks
+		let reduceTicking = (f) => {
+			return Object.values(this.registry.entries)
+				.filter((t) => t.interval > 0)
+				.reduce((acc, t) => acc + f(t.id), "");
+		};
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
+			type: "replace",
+			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
+			to: `~${reduceTicking((id) => `,(r.type===d[${id}])&&(n.store.corelibCache[${id}]=n.store.corelibCache[${id}].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
+			type: "replace",
+			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
+			to: `~${reduceTicking((id) => `,h.type===d[${id}]&&t.store.corelibCache[${id}].push({x:h.x,y:h.y})`)}`,
 			token: "~",
 		});
 	}

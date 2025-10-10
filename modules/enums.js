@@ -79,7 +79,7 @@ class EnumsModule {
 			newEnumMapping[moduleName] ??= {};
 			let moduleEnumMapping = newEnumMapping[moduleName];
 
-			// Update the new enum mapping with any local enums we the game is missing
+			// Update the new enum mapping with any local enum values the game is missing
 			let latestId = Math.max(enumRegistry.start - 1, ...Object.values(moduleEnumMapping));
 			for (let stringId of enumRegistry.stringIds) {
 				if (!moduleEnumMapping[stringId]) {
@@ -93,6 +93,11 @@ class EnumsModule {
 	}
 
 	applyPatches() {
+		// Run this once so that we generate the mappings
+		// This is mainly for during the menu before we have any values
+		// Once the game has started we will get the real enum mapping from the game
+		this.updateEnumMapping(this.enumMapping);
+
 		let reducedEnumStrings = { main: "", sim: "", manager: "" };
 
 		// loop through bundles here

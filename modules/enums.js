@@ -93,8 +93,6 @@ class EnumsModule {
 	}
 
 	applyPatches() {
-		this.updateEnumMapping(this.enumMapping);
-
 		let reducedEnumStrings = { main: "", sim: "", manager: "" };
 
 		// loop through bundles here

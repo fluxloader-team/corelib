@@ -1,9 +1,12 @@
+const config = fluxloaderAPI.modConfig.get("corelib");
+
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
 includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
 includeVMScript("modules/schedules.js");
+includeVMScript("modules/elements.js");
 includeVMScript("modules/enums.js");
 
 class CoreLib {
@@ -25,6 +28,7 @@ class CoreLib {
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
+		this.elements = new ElementsModule();
 	}
 
 	async applyPatches() {
@@ -36,6 +40,7 @@ class CoreLib {
 		this.items.applyPatches();
 		this.events.applyPatches();
 		this.schedules.applyPatches();
+		this.elements.applyPatches();
 		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
@@ -61,8 +66,8 @@ td,ed,Jh,Qh,Zh,Kh,qh,Yh,$h,zh,Qh,Bh,Lh,Nh,Fh,Dh,Ih,Rh,Ah,kh,Eh,Th,_h,bh,xh,vh,yh
 th,eh,Jc,Qc,qc,Yc,$c,Xc,Wc,Hc,Vc,Gc,Uc,jc,zc,Oc,Bc,Lc,Nc,Fc,Dc,Ic,Rc,Pc,Mc,Ac,kc,Ec,wc,bc,xc,yc,gc,
 mc,pc,fc,dc,hc,cc,uc,lc,tc,ec,Ju,Qu,Zu,Ku,$u,Hu,Vu,Uu,ju,zu,Ou,Lu,Nu,Fu,Du,Iu,Ru,Pu,ku,Eu,Tu,_u,Su,
 bu,xu,vu,yu,gu,pu,fu,du,lu,au,ou,ru,nu,tu,eu,Ql,Zl,Kl,ql,Yl,$l,Ul,jl,zl,Ol,Bl,Ll,Nl,Fl,Dl,Il,Rl,Pl,
-Ml,Al,Ed,nd,Xh,Wh,Hh,Gh,jh,wh,vc,oc,Yu,Xu,Wu,Gu,Mu,Au,wu,mu,hu,le,n,t,d,q,r,s,o,a,l,u,c,h,f,p,g,y,v
-,x,b,w,S,_,T,E,C,k,A,M,P,R,I,D,F};
+Mu,_,z,U,o,A,G,l,mu,y,N,j,M,O,x,g,nd,oc,P,S,Y,Yu,Xu,B,I,R,h,f,d,Au,Wu,Wh,T,s,p,L,q,v,Al,b,Hh,D,Ed,wh,
+Gu,wu,n,V,vc,Xh,m,w,F,t,jh,k,le,a,hu,C,Ml,r,c,E,H,W,u,X,$,Gh};
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 ~`,
 			token: `~`,
@@ -71,7 +76,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:expose", {
 			type: "replace",
 			from: `const O=function()`,
-			to: `globalThis.corelib.exposed={a,n,o,i,l,s,d,u,c},fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
+			to: `globalThis.corelib.exposed={a,n,s,o,i,l,d,u,c},fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});
 	}

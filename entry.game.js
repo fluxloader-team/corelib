@@ -5,9 +5,10 @@ fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
 fluxloaderAPI.events.on("cl:raw-api-setup", () => {
 	log("info", "corelib", "Setting up corelib raw API");
 	corelib.simulation.internal = {};
-	corelib.simulation.internal.solids = corelib.exposed.t;
+	corelib.simulation.internal.soils = corelib.exposed.t;
 	corelib.simulation.internal.particles = corelib.exposed.n;
 	corelib.simulation.internal.blocks = corelib.exposed.d;
+	corelib.simulation.internal.matterTypes = corelib.exposed.h;
 	corelib.simulation.internal.createParticle = corelib.exposed.Fh;
 	corelib.simulation.internal.createBlock = corelib.exposed.xd;
 	corelib.simulation.internal.setCell = corelib.exposed.Od;
@@ -55,7 +56,7 @@ corelib.utils = {
 		return corelib.simulation.internal.particles[type] != undefined ? corelib.simulation.internal.particles[type] : null;
 	},
 	getSolidNameByType: (type) => {
-		return corelib.simulation.internal.solids[type] != undefined ? corelib.simulation.internal.solids[type] : null;
+		return corelib.simulation.internal.soils[type] != undefined ? corelib.simulation.internal.soils[type] : null;
 	},
 	// Used internally in the tech UI to fix the line drawing
 	// counts how many techs are at the very bottom, to get the width

@@ -100,13 +100,13 @@ class ElementsModule {
 	}
 
 	unregisterBasicRecipe(element1, element2, removeBothWays = true) {
-		const removeRecipesBothWays = (input1, input2) => {
+		const removeBasicRecipe = (input1, input2) => {
 			if (!this.elementReactions.normal[input1]) return log("error", "corelib", `Could not unregister recipe between ${element1} and ${element2}! The reaction doesn't exist.`);
 			this.elementReactions.normal[input1] = this.elementReactions.normal[input1].filter(([target]) => target !== input2);
 			if (this.elementReactions.normal[input1].length === 0) delete this.elementReactions.normal[input1];
 		};
-		if (removeBothWays) removeRecipesBothWays(element1, element2);
-		removeRecipesBothWays(element2, element1);
+		if (removeBothWays) removeBasicRecipe(element1, element2);
+		removeBasicRecipe(element2, element1);
 	}
 	unregisterPressRecipe(id) {
 		if (!this.elementReactions.press[id]) return log("error", "corelib", `Press recipe with id "${id}" not found! Unable to unregister.`);

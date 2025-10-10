@@ -39,14 +39,14 @@ class EnumsModule {
 				if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
 					return {
 						success: false,
-						message: `Parameter 'bundleMap' does not contain all the required bundles, found '${Object.keys(v).join(", ")}' but needed each of '${bundles.join(", ")}'`,
+						message: `Parameter 'bundleMap' does not contain all the required bundles, found [${Object.keys(v).join(", ")}] but needed each of [${bundles.join(", ")}]`,
 					};
 				}
 				for (let key in v) {
 					if (!bundles.includes(key)) {
 						return {
 							success: false,
-							message: `Parameter 'bundleMap' contains invalid bundle '${key}', must be one of '${bundles.join(", ")}'`,
+							message: `Parameter 'bundleMap' contains invalid bundle '${key}' must be one of [${bundles.join(", ")}]`,
 						};
 					}
 					// this should NOT be what you directly replace in the enumerator, it should be the variable used to access the enumerator

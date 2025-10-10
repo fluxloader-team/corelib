@@ -23,7 +23,7 @@ class ModuleEnumRegistry {
 
 class EnumsModule {
 	registry = new SafeMap("enums");
-	store = {};
+	enumMapping = {};
 
 	schema = {
 		id: {
@@ -72,40 +72,40 @@ class EnumsModule {
 		return registry;
 	}
 
-	updateStore(gameStore) {
-		// For each module with an enum registry
+	updateEnumMapping(newEnumMapping) {
+		// For each module enum registry we have locally
 		for (let moduleName in this.registry.entries) {
 			let enumRegistry = this.registry.entries[moduleName];
-			gameStore[moduleName] ??= {};
-			let moduleGameStore = gameStore[moduleName];
+			newEnumMapping[moduleName] ??= {};
+			let moduleEnumMapping = newEnumMapping[moduleName];
 
-			// Put every registered enum value into the store
-			let latestId = Math.max(enumRegistry.start - 1, ...Object.values(moduleGameStore));
+			// Update the new enum mapping with any local enums we the game is missing
+			let latestId = Math.max(enumRegistry.start - 1, ...Object.values(moduleEnumMapping));
 			for (let stringId of enumRegistry.stringIds) {
-				if (!moduleGameStore[stringId]) {
-					moduleGameStore[stringId] = ++latestId;
+				if (!moduleEnumMapping[stringId]) {
+					moduleEnumMapping[stringId] = ++latestId;
 				}
 			}
 		}
 
-		// If we receive the store from the game keep our internal copy updated
-		this.gameStore = gameStore;
+		// Now use the new game enum mapping with any local additions we made
+		this.enumMapping = newEnumMapping;
 	}
 
 	applyPatches() {
-		this.updateStore(this.gameStore);
+		this.updateEnumMapping(this.enumMapping);
 
 		let reducedEnumStrings = { main: "", sim: "", manager: "" };
 
 		// loop through bundles here
-		for (let moduleName in this.gameStore) {
-			let enumRegistry = this.registry.entries[moduleName];
-			let storeValues = this.gameStore[moduleName];
+		for (let moduleName in this.enumMapping) {
+			let moduleRegistry = this.registry.entries[moduleName];
+			let moduleMapping = this.enumMapping[moduleName];
 
 			// example output: _[_["Schedule"]=19]="Schedule";
-			for (let bundle in enumRegistry.bundleMap) {
-				let identifier = enumRegistry.bundleMap[bundle];
-				for (let [stringId, intId] of Object.entries(storeValues)) {
+			for (let bundle in moduleRegistry.bundleMap) {
+				let identifier = moduleRegistry.bundleMap[bundle];
+				for (let [stringId, intId] of Object.entries(moduleMapping)) {
 					reducedEnumStrings[bundle] += `${identifier}[${identifier}["${stringId}"]=${intId}]="${stringId}";`;
 				}
 			}

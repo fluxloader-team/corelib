@@ -75,7 +75,7 @@ fluxloaderAPI.events.on("fl:scene-loaded", () => {
 	hasSceneLoaded = true;
 
 	let { store } = fluxloaderAPI.gameInstance.state;
-	store.corelibEnums = registrations.enumGameStore;
+	store.corelibEnumMapping = registrations.enumMapping;
 	store.corelibCache ??= {};
 	for (let id of tickingIds) {
 		store.corelibCache[id] ??= {};
@@ -118,7 +118,7 @@ function disableScreen() {
 globalThis.corelib.hooks.setupSave = (store) => {
 	return store;
 	// we can always overwrite it because we read from the save before loading it
-	// store.corelibEnums = registrations.enumGameStore;
+	// store.corelibEnumMapping = registrations.enumMapping;
 	// return store;
 };
 
@@ -130,10 +130,10 @@ globalThis.corelib.hooks.preSceneChange = async (param) => {
 		let url = param.substring(8); // "db_load="
 		let results = await window.electron.load(url);
 		let data = results.data; // get results
-		let store = data?.corelibEnums ?? {};
+		let enumMapping = data?.corelibEnumMapping ?? {};
 
 		// if we send electron an object it adds on all it's internals, and if we send it as {data:store} it just refuses to pass data for some reason
-		await fluxloaderAPI.invokeElectronIPC("corelib:updateEnumsGameStore", store);
+		await fluxloaderAPI.invokeElectronIPC("corelib:updateEnumMapping", enumMapping);
 	}
 	corelib.hooks.doSceneChange(param);
 };

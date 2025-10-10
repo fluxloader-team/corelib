@@ -84,14 +84,13 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");
 			let data = {};
 			data.schedules = corelib.schedules.registry.entries;
 			data.blocks = corelib.blocks.registry.entries;
-			data.enums = corelib.enums.registry.entries;
-			data.enumGameStore = corelib.enums.gameStore;
+			data.enumMapping = corelib.enums.enumMapping;
 			return data;
 		});
 
-		fluxloaderAPI.handleGameIPC("corelib:updateEnumsGameStore", (internal, store) => {
+		fluxloaderAPI.handleGameIPC("corelib:updateEnumMapping", (internal, enumMapping) => {
 			// update also stores it
-			corelib.enums.updateStore(store);
+			corelib.enums.updateEnumMapping(enumMapping);
 		});
 	}
 }

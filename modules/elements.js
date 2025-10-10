@@ -216,7 +216,9 @@ class ElementsModule {
 					(e) =>
 						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
 							e.colorHSL,
+							e.colorHSL,
 						)}},`,
+					this.soilRegistry,
 					this.soilRegistry,
 				),
 			token: "~",

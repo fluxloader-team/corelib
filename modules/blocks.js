@@ -85,18 +85,7 @@ class BlocksModule {
 			},
 		},
 	};
-
-	validateInput() {
-		let res = validateInput(data, blockSchema);
-		if (!res.success) {
-			let message = res.error.message;
-			if (res.error.argument === "shape" && res.error.message.includes("verifier")) message = "Parameter 'shape' must be a 4x4 matrix of integers";
-			if (res.error.argument === "angles") message = "Parameter 'angles' must be an array of integers";
-			throw new Error(message);
-		}
-		return res.data;
-	}
-
+	
 	register(data) {
 		data = validateInput(data, this.blockSchema, true).data;
 		

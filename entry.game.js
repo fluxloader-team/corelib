@@ -91,12 +91,12 @@ for (let id of tickingIds) {
 		let { structures } = fluxloaderAPI.gameInstance.state.session.cache.structures;
 
 		// use for...in instead of for...of so we can right away remove it, could use indexOf but this is better
-		for (let blockInd in store.corelibCache[id]) {
-			let block = store.corelibCache[id][blockInd];
+		for (let blockIndex in store.corelibCache[id]) {
+			let block = store.corelibCache[id][blockIndex];
 			const realBlock = structures?.[block.y]?.[block.x];
 
 			if (!realBlock) {
-				store.corelibCache[id].splice(blockInd, 1);
+				store.corelibCache[id].splice(blockIndex, 1);
 				continue;
 			}
 			fluxloaderAPI.events.trigger(`corelib:block-${id}`, realBlock);

@@ -39,14 +39,14 @@ class EnumsModule {
 				if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
 					return {
 						success: false,
-						message: `bundleMap when registering a module enum registry must have a valid bundle identifier, keys are ${Object.keys(v).join(", ")}, must be one of ${bundles.join(", ")}`,
+						message: `parameter 'bundleMap' does not contain all the required bundles, found '${Object.keys(v).join(", ")}' but needed each of '${bundles.join(", ")}'`,
 					};
 				}
 				for (let key in v) {
 					if (!bundles.includes(key)) {
 						return {
 							success: false,
-							message: `unexpected key "${key}" in bundleMap object for module enum registry, must be one of ${bundles.join(", ")}`,
+							message: `Parameter 'bundleMap' contains invalid bundle '${key}', must be one of '${bundles.join(", ")}'`,
 						};
 					}
 					// this should NOT be what you directly replace in the enumerator, it should be the variable used to access the enumerator
@@ -54,7 +54,7 @@ class EnumsModule {
 					if (typeof v[key] != "string") {
 						return {
 							success: false,
-							message: "bundleMap object in module enum registry must have only string variable names",
+							message: "Parameter 'bundleMap' must have only string variable names",
 						};
 					}
 				}

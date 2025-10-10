@@ -121,15 +121,19 @@ class EnumsModule {
 			manager: "(J||(J={}))",
 		};
 
-		fluxloaderAPI.setMappedPatch({
-			"js/bundle.js": [reducedEnumStrings.main, bundlePatchFroms.main],
-			"js/336.bundle.js": [reducedEnumStrings.sim, bundlePatchFroms.sim],
-			"js/546.bundle.js": [reducedEnumStrings.manager, bundlePatchFroms.manager]
-		}, "corelib:addEnums", (text, bundleFrom) => ({
-			type: "replace",
-			from: bundleFrom,
-			to: `${bundleFrom};${text}`, // Account for bad characters like '~' in enum ids by seperating with ';'
-		}));
+		fluxloaderAPI.setMappedPatch(
+			{
+				"js/bundle.js": [reducedEnumStrings.main, bundlePatchFroms.main],
+				"js/336.bundle.js": [reducedEnumStrings.sim, bundlePatchFroms.sim],
+				"js/546.bundle.js": [reducedEnumStrings.manager, bundlePatchFroms.manager],
+			},
+			"corelib:addEnums",
+			(text, bundleFrom) => ({
+				type: "replace",
+				from: bundleFrom,
+				to: `${bundleFrom};${text}`, // Account for bad characters like '~' in enum ids by seperating with ';'
+			}),
+		);
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveLoadHook", {
 			type: "replace",

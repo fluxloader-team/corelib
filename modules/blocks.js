@@ -85,10 +85,10 @@ class BlocksModule {
 			},
 		},
 	};
-	
+
 	register(data) {
 		data = validateInput(data, this.blockSchema, true).data;
-		
+
 		if (data.interval > 0) {
 			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
 			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });

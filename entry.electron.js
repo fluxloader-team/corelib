@@ -11,7 +11,7 @@ includeVMScript("modules/enums.js");
 
 class CoreLib {
 	constructor() {
-		this.enums = null
+		this.enums = null;
 		this.blocks = null;
 		this.tech = null;
 		this.upgrades = null;
@@ -21,7 +21,7 @@ class CoreLib {
 	}
 
 	initModules() {
-		this.enums = new EnumsModule()
+		this.enums = new EnumsModule();
 		this.blocks = new BlocksModule();
 		this.tech = new TechModule();
 		this.upgrades = new UpgradesModule();
@@ -212,11 +212,15 @@ function validateInput(parameters, schema, throwOnFail = false) {
 	}
 
 	if (throwOnFail && !result.success) {
-		throw new Error(`Input handling failed: ${Object.values(result.errors).map((e) => e.message).join("; ")}`);
+		throw new Error(
+			`Input handling failed: ${Object.values(result.errors)
+				.map((e) => e.message)
+				.join("; ")}`,
+		);
 	}
 
 	return result;
-};
+}
 
 globalThis.SafeMap = SafeMap;
 globalThis.validateInput = validateInput;

@@ -76,7 +76,7 @@ class ElementsModule {
 
 	registerBasicRecipe(input1, input2, output1, output2, addBothWays /* recipeSchema.basic */) {
 		const schemaCheck = { input1, input2, output1, output2, addBothWays };
-		data = validateInput(schemaCheck, this.recipeSchemas.basic, true).data;
+		const data = validateInput(schemaCheck, recipeSchemas.basic, true).data;
 		const add = (from, to) => {
 			this.elementReactions.normal[from] ??= [];
 			this.elementReactions.normal[from].push([to, data.output1, data.output2]);
@@ -87,7 +87,7 @@ class ElementsModule {
 
 	registerPressRecipe(input, outputs, requiredVelocity /* recipeSchema.press */) {
 		const schemaCheck = { input, outputs, requiredVelocity };
-		data = validateInput(schemaCheck, this.recipeSchemas.press, true).data;
+		const data = validateInput(schemaCheck, recipeSchemas.press, true).data;
 		this.elementReactions.press[data.input] = [data.requiredVelocity, data.outputs];
 	}
 
@@ -113,28 +113,15 @@ class ElementsModule {
 	unregisterConveyorBeltIgnores(id) {
 		const index = this.otherFeatures.conveyorBeltIgnores.indexOf(id);
 		if (index > -1) {
-			array.splice(index, 1);
+			this.otherFeatures.conveyorBeltIgnores.splice(index, 1);
 		}
 	}
 
 	applyPatches() {
 		//I wrote some of it then fed it into chatgpt to tell me what I did wrong
 		const getBasicRecipesToPatch = (registry, objectPrefix) => {
-			//Would like it on one line but prettier
-			const listToReturn = Object.entries(registry).map(
-				([key, values]) =>
-					`${objectPrefix}[n.RJ.${key}]=[` +
-					values
-						.map(
-							(v) =>
-								`[${v
-									.filter(Boolean)
-									.map((x) => `n.RJ.${x}`)
-									.join(",")}]`,
-						)
-						.join(",") +
-					`]`,
-			);
+			// prettier-ignore
+			const listToReturn = Object.entries(registry).map(([key, values]) => `${objectPrefix}[n.RJ.${key}]=[` + values.map(v => `[${v.filter(Boolean).map(x => `n.RJ.${x}`).join(",")}]`).join(",") +`]`);
 			return listToReturn.join(",");
 		};
 		const getPressRecipesToPatch = (registry, objectPrefix) => {
@@ -216,10 +203,8 @@ class ElementsModule {
 					(e) =>
 						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
 							e.colorHSL,
-							e.colorHSL,
 						)}},`,
-					this.soilRegistry,
-					this.soilRegistry,
+					this.soilRegistry
 				),
 			token: "~",
 		}));
@@ -241,8 +226,7 @@ class ElementsModule {
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
 			to: `pressRecipes=(function(){var press={};${getPressRecipesToPatch(
 				this.elementReactions.press,
-				"press",
-				"press",
+				"press"
 			)};return press;})(),s=function(e,t,r){const recipe=pressRecipes[t.type];if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}const outputs=recipe[1];let posY = outputs.length; for(const[outputId,chance]of outputs){if(Math.random()<chance){posY--;h(e,t.x,t.y+posY,outputId);}}(0,l.Nz)(e,t);if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]])}return true;}`,
 		});
 

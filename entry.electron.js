@@ -221,7 +221,7 @@ function validateInput(parameters, schema, throwOnFail = false) {
 		throw new Error(
 			`Input handling failed: ${Object.values(result.errors)
 				.map((e) => e.message)
-				.join("; ")}`,
+				.join("; ")}`
 		);
 	}
 

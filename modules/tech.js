@@ -19,6 +19,7 @@ const techSchema = {
 	},
 	unlocks: {
 		type: "object",
+		default: {},
 		// game accepts `structures[]` and/or `items[]`
 	},
 	parent: {
@@ -71,6 +72,8 @@ class TechModule {
 
 	register(data /* techSchema */) {
 		data = validateInput(data, this.techSchema, true).data;
+
+		if (Object.keys(data.unlocks).length === 0) delete data.unlocks;
 
 		if (this.registry.register(data.id, data)) {
 			this.enums.add(data.id);

@@ -1,3 +1,105 @@
+function cyrb53(str, seed = 0) {
+	let h1 = 0xdeadbeef ^ seed,
+		h2 = 0x41c6ce57 ^ seed;
+	for (let i = 0, ch; i < str.length; i++) {
+		ch = str.charCodeAt(i);
+		h1 = Math.imul(h1 ^ ch, 2654435761);
+		h2 = Math.imul(h2 ^ ch, 1597334677);
+	}
+	h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+	h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+	h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+	h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+	return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+
+function sortRegistryIds(registry, startingId) {
+	const items = Object.values(registry);
+	items.sort((a, b) => a.numericHash - b.numericHash);
+	items.forEach((item, index) => {
+		item.numericId = index + startingId;
+	});
+}
+elementSchema = {
+	id: {
+		type: "string",
+	},
+	name: {
+		type: "string",
+	},
+	interactsWithHoverText: {
+		type: "array",
+		default: [""],
+	},
+	colors: {
+		type: "array",
+		verifier: (v) => {
+			return {
+				success: v.every(Array.isArray),
+				message: `Parameter 'colors' must be an array of rgba colors`,
+			};
+		},
+	},
+	density: {
+		type: "number",
+		verifier: (v) => {
+			return {
+				success: Number.isInteger(v) && v > 0,
+				message: "Parameter 'density' must be an integer > 0",
+			};
+		},
+	},
+	matterType: {
+		type: "string",
+		default: "Solid",
+		verifier: (v) => {
+			return {
+				success: ["Solid", "Liquid", "Particle", "Gas", "Static", "Slushy", "Wisp"].includes(v),
+				message: `Parameter 'type' must be one of "Solid", "Liquid", "Particle", "Gas", "Static", "Slushy", "Wisp"`,
+			};
+		},
+	},
+
+	addToFilterList: {
+		type: "boolean",
+		default: true,
+	},
+};
+
+soilSchema = {
+	id: {
+		type: "string",
+	},
+	name: {
+		type: "string",
+	},
+	interactsWithHoverText: {
+		type: "array",
+		default: [""],
+	},
+	colorHSL: {
+		type: "array",
+		verifier: (v) => {
+			return {
+				success: v.length == 3,
+				message: `Parameter 'colorHSL' must be a HSL array`,
+			};
+		},
+	},
+	hp: {
+		type: "number",
+		default: 1,
+	},
+	outputElement: {
+		type: "string",
+	},
+	chanceForOutput: {
+		type: "number",
+		default: 1,
+	},
+};
+
 const recipeSchemas = {
 	basic: {
 		input1: {
@@ -40,7 +142,7 @@ const recipeSchemas = {
 	burn: {},
 	shake: {},
 };
-
+const saveHasNewStorageType = false;
 class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
@@ -73,7 +175,16 @@ class ElementsModule {
 		this.registerConveyorBeltIgnores("Lava");
 		this.registerConveyorBeltIgnores("Fire");
 	}
-
+	registerElement(inputs) {
+		const data = validateInput(inputs, elementSchema, true).data;
+		data.numericHash = cyrb53(data.id);
+		this.elementRegistry[data.id] = data;
+	}
+	registerSoil(inputs) {
+		const data = validateInput(inputs, soilSchema, true).data;
+		data.numericHash = cyrb53(data.id);
+		this.soilRegistry[data.id] = data;
+	}
 	registerBasicRecipe(input1, input2, output1, output2, addBothWays /* recipeSchema.basic */) {
 		const schemaCheck = { input1, input2, output1, output2, addBothWays };
 		const data = validateInput(schemaCheck, recipeSchemas.basic, true).data;
@@ -85,6 +196,18 @@ class ElementsModule {
 		add(data.input2, data.input1);
 	}
 
+	/*
+	registerBurnRecipe({id,elementOrSoil,result,chance = 1}) {
+		if (elementOrSoil==="element") {
+			this.elementReactions.burn["i.RJ."+id]={output:"i.RJ."+result,chance}
+		} else if (elementOrSoil==="soil") {
+			this.elementReactions.burn["i.vZ."+id]={output:"i.RJ."+result,chance}
+		} 
+	} 
+
+	registerShakerRecipe(input, output1, output2) {}
+
+	*/
 	registerPressRecipe(input, outputs, requiredVelocity /* recipeSchema.press */) {
 		const schemaCheck = { input, outputs, requiredVelocity };
 		const data = validateInput(schemaCheck, recipeSchemas.press, true).data;
@@ -118,6 +241,9 @@ class ElementsModule {
 	}
 
 	applyPatches() {
+		const reduceElements = (string, registry) => {
+			return Object.values(registry).reduce((acc, e) => acc + string(e), "");
+		};
 		//I wrote some of it then fed it into chatgpt to tell me what I did wrong
 		const getBasicRecipesToPatch = (registry, objectPrefix) => {
 			// prettier-ignore
@@ -202,7 +328,7 @@ class ElementsModule {
 				reduceElements(
 					(e) =>
 						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
-							e.colorHSL,
+							e.colorHSL
 						)}},`,
 					this.soilRegistry
 				),
@@ -220,7 +346,18 @@ class ElementsModule {
 			from: `[t.type,r.type].includes(n.RJ.Spore)?(0,a.Jx)(e,r.x,r.y,n.vZ.Empty):[t.type,r.type].includes(n.RJ.Lava)?(0,a.Jx)(e,r.x,r.y,(0,o.n)(n.RJ.Lava,r.x,r.y)):(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[1],r.x,r.y))`,
 			to: `i[2]?(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[2],r.x,r.y)):(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)`,
 		});
-
+		/*
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:burningFuctionEdit", {
+   			type: "replace",
+   			from: `p=((a={})[i.RJ.Slag]=function(){return{output:{elementType:i.RJ.BurntSlag,chance:.25}}},a),f=!1,g=function(e,t,r,a){if(!(t<0||r<0||t>=e.store.world.size.width||r>=e.store.world.size.height)){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n))return(d=(0,s.n)(i.RJ.Fire,t,r)).duration.left=d.duration.max=d.duration.left*Math.max(.25,1-a/.64),void(0,c.Jx)(e,t,r,d);if((0,c.W)(n,i.vZ.Ice))(0,u.jE)(e,t,r);else{if((0,c.af)(n,[i.RJ.Water,i.RJ.FreezingIce])){var d=(0,s.n)(i.RJ.Steam,t,r);return(0,c.Jx)(e,t,r,d),f||(e.environment.postMessage([i.dD.ForceCompleteObjective,"vaporize_water"]),f=!0),void e.environment.postMessage([i.dD.PlaySound,[{id:"vaporize",opts:{volume:.1,fadeOut:l.A.getRandomFloatBetween(.1,.5),playbackRate:l.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:d.x*o.A.cellSize,y:d.y*o.A.cellSize}}]])}if((0,c.af)(n,i.RJ.Slag))return(d=(0,s.n)(i.RJ.Flame,t,r)).data=p[i.RJ.Slag](),d.duration.left=d.duration.max=d.duration.left-a,void(0,c.Jx)(e,t,r,d);x(e,t,r,n)||(0,c.af)(n,i.RJ.Basalt)&&(0,c.Jx)(e,t,r,(0,s.n)(i.RJ.Lava,t,r))}}},y=function(e,t){var r;if(![i.RJ.Flame,i.RJ.Lava].includes(t.type))return!1;if(t.type===i.RJ.Flame&&((0,v.$T)(e,t.x*o.A.cellSize,t.y*o.A.cellSize,v.c6.Fire),e.environment.postMessage([i.dD.AddLight,t.x*o.A.cellSize,t.y*o.A.cellSize,{brightness:1,duration:100,useLightZones:!0}])),[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].forEach((function(r){var a=r.x,n=r.y,o={cX:t.x+a,cY:t.y+n},s=o.cX,d=o.cY;if(!(s<0||d<0||s>=e.store.world.size.width||d>=e.store.world.size.height)){var u=e.environment,c=l.A.getThreadIndexFromCellX(s,u.threadMeta.threadCount);c===u.threadMeta.startingIndex?m(e,s,d,t):e.environment.threadMeta.ports[c].postMessage([i.dD.Burn,s,d])}})),t.type===i.RJ.Lava)return t.duration.left=t.duration.max*l.A.getRandomFloatBetween(.5,1.5),t.variantIndex=l.A.getRandomIntBetween(0,3),(0,c.Jx)(e,t.x,t.y,t),!0;var a=null===(r=t.data)||void 0===r?void 0:r.output;return a?!1===a.elementType||a.chance&&Math.random()>=a.chance?((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(a.elementType,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0)},m=function(e,t,r,a){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n)){var l=(null==a?void 0:a.type)===i.RJ.Lava?.01:.25;if(Math.random()<l){(null==a?void 0:a.type)===i.RJ.Lava&&e.environment.postMessage([i.dD.AddLight,a.x*o.A.cellSize,a.y*o.A.cellSize,{brightness:1,size:r*o.A.cellSize<e.store.world.horizon[Math.floor(t)]*o.A.cellSize+10*o.A.cellSize?100:1e3,duration:5e3,useLightZones:!0}]);var d=(0,s.n)(i.RJ.Fire,t,r);return(null==a?void 0:a.type)===i.RJ.Lava&&(d.data.temperature=1200),void(0,c.Jx)(e,t,r,d)}}if((0,c.af)(n,i.RJ.Slag)){var u=(0,s.n)(i.RJ.Flame,t,r);return u.data=p[i.RJ.Slag](),void(0,c.Jx)(e,t,r,u)}(0,h.x)(e,n,t,r),x(e,t,r,n)},S=((n={})[i.vZ.Moss]=!1,n[i.vZ.Divider]=!1,n[i.vZ.GoldSoil]=i.RJ.Gold,n[i.vZ.Petal]=i.RJ.Petalium,n),x=function(e,t,r,a){if(a=null!=a?a:(0,c.tT)(e.store,t,r),(0,c.ez)(a)){if((0,c.kw)(a,[i.vZ.Moss,i.vZ.Divider,i.vZ.GoldSoil,i.vZ.Petal])){var n=(0,s.n)(i.RJ.Flame,t,r);return n.skipPhysics=!0,n.data={output:{elementType:S[a]}},(0,c.Jx)(e,t,r,n),!0}(0,d.zT)(e,t,r,4)}return!1}}`,
+    		to: `
+    		p=((a={})[i.RJ.Slag]=function(){return{output:{elementType:i.RJ.BurntSlag,chance:.25}}},a),f=!1,
+    		g=function(e,t,r,a){if(!(t<0||r<0||t>=e.store.world.size.width||r>=e.store.world.size.height)){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n))return(d=(0,s.n)(i.RJ.Fire,t,r)).duration.left=d.duration.max=d.duration.left*Math.max(.25,1-a/.64),void(0,c.Jx)(e,t,r,d);if((0,c.W)(n,i.vZ.Ice))(0,u.jE)(e,t,r);else{if((0,c.af)(n,[i.RJ.Water,i.RJ.FreezingIce])){var d=(0,s.n)(i.RJ.Steam,t,r);return(0,c.Jx)(e,t,r,d),f||(e.environment.postMessage([i.dD.ForceCompleteObjective,"vaporize_water"]),f=!0),void e.environment.postMessage([i.dD.PlaySound,[{id:"vaporize",opts:{volume:.1,fadeOut:l.A.getRandomFloatBetween(.1,.5),playbackRate:l.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:d.x*o.A.cellSize,y:d.y*o.A.cellSize}}]])}if((0,c.af)(n,i.RJ.Slag))return(d=(0,s.n)(i.RJ.Flame,t,r)).data=p[i.RJ.Slag](),d.duration.left=d.duration.max=d.duration.left-a,void(0,c.Jx)(e,t,r,d);x(e,t,r,n)||(0,c.af)(n,i.RJ.Basalt)&&(0,c.Jx)(e,t,r,(0,s.n)(i.RJ.Lava,t,r))}}},
+    		y=function(e,t){var r;if(![i.RJ.Flame,i.RJ.Lava].includes(t.type))return!1;if(t.type===i.RJ.Flame&&((0,v.$T)(e,t.x*o.A.cellSize,t.y*o.A.cellSize,v.c6.Fire),e.environment.postMessage([i.dD.AddLight,t.x*o.A.cellSize,t.y*o.A.cellSize,{brightness:1,duration:100,useLightZones:!0}])),[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].forEach((function(r){var a=r.x,n=r.y,o={cX:t.x+a,cY:t.y+n},s=o.cX,d=o.cY;if(!(s<0||d<0||s>=e.store.world.size.width||d>=e.store.world.size.height)){var u=e.environment,c=l.A.getThreadIndexFromCellX(s,u.threadMeta.threadCount);c===u.threadMeta.startingIndex?m(e,s,d,t):e.environment.threadMeta.ports[c].postMessage([i.dD.Burn,s,d])}})),t.type===i.RJ.Lava)return t.duration.left=t.duration.max*l.A.getRandomFloatBetween(.5,1.5),t.variantIndex=l.A.getRandomIntBetween(0,3),(0,c.Jx)(e,t.x,t.y,t),!0;var a=null===(r=t.data)||void 0===r?void 0:r.output;return a?!1===a.elementType||a.chance&&Math.random()>=a.chance?((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(a.elementType,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0)},
+    		m=function(e,t,r,a){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n)){var l=(null==a?void 0:a.type)===i.RJ.Lava?.01:.25;if(Math.random()<l){(null==a?void 0:a.type)===i.RJ.Lava&&e.environment.postMessage([i.dD.AddLight,a.x*o.A.cellSize,a.y*o.A.cellSize,{brightness:1,size:r*o.A.cellSize<e.store.world.horizon[Math.floor(t)]*o.A.cellSize+10*o.A.cellSize?100:1e3,duration:5e3,useLightZones:!0}]);var d=(0,s.n)(i.RJ.Fire,t,r);return(null==a?void 0:a.type)===i.RJ.Lava&&(d.data.temperature=1200),void(0,c.Jx)(e,t,r,d)}}if((0,c.af)(n,i.RJ.Slag)){var u=(0,s.n)(i.RJ.Flame,t,r);return u.data=p[i.RJ.Slag](),void(0,c.Jx)(e,t,r,u)}(0,h.x)(e,n,t,r),x(e,t,r,n)},S=((n={})[i.vZ.Moss]=!1,n[i.vZ.Divider]=!1,n[i.vZ.GoldSoil]=i.RJ.Gold,n[i.vZ.Petal]=i.RJ.Petalium,n),
+    		x=function(e,t,r,a){if(a=null!=a?a:(0,c.tT)(e.store,t,r),(0,c.ez)(a)){if((0,c.kw)(a,[i.vZ.Moss,i.vZ.Divider,i.vZ.GoldSoil,i.vZ.Petal])){var n=(0,s.n)(i.RJ.Flame,t,r);return n.skipPhysics=!0,n.data={output:{elementType:S[a]}},(0,c.Jx)(e,t,r,n),!0}(0,d.zT)(e,t,r,4)}return!1}}`
+		}); 
+		*/
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:Press", {
 			type: "replace",
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
@@ -235,6 +372,19 @@ class ElementsModule {
 			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,
 			to: `d=[${simpleAppend(this.otherFeatures.conveyorBeltIgnores, "a.RJ.")}`,
 		});
+
+		if (saveHasNewStorageType) {
+			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {
+				type: "replace",
+				from: `e>=100?Fh(e-100,n,t)`,
+				to: `e<0?Fh(-e,n,t)`,
+			});
+			fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveNegitiveValuesInSavedata", {
+				type: "replace",
+				from: `e.type+100`,
+				to: `-e.type`,
+			});
+		}
 	}
 }
 

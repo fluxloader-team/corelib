@@ -27,7 +27,7 @@ class SchedulesModule {
 	});
 
 	register(id, interval /* scheduleSchema */) {
-		data = validateInput({ id, interval }, scheduleSchema, true).data;
+		const data = validateInput({ id, interval }, scheduleSchema, true).data;
 
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 		if (this.registry.register(data.id, data.interval)) {

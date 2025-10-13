@@ -71,7 +71,7 @@ class TechModule {
 	}
 
 	register(data /* techSchema */) {
-		data = validateInput(data, techSchema, true).data;
+		const data = validateInput(data, techSchema, true).data;
 
 		if (Object.keys(data.unlocks).length === 0) delete data.unlocks;
 

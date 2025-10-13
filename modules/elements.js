@@ -76,7 +76,7 @@ class ElementsModule {
 
 	registerBasicRecipe(input1, input2, output1, output2, addBothWays /* recipeSchema.basic */) {
 		const schemaCheck = { input1, input2, output1, output2, addBothWays };
-		data = validateInput(schemaCheck, recipeSchemas.basic, true).data;
+		const data = validateInput(schemaCheck, recipeSchemas.basic, true).data;
 		const add = (from, to) => {
 			this.elementReactions.normal[from] ??= [];
 			this.elementReactions.normal[from].push([to, data.output1, data.output2]);
@@ -87,7 +87,7 @@ class ElementsModule {
 
 	registerPressRecipe(input, outputs, requiredVelocity /* recipeSchema.press */) {
 		const schemaCheck = { input, outputs, requiredVelocity };
-		data = validateInput(schemaCheck, recipeSchemas.press, true).data;
+		const data = validateInput(schemaCheck, recipeSchemas.press, true).data;
 		this.elementReactions.press[data.input] = [data.requiredVelocity, data.outputs];
 	}
 

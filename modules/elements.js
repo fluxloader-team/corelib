@@ -175,19 +175,18 @@ class ElementsModule {
 		this.registerConveyorBeltIgnores("Lava");
 		this.registerConveyorBeltIgnores("Fire");
 	}
-	registerElement(inputs) {
-		const data = validateInput(inputs, elementSchema, true).data;
+	registerElement(inputData) {
+		const data = validateInput(inputData, elementSchema, true).data;
 		data.numericHash = cyrb53(data.id);
 		this.elementRegistry[data.id] = data;
 	}
-	registerSoil(inputs) {
-		const data = validateInput(inputs, soilSchema, true).data;
+	registerSoil(inputData) {
+		const data = validateInput(inputData, soilSchema, true).data;
 		data.numericHash = cyrb53(data.id);
 		this.soilRegistry[data.id] = data;
 	}
 	registerBasicRecipe(input1, input2, output1, output2, addBothWays /* recipeSchema.basic */) {
-		const schemaCheck = { input1, input2, output1, output2, addBothWays };
-		const data = validateInput(schemaCheck, recipeSchemas.basic, true).data;
+		const data = validateInput({ input1, input2, output1, output2, addBothWays }, recipeSchemas.basic, true).data;
 		const add = (from, to) => {
 			this.elementReactions.normal[from] ??= [];
 			this.elementReactions.normal[from].push([to, data.output1, data.output2]);
@@ -209,8 +208,7 @@ class ElementsModule {
 
 	*/
 	registerPressRecipe(input, outputs, requiredVelocity /* recipeSchema.press */) {
-		const schemaCheck = { input, outputs, requiredVelocity };
-		const data = validateInput(schemaCheck, recipeSchemas.press, true).data;
+		const data = validateInput({ input, outputs, requiredVelocity }, recipeSchemas.press, true).data;
 		this.elementReactions.press[data.input] = [data.requiredVelocity, data.outputs];
 	}
 

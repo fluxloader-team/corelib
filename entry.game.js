@@ -7,11 +7,11 @@ function disableScreen() {
 }
 
 class CoreLib {
-    exposed = { raw: {}, named: {} };
-    simulation = {};
-    events = {};
-    utils = {};
-    hooks = {};
+	exposed = { raw: {}, named: {} };
+	simulation = {};
+	events = {};
+	utils = {};
+	hooks = {};
 
 	async init() {
 		this.setupEvents();

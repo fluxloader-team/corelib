@@ -108,7 +108,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 
 class SafeMap {
 	name = "";
-	definitions = {};
+	entries = {};
 
 	constructor(name) {
 		this.name = name;

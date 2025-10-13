@@ -1,9 +1,11 @@
 class CoreLib {
-    exposed = { raw: {}, named: {} };
-    simulation = {};
-    events = {};
-    utils = {};
-    hooks = {};
+	exposed = { raw: {}, named: {} };
+	simulation = {};
+	events = {};
+	utils = {};
+	hooks = {};
+	batchData = {};
+	eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 
 	init() {
 		this.setupEvents();
@@ -12,12 +14,9 @@ class CoreLib {
 	}
 
 	setupEvents() {
-		let batchData = {};
-		const events = ["cell-change", "fog-reveal", "soil-dig"];
-
-		for (let event of events) {
+		for (let event of this.eventNames) {
 			fluxloaderAPI.events.registerEvent(`cl:${event}`);
-			batchData[event] = [];
+			this.batchData[event] = [];
 		}
 
 		fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
@@ -26,18 +25,18 @@ class CoreLib {
 			log("info", "corelib", "Setting up corelib raw API");
 
 			corelib.exposed.named = {
-				soils: corelib.exposed.rawi.vZ,
-				tech: corelib.exposed.rawi.xQ,
-				blocks: corelib.exposed.rawi.ev,
-				particles: corelib.exposed.rawi.RJ,
-				items: corelib.exposed.rawi.Np,
-				createParticle: corelib.exposed.rawc.n,
-				matterTypes: corelib.exposed.rawi.es,
-				setCell: corelib.exposed.rawu.Jx,
+				soils: corelib.exposed.raw.i.vZ,
+				tech: corelib.exposed.raw.i.xQ,
+				blocks: corelib.exposed.raw.i.ev,
+				particles: corelib.exposed.raw.i.RJ,
+				items: corelib.exposed.raw.i.Np,
+				createParticle: corelib.exposed.raw.c.n,
+				matterTypes: corelib.exposed.raw.i.es,
+				setCell: corelib.exposed.raw.u.Jx,
 			};
 
 			corelib.utils = {
-				...corelib.exposed.rawo.A,
+				...corelib.exposed.raw.o.A,
 			};
 		});
 	}
@@ -46,10 +45,10 @@ class CoreLib {
 		// Events are batched together because of how many are triggered
 		// All batched data is sent when the worker receives the "RunUpdate" message
 		corelib.events.sendBatches = () => {
-			for (let event of events) {
-				if (batchData[event].length === 0) continue;
-				fluxloaderAPI.events.trigger(`cl:${event}`, batchData[event], false);
-				batchData[event] = [];
+			for (let event of this.eventNames) {
+				if (this.batchData[event].length === 0) continue;
+				fluxloaderAPI.events.trigger(`cl:${event}`, this.batchData[event], false);
+				this.batchData[event] = [];
 			}
 		};
 
@@ -72,11 +71,11 @@ class CoreLib {
 			data.toParticleType = data.toCellType == 1 && typeof data.raw.to === "object" ? data.raw.to.type : null;
 			data.toBlockType = data.toCellType == 15 && typeof data.raw.to === "object" ? data.raw.to.type : null;
 
-			batchData["cell-change"].push(data);
+			this.batchData["cell-change"].push(data);
 
 			if (data.fromCellType && data.fromCellType !== 1) {
 				data.cellFromName = corelib.exposed.named.soils[data.fromCellType];
-				batchData["soil-dig"].push(data);
+				this.batchData["soil-dig"].push(data);
 			}
 		};
 
@@ -89,14 +88,14 @@ class CoreLib {
 				loc: { x, y },
 			};
 
-			batchData["fog-reveal"].push(data);
+			this.batchData["fog-reveal"].push(data);
 		};
 	}
 
 	setupInternals() {
 		corelib.simulation = {
 			isEmpty: (x, y) => {
-				corelib.exposed.rawu.lV(fluxloaderAPI.gameInstanceState, x, y);
+				corelib.exposed.raw.u.lV(fluxloaderAPI.gameInstanceState, x, y);
 			},
 			spawnParticle: (x, y, type, data = {}) => {
 				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
@@ -116,7 +115,7 @@ class CoreLib {
 			},
 			setCell: (x, y, data) => {
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstanceState, x, y, data);
-			}
+			},
 		};
 	}
 }

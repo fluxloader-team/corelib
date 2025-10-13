@@ -126,7 +126,7 @@ class UpgradesModule {
 	}
 
 	registerTab(data /* tabSchema */) {
-		data = validateInput(data, this.tabSchema, true).data;
+		data = validateInput(data, tabSchema, true).data;
 
 		if (Object.keys(data.requirement).length === 0) delete data.requirement;
 
@@ -134,7 +134,7 @@ class UpgradesModule {
 	}
 
 	registerCategory(data /* categorySchema */) {
-		data = validateInput(data, this.categorySchema, true).data;
+		data = validateInput(data, categorySchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
@@ -148,7 +148,7 @@ class UpgradesModule {
 
 
 	registerUpgrade(data /* upgradeSchema */) {
-		data = validateInput(data, this.upgradeSchema, true).data;
+		data = validateInput(data, upgradeSchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);

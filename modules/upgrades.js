@@ -99,7 +99,6 @@ const upgradeSchema = {
 	},
 };
 
-
 class UpgradesModule {
 	upgrades = {};
 
@@ -125,16 +124,16 @@ class UpgradesModule {
 		}
 	}
 
-	registerTab(data /* tabSchema */) {
-		data = validateInput(data, this.tabSchema, true).data;
+	registerTab(inputData /* tabSchema */) {
+		const data = validateInput(inputData, tabSchema, true).data;
 
 		if (Object.keys(data.requirement).length === 0) delete data.requirement;
 
 		this.upgrades[data.id] = { ...data, items: {} };
 	}
 
-	registerCategory(data /* categorySchema */) {
-		data = validateInput(data, this.categorySchema, true).data;
+	registerCategory(inputData /* categorySchema */) {
+		const data = validateInput(inputData, categorySchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
@@ -146,9 +145,8 @@ class UpgradesModule {
 		this.upgrades[data.tabID].items[data.id] = { ...data, upgrades: {} };
 	}
 
-
-	registerUpgrade(data /* upgradeSchema */) {
-		data = validateInput(data, this.upgradeSchema, true).data;
+	registerUpgrade(inputData /* upgradeSchema */) {
+		const data = validateInput(inputData, upgradeSchema, true).data;
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);

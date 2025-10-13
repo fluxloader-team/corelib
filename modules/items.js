@@ -1,4 +1,3 @@
-
 const itemSchema = {
 	id: {
 		type: "string",
@@ -32,8 +31,8 @@ class ItemsModule {
 		},
 	});
 
-	register(data /* itemSchema */) {
-		data = validateInput(data, this.itemSchema, true).data;
+	register(inputData /* itemSchema */) {
+		const data = validateInput(inputData, itemSchema, true).data;
 
 		if (data.type === "Consumable") {
 			// For now just silently continue but with a warning

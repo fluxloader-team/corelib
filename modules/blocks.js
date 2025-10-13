@@ -150,8 +150,8 @@ class BlocksModule {
 		},
 	});
 
-	register(data /* blockSchema */) {
-		data = validateInput(data, this.blockSchema, true).data;
+	register(inputData /* blockSchema */) {
+		const data = validateInput(inputData, blockSchema, true).data;
 
 		if (data.interval > 0) {
 			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
@@ -163,8 +163,8 @@ class BlocksModule {
 		}
 	}
 
-	registerVariant(data /* variantSchema */) {
-		data = validateInput(data, this.variantSchema, true).data;
+	registerVariant(inputData /* variantSchema */) {
+		const data = validateInput(inputData, this.variantSchema, true).data;
 
 		if (!this.idMap.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block id: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
@@ -207,7 +207,7 @@ class BlocksModule {
 		}
 
 		return _return;
-	};
+	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading block patches");
@@ -279,13 +279,16 @@ class BlocksModule {
 			to:
 				reduceBlocks(
 					(b) =>
-						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationDelay || 500
+						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
+							b.animationDelay || 500
 						})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
 						reduceBlockVariants(
 							b,
 							(v) =>
-								`if(n.type===d.${b.id}){l=t.session.rendering.images["${v.fullImagePath
-								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${v.animationDelay || 500
+								`if(n.type===d.${b.id}){l=t.session.rendering.images["${
+									v.fullImagePath
+								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
+									v.animationDelay || 500
 								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
 						),
 				) + "~",

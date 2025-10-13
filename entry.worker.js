@@ -4,10 +4,10 @@ class CoreLib {
 	events = {};
 	utils = {};
 	hooks = {};
+	batchData = {};
+	eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 
 	init() {
-		this.batchData = {};
-		this.eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 		this.setupEvents();
 		this.setupHooks();
 		this.setupInternals();

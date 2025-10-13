@@ -106,7 +106,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 	}
 }
 
-class SafeMap {
+class DataRegistry {
 	name = "";
 	entries = {};
 
@@ -116,7 +116,7 @@ class SafeMap {
 
 	register(id, data) {
 		if (this.entries.hasOwnProperty(id)) {
-			log("error", "corelib", `${this.name} with id "${id}" already exists!`);
+			log("error", "corelib", `DataRegistry '${this.name}' already has an entry with ID '${id}'`);
 			return false;
 		}
 		this.entries[id] = data;
@@ -125,7 +125,7 @@ class SafeMap {
 
 	unregister(id) {
 		if (!this.entries.hasOwnProperty(id)) {
-			log("error", "corelib", `${this.name} with id "${id}" already exists!`);
+			log("error", "corelib", `DataRegistry '${this.name}' does not have an entry with ID '${id}'`);
 			return false;
 		}
 		delete this.entries[id];
@@ -228,7 +228,7 @@ function validateInput(parameters, schema, throwOnFail = false) {
 	return result;
 }
 
-globalThis.SafeMap = SafeMap;
+globalThis.DataRegistry = DataRegistry;
 globalThis.validateInput = validateInput;
 
 globalThis.corelib = new CoreLib();

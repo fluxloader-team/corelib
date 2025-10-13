@@ -1,8 +1,8 @@
 const moduleEnumSchema = {
-	id: {
+	name: {
 		type: "string",
 	},
-	start: {
+	intIdStart: {
 		type: "number",
 	},
 	bundleMap: {
@@ -38,37 +38,52 @@ const moduleEnumSchema = {
 	},
 };
 
-class ModuleEnumRegistry {
-	constructor(id, start, bundleMap) {
-		this.id = id;
-		this.start = start;
+class EnumDataRegistry {
+	name;
+	entries = {};
+	intIdStart;
+	bundleMap;
+
+	constructor(name, intIdStart, bundleMap) {
+		this.name = name;
+		this.entries = {};
+		this.intIdStart = intIdStart;
 		this.bundleMap = bundleMap;
-		this.stringIds = [];
 	}
 
-	add(value) {
-		if (this.stringIds.includes(value)) {
-			throw new Error(`Value "${value}" already exists under id "${this.id}"`);
+	register(id, data) {
+		if (this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} EnumDataRegistry already has an entry with ID '${id}'`);
+			return false;
 		}
-		this.stringIds.push(value);
+
+		this.entries[id] = data;
+		return true;
 	}
 
-	remove(value) {
-		if (!this.stringIds.includes(value)) {
-			throw new Error(`Value "${value}" does not exist under id "${this.id}"`);
+	unregister(id) {
+		if (!this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} EnumDataRegistry does not have an entry with ID '${id}'`);
+			return false;
 		}
-		this.stringIds.splice(this.stringIds.indexOf(value), 1);
+
+		delete this.entries[id];
+		return true;
+	}
+
+	getStringIds() {
+		return Object.keys(this.entries);
 	}
 }
 
 class EnumsModule {
-	registry = new SafeMap("enums");
+	registry = new DataRegistry("enums");
 	enumMapping = {};
 
-	register(inputData /* moduleEnumSchema */) {
+	createRegistry(inputData /* moduleEnumSchema */) {
 		const data = validateInput(inputData, moduleEnumSchema, true).data;
-		const registry = new ModuleEnumRegistry(data.id, data.start, data.bundleMap);
-		this.registry.register(data.id, registry);
+		const registry = new EnumDataRegistry(data.name, data.intIdStart, data.bundleMap);
+		this.registry.register(data.name, registry);
 		return registry;
 	}
 
@@ -80,8 +95,8 @@ class EnumsModule {
 			let moduleEnumMapping = newEnumMapping[moduleName];
 
 			// Update the new enum mapping with any local enum values the game is missing
-			let latestId = Math.max(enumRegistry.start - 1, ...Object.values(moduleEnumMapping));
-			for (let stringId of enumRegistry.stringIds) {
+			let latestId = Math.max(enumRegistry.intIdStart - 1, ...Object.values(moduleEnumMapping));
+			for (let stringId of enumRegistry.getStringIds()) {
 				if (!moduleEnumMapping[stringId]) {
 					moduleEnumMapping[stringId] = ++latestId;
 				}
@@ -93,6 +108,8 @@ class EnumsModule {
 	}
 
 	applyPatches() {
+		log("info", "corelib", "Loading enum module patches");
+
 		// Run this once so that we generate the mappings
 		// This is mainly for during the menu before we have any values
 		// Once the game has started we will get the real enum mapping from the game

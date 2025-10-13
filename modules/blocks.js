@@ -139,10 +139,9 @@ const variantSchema = {
 };
 
 class BlocksModule {
-	registry = new SafeMap("Block");
-	enums = corelib.enums.register({
-		id: "Block",
-		start: 99,
+	registry = corelib.enums.createRegistry({
+		name: "Block",
+		intIdStart: 99,
 		bundleMap: {
 			main: "d",
 			sim: "h",
@@ -158,23 +157,20 @@ class BlocksModule {
 			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
 		}
 		let fullImagePath = this.getFullImagePath(data.sourceMod, data.id, data.imagePath);
-		if (this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data })) {
-			this.enums.add(data.id);
-		}
+		this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data });
 	}
 
 	registerVariant(inputData /* variantSchema */) {
 		const data = validateInput(inputData, this.variantSchema, true).data;
 
 		if (!this.idMap.hasOwnProperty(data.parentId)) {
-			return log("error", "corelib", `Parent block id: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
+			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
 		}
 
 		let id = data.parentId + data.suffix;
 		let parentBlock = this.registry.entries[this.idMap[data.parentId]];
 		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
 		if (this.registry.register(data.id, { isVariant: true, fullImagePath, ...data })) {
-			this.enums.add(data.id);
 			parentBlock.variants.push({ fullImagePath, ...data });
 		}
 	}
@@ -191,12 +187,9 @@ class BlocksModule {
 		for (let variant of this.registry.entries[id].variants) {
 			// unregister each variant entry (they are registered under their own id)
 			this.registry.unregister(variant.id);
-			// remove from enums registry
-			this.enums.remove(variant.id);
 		}
 
 		this.registry.unregister(id);
-		this.enums.remove(id);
 	}
 
 	getFullImagePath(sourceMod, id, imagePath) {
@@ -210,7 +203,7 @@ class BlocksModule {
 	}
 
 	applyPatches() {
-		log("info", "corelib", "Loading block patches");
+		log("info", "corelib", "Loading block module patches");
 
 		const reduceBlocks = (f) => {
 			return Object.values(this.registry.entries)
@@ -279,16 +272,13 @@ class BlocksModule {
 			to:
 				reduceBlocks(
 					(b) =>
-						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
-							b.animationDelay || 500
+						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationDelay || 500
 						})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
 						reduceBlockVariants(
 							b,
 							(v) =>
-								`if(n.type===d.${b.id}){l=t.session.rendering.images["${
-									v.fullImagePath
-								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
-									v.animationDelay || 500
+								`if(n.type===d.${b.id}){l=t.session.rendering.images["${v.fullImagePath
+								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${v.animationDelay || 500
 								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
 						),
 				) + "~",

@@ -1,4 +1,3 @@
-
 const itemSchema = {
 	id: {
 		type: "string",

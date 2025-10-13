@@ -99,7 +99,6 @@ const upgradeSchema = {
 	},
 };
 
-
 class UpgradesModule {
 	upgrades = {};
 
@@ -145,7 +144,6 @@ class UpgradesModule {
 
 		this.upgrades[data.tabID].items[data.id] = { ...data, upgrades: {} };
 	}
-
 
 	registerUpgrade(inputData /* upgradeSchema */) {
 		const data = validateInput(inputData, upgradeSchema, true).data;

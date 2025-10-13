@@ -1,9 +1,9 @@
 class CoreLib {
-    exposed = { raw: {}, named: {} };
-    simulation = {};
-    events = {};
-    utils = {};
-    hooks = {};
+	exposed = { raw: {}, named: {} };
+	simulation = {};
+	events = {};
+	utils = {};
+	hooks = {};
 
 	init() {
 		this.batchData = {};
@@ -115,7 +115,7 @@ class CoreLib {
 			},
 			setCell: (x, y, data) => {
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstanceState, x, y, data);
-			}
+			},
 		};
 	}
 }

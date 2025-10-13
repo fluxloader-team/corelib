@@ -156,6 +156,7 @@ class BlocksModule {
 			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
 			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
 		}
+
 		let fullImagePath = this.getFullImagePath(data.sourceMod, data.id, data.imagePath);
 		this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data });
 	}
@@ -163,13 +164,14 @@ class BlocksModule {
 	registerVariant(inputData /* variantSchema */) {
 		const data = validateInput(inputData, this.variantSchema, true).data;
 
-		if (!this.idMap.hasOwnProperty(data.parentId)) {
+		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
 		}
 
 		let id = data.parentId + data.suffix;
-		let parentBlock = this.registry.entries[this.idMap[data.parentId]];
+		let parentBlock = this.registry.entries[data.parentId];
 		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
+
 		if (this.registry.register(data.id, { isVariant: true, fullImagePath, ...data })) {
 			parentBlock.variants.push({ fullImagePath, ...data });
 		}
@@ -214,13 +216,6 @@ class BlocksModule {
 		const reduceBlockVariants = (b, f) => {
 			return b.variants.reduce((acc, v) => acc + f(v), "");
 		};
-
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["V"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, "corelib:blockTypes", (v1) => ({
-			type: "replace",
-			from: `${v1}[${v1}.GloomEmitter=27]="GloomEmitter"`,
-			to: `~` + reduceBlocks((b) => `,${v1}[${v1}.${b.id}=${this.idMap[b.id]}]="${b.id}"` + reduceBlockVariants(b, (v) => `,${v1}[${v1}.${v.id}=${this.idMap[v.id]}]="${v.id}"`)),
-			token: `~`,
-		}));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",

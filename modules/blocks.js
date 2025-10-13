@@ -165,7 +165,7 @@ class BlocksModule {
 		const data = validateInput(inputData, this.variantSchema, true).data;
 
 		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
-			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
+			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}" not found!`);
 		}
 
 		let id = data.parentId + data.suffix;

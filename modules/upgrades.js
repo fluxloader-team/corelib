@@ -201,7 +201,7 @@ class UpgradesModule {
 
 	applyPatches() {
 		log("info", "corelib", "Loading upgrades module patches");
-		
+
 		let nestedUpgradeDefinitions = [];
 
 		// Merged into game's upgrades data to add new upgrades even in old saves

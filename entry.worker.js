@@ -9,15 +9,14 @@ class CoreLib {
 		this.setupEvents();
 		this.setupHooks();
 		this.setupInternals();
+		this.batchData = {};
+		this.eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 	}
 
 	setupEvents() {
-		let batchData = {};
-		const events = ["cell-change", "fog-reveal", "soil-dig"];
-
-		for (let event of events) {
+		for (let event of this.eventNames) {
 			fluxloaderAPI.events.registerEvent(`cl:${event}`);
-			batchData[event] = [];
+			this.batchData[event] = [];
 		}
 
 		fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
@@ -46,10 +45,10 @@ class CoreLib {
 		// Events are batched together because of how many are triggered
 		// All batched data is sent when the worker receives the "RunUpdate" message
 		corelib.events.sendBatches = () => {
-			for (let event of events) {
-				if (batchData[event].length === 0) continue;
-				fluxloaderAPI.events.trigger(`cl:${event}`, batchData[event], false);
-				batchData[event] = [];
+			for (let event of this.eventNames) {
+				if (this.batchData[event].length === 0) continue;
+				fluxloaderAPI.events.trigger(`cl:${event}`, this.batchData[event], false);
+				this.batchData[event] = [];
 			}
 		};
 
@@ -72,11 +71,11 @@ class CoreLib {
 			data.toParticleType = data.toCellType == 1 && typeof data.raw.to === "object" ? data.raw.to.type : null;
 			data.toBlockType = data.toCellType == 15 && typeof data.raw.to === "object" ? data.raw.to.type : null;
 
-			batchData["cell-change"].push(data);
+			this.batchData["cell-change"].push(data);
 
 			if (data.fromCellType && data.fromCellType !== 1) {
 				data.cellFromName = corelib.exposed.named.soils[data.fromCellType];
-				batchData["soil-dig"].push(data);
+				this.batchData["soil-dig"].push(data);
 			}
 		};
 
@@ -89,7 +88,7 @@ class CoreLib {
 				loc: { x, y },
 			};
 
-			batchData["fog-reveal"].push(data);
+			this.batchData["fog-reveal"].push(data);
 		};
 	}
 

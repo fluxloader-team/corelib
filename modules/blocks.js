@@ -171,7 +171,8 @@ class BlocksModule {
 		let id = data.parentId + data.suffix;
 		let parentBlock = this.registry.entries[data.parentId];
 		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
-		let variantData = { isVariant: true, fullImagePath, id, ...data };
+		let variantData = { isVariant: true, fullImagePath, ...data };
+		variantData.id = id;
 
 		if (this.registry.register(id, variantData)) {
 			parentBlock.variants.push(variantData);

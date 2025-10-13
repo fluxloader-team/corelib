@@ -118,6 +118,8 @@ class ElementsModule {
 	}
 
 	applyPatches() {
+		log("info", "corelib", "Loading element module patches");
+
 		//I wrote some of it then fed it into chatgpt to tell me what I did wrong
 		const getBasicRecipesToPatch = (registry, objectPrefix) => {
 			//Would like it on one line but prettier

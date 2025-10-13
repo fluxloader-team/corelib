@@ -29,10 +29,9 @@ const techSchema = {
 };
 
 class TechModule {
-	registry = new SafeMap("Tech");
-	enums = corelib.enums.register({
-		id: "Tech",
-		start: 38,
+	registry = corelib.enums.createRegistry({
+		name: "Tech",
+		intIdStart: 38,
 		bundleMap: {
 			main: "w",
 			sim: "b",
@@ -75,19 +74,16 @@ class TechModule {
 
 		if (Object.keys(data.unlocks).length === 0) delete data.unlocks;
 
-		if (this.registry.register(data.id, data)) {
-			this.enums.add(data.id);
-		}
+		this.registry.register(data.id, data);
 	}
 
 	unregister(id) {
-		if (this.registry.unregister(id)) {
-			this.enums.remove(id);
-		}
+		this.registry.unregister(id);
 	}
 
 	applyPatches() {
-		log("debug", "corelib", "Loading technology patches");
+		log("info", "corelib", "Loading technology module patches");
+
 		let techList = Object.values(this.baseTechs).concat(Object.values(this.registry.entries));
 
 		// Convert the big list of tech into a nested list structure

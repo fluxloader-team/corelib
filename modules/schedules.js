@@ -15,10 +15,9 @@ const scheduleSchema = {
 };
 
 class SchedulesModule {
-	registry = new SafeMap("Schedule");
-	enums = corelib.enums.register({
-		id: "Schedule",
-		start: 19,
+	registry = corelib.enums.createRegistry({
+		name: "Schedule",
+		intIdStart: 19,
 		bundleMap: {
 			main: "_",
 			sim: "w",
@@ -30,19 +29,16 @@ class SchedulesModule {
 		const data = validateInput({ id, interval }, scheduleSchema, true).data;
 
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
-		if (this.registry.register(data.id, data.interval)) {
-			this.enums.add(data.id);
-		}
+		this.registry.register(data.id, data.interval);
 	}
 
 	unregister(id) {
-		if (this.registry.unregister(id)) {
-			this.enums.remove(id);
-		}
+		this.registry.unregister(id);
 	}
 
 	applyPatches() {
-		log("info", "corelib", "Loading schedule patches");
+		log("info", "corelib", "Loading schedule module patches");
+
 		let scheduleDefinitionString = "";
 
 		for (let [id, interval] of Object.entries(this.registry.entries)) {

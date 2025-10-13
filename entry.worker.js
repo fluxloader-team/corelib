@@ -6,11 +6,11 @@ class CoreLib {
     hooks = {};
 
 	init() {
+		this.batchData = {};
+		this.eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 		this.setupEvents();
 		this.setupHooks();
 		this.setupInternals();
-		this.batchData = {};
-		this.eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 	}
 
 	setupEvents() {
@@ -25,18 +25,18 @@ class CoreLib {
 			log("info", "corelib", "Setting up corelib raw API");
 
 			corelib.exposed.named = {
-				soils: corelib.exposed.rawi.vZ,
-				tech: corelib.exposed.rawi.xQ,
-				blocks: corelib.exposed.rawi.ev,
-				particles: corelib.exposed.rawi.RJ,
-				items: corelib.exposed.rawi.Np,
-				createParticle: corelib.exposed.rawc.n,
-				matterTypes: corelib.exposed.rawi.es,
-				setCell: corelib.exposed.rawu.Jx,
+				soils: corelib.exposed.raw.i.vZ,
+				tech: corelib.exposed.raw.i.xQ,
+				blocks: corelib.exposed.raw.i.ev,
+				particles: corelib.exposed.raw.i.RJ,
+				items: corelib.exposed.raw.i.Np,
+				createParticle: corelib.exposed.raw.c.n,
+				matterTypes: corelib.exposed.raw.i.es,
+				setCell: corelib.exposed.raw.u.Jx,
 			};
 
 			corelib.utils = {
-				...corelib.exposed.rawo.A,
+				...corelib.exposed.raw.o.A,
 			};
 		});
 	}
@@ -95,7 +95,7 @@ class CoreLib {
 	setupInternals() {
 		corelib.simulation = {
 			isEmpty: (x, y) => {
-				corelib.exposed.rawu.lV(fluxloaderAPI.gameInstanceState, x, y);
+				corelib.exposed.raw.u.lV(fluxloaderAPI.gameInstanceState, x, y);
 			},
 			spawnParticle: (x, y, type, data = {}) => {
 				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];

@@ -150,8 +150,8 @@ class BlocksModule {
 		},
 	});
 
-	register(data /* blockSchema */) {
-		const data = validateInput(data, blockSchema, true).data;
+	register(inputData /* blockSchema */) {
+		const data = validateInput(inputData, blockSchema, true).data;
 
 		if (data.interval > 0) {
 			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
@@ -163,8 +163,8 @@ class BlocksModule {
 		}
 	}
 
-	registerVariant(data /* variantSchema */) {
-		const data = validateInput(data, this.variantSchema, true).data;
+	registerVariant(inputData /* variantSchema */) {
+		const data = validateInput(inputData, this.variantSchema, true).data;
 
 		if (!this.idMap.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block id: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);

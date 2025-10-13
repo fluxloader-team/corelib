@@ -65,8 +65,8 @@ class EnumsModule {
 	registry = new SafeMap("enums");
 	enumMapping = {};
 
-	register(data /* moduleEnumSchema */) {
-		const data = validateInput(data, moduleEnumSchema, true).data;
+	register(inputData /* moduleEnumSchema */) {
+		const data = validateInput(inputData, moduleEnumSchema, true).data;
 		const registry = new ModuleEnumRegistry(data.id, data.start, data.bundleMap);
 		this.registry.register(data.id, registry);
 		return registry;

@@ -239,6 +239,7 @@ class ElementsModule {
 	}
 
 	applyPatches() {
+		log("info", "corelib", "Loading element module patches");
 		const reduceElements = (string, registry) => {
 			return Object.values(registry).reduce((acc, e) => acc + string(e), "");
 		};

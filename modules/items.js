@@ -20,10 +20,9 @@ const itemSchema = {
 };
 
 class ItemsModule {
-	registry = new SafeMap("Item", 25);
-	enums = corelib.enums.register({
-		id: "Item",
-		start: 25,
+	registry = corelib.enums.createRegistry({
+		name: "Item",
+		intIdStart: 25,
 		bundleMap: {
 			main: "l",
 			sim: "d",
@@ -39,19 +38,15 @@ class ItemsModule {
 			log("warn", "corelib", `Item type "Consumable" is not fully supported yet; you should use "Tool" or "Weapon" instead.`);
 		}
 
-		if (this.registry.register(data.id, data)) {
-			this.enums.add(data.id);
-		}
+		this.registry.register(data.id, data);
 	}
 
 	unregister(id) {
-		if (this.registry.unregister(id)) {
-			this.enums.remove(id);
-		}
+		this.registry.unregister(id);
 	}
 
 	applyPatches() {
-		log("debug", "corelib", "Loading item patches");
+		log("info", "corelib", "Loading item module patches");
 
 		let itemDefinitionString = "";
 		for (const item of Object.values(this.registry.entries)) {

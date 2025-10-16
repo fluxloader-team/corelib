@@ -37,6 +37,13 @@ class CoreLib {
 				getCellAtPos: corelib.exposed.raw.u.tT,
 				moveCell: corelib.exposed.raw.u.L3,
 				trySetCell: corelib.exposed.raw.u.MH,
+				swapCells: corelib.exposed.raw.u.Hc,					//You figure it out
+				shouldChunkUpdate: corelib.exposed.raw.u.Do,
+				isEmpty: corelib.exposed.raw.u.lV,
+				getElementType: corelib.exposed.raw.u.QC,				//What type tho?
+				getElementTypeFromMapData: corelib.exposed.raw.u.BQ,	//Similar to last?
+				setCellWithAutoWorkerRoute: corelib.exposed.raw.u.Q1,	//Doesn't setCell do this too?
+				getChunkAtPos: corelib.exposed.raw.u.NK,				//At least I think that's what this does
 			};
 
 			corelib.utils = {

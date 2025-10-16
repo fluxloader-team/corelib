@@ -11,6 +11,7 @@ class CoreLib {
 		this.setupEvents();
 		this.setupHooks();
 		this.setupInternals();
+		console.log(globalThis.corelib.exposed);
 	}
 
 	setupEvents() {
@@ -33,6 +34,9 @@ class CoreLib {
 				createParticle: corelib.exposed.raw.c.n,
 				matterTypes: corelib.exposed.raw.i.es,
 				setCell: corelib.exposed.raw.u.Jx,
+				getCellAtPos: corelib.exposed.raw.u.tT,
+				moveCell: corelib.exposed.raw.u.L3,
+				trySetCell: corelib.exposed.raw.u.MH,
 			};
 
 			corelib.utils = {

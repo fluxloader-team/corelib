@@ -234,7 +234,7 @@ class UpgradesModule {
 			type: "replace",
 			from: "return[2,s];",
 			to: `const newData=${JSON.stringify(
-				updates
+				updates,
 			)};for(const category of Object.keys(newData)){if(!s.upgrades.hasOwnProperty(category))s.upgrades[category]={};for(const upgrade of Object.keys(newData[category])){if(!s.upgrades[category].hasOwnProperty(upgrade))s.upgrades[category][upgrade]=newData[category][upgrade];}};~`,
 			token: "~",
 		});

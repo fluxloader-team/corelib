@@ -113,7 +113,7 @@ class ElementsModule {
 	unregisterConveyorBeltIgnores(id) {
 		const index = this.otherFeatures.conveyorBeltIgnores.indexOf(id);
 		if (index > -1) {
-			array.splice(index, 1);
+			this.otherFeatures.conveyorBeltIgnores.splice(index, 1);
 		}
 	}
 
@@ -122,21 +122,8 @@ class ElementsModule {
 
 		//I wrote some of it then fed it into chatgpt to tell me what I did wrong
 		const getBasicRecipesToPatch = (registry, objectPrefix) => {
-			//Would like it on one line but prettier
-			const listToReturn = Object.entries(registry).map(
-				([key, values]) =>
-					`${objectPrefix}[n.RJ.${key}]=[` +
-					values
-						.map(
-							(v) =>
-								`[${v
-									.filter(Boolean)
-									.map((x) => `n.RJ.${x}`)
-									.join(",")}]`,
-						)
-						.join(",") +
-					`]`,
-			);
+			// prettier-ignore
+			const listToReturn = Object.entries(registry).map(([key, values]) => `${objectPrefix}[n.RJ.${key}]=[` + values.map(v => `[${v.filter(Boolean).map(x => `n.RJ.${x}`).join(",")}]`).join(",") +`]`);
 			return listToReturn.join(",");
 		};
 		const getPressRecipesToPatch = (registry, objectPrefix) => {

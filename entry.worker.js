@@ -47,7 +47,7 @@ class CoreLib {
 				getChunkAtPos: corelib.exposed.raw.u.NK, //At least I think that's what this does
 			};
 
-			corelib.utils = {
+			corelib.exposed.workerUtils = {
 				...corelib.exposed.raw.o.A,
 			};
 		});
@@ -135,14 +135,25 @@ class CoreLib {
 			deleteBlocks: (x1, y1, x2, y2) => {
 				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstanceState, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
+		};
+		corelib.getInfo = {
 			getCellAtPos: (x, y) => {
 				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
 			},
 			getThreadFromCellX(x) {
-				return corelib.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
+				return corelib.exposed.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
 			},
 			xCoordinateInsideWorker(x) {
 				return fluxloaderAPI.gameInstanceState.environment.threadMeta.startingIndex === getThreadFromCellX(x);
+			},
+			getBlockNameFromNumber: (type) => {
+				return corelib.exposed.named.blocks[type] != undefined ? corelib.exposed.named.blocks[type] : null;
+			},
+			getParticleNameFromNumber: (type) => {
+				return corelib.exposed.named.particles[type] != undefined ? corelib.exposed.named.particles[type] : null;
+			},
+			getSoilNameFromNumber: (type) => {
+				return corelib.exposed.named.soils[type] != undefined ? corelib.exposed.named.soils[type] : null;
 			},
 		};
 	}

@@ -101,14 +101,14 @@ class CoreLib {
 		};
 
 		corelib.utils = {
-			getBlockNameByType: (type) => {
-				return corelib.exposed.named.blocks[type] != undefined ? corelib.exposed.named.blocks[type] : null;
+			getBlockNameFromNumber: (id) => {
+				return corelib.exposed.named.blocks[id] != undefined ? corelib.exposed.named.blocks[id] : null;
 			},
-			getParticleNameByType: (type) => {
-				return corelib.exposed.named.particles[type] != undefined ? corelib.exposed.named.particles[type] : null;
+			getParticleNameFromNumber: (id) => {
+				return corelib.exposed.named.particles[id] != undefined ? corelib.exposed.named.particles[id] : null;
 			},
-			getSoilNameByType: (type) => {
-				return corelib.exposed.named.soils[type] != undefined ? corelib.exposed.named.soils[type] : null;
+			getSoilNameFromNumber: (id) => {
+				return corelib.exposed.named.soils[id] != undefined ? corelib.exposed.named.soils[id] : null;
 			},
 			countTechLeaves: (tech) => {
 				// Used internally in the tech UI to fix the line drawing

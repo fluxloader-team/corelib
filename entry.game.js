@@ -32,13 +32,14 @@ class CoreLib {
 				blocks: corelib.exposed.raw.d,
 				matterTypes: corelib.exposed.raw.h,
 				createParticle: corelib.exposed.raw.Fh,
-				createBlock: corelib.exposed.raw.xd,
+				spawnBlock: corelib.exposed.raw.xd,
 				setCell: corelib.exposed.raw.Od,
 				getSelectedItem: corelib.exposed.raw.Ef,
 				notifyUIChange: corelib.exposed.raw.Al,
 				convertHSLtoRGBA: corelib.exposed.raw.pu,
 				getStructureAtPos: corelib.exposed.raw.Oc,
 				checkIfTechUnlocked: corelib.exposed.raw.Xf,
+				deleteBlocks: corelib.exposed.raw.ed,
 			};
 		});
 	}
@@ -66,30 +67,30 @@ class CoreLib {
 
 	setupInternals() {
 		corelib.simulation = {
-			spawnParticle: (x, y, type, data = {}) => {
-				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
-				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+			spawnParticle: ({ x, y, id, data = {} }) => {
+				const particleType = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
+				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle ${id} does not exist!`);
 				const particle = corelib.exposed.named.createParticle(particleType, x, y, data);
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 			},
-			spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
-				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
-				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+			spawnMovingParticle: ({ x, y, velocityX, velocityY, id, data = {} }) => {
+				const particleType = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
+				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle ${id} does not exist!`);
 				const innerParticle = corelib.exposed.named.createParticle(particleType, x, y, data);
 				const outerParticle = corelib.exposed.named.createParticle(corelib.exposed.named.particles.Particle, x, y, {
 					element: innerParticle,
-					velocity: { x: vx, y: vy },
+					velocity: { x: velocityX, y: velocityY },
 				});
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, outerParticle);
 			},
 			spawnBlock: (x, y, type) => {
 				const blockType = corelib.exposed.named.blocks[type];
 				if (blockType === undefined) return log("error", "corelib", `Block type ${type} does not exist!`);
-				corelib.exposed.named.createBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
+				corelib.exposed.named.spawnBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
 			},
 			deleteBlocks: (x1, y1, x2, y2) => {
 				// The game only deals with deleting blocks in a specific area
-				corelib.exposed.raw.ed(fluxloaderAPI.gameInstance.state, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
+				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstance.state, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
 			revealFog: (x, y) => {
 				fluxloaderAPI.gameInstance.state.environment.multithreading.simulation.postAll(fluxloaderAPI.gameInstance.state, [14, x, y]);
@@ -100,14 +101,14 @@ class CoreLib {
 		};
 
 		corelib.utils = {
-			getBlockNameByType: (type) => {
-				return corelib.exposed.named.blocks[type] != undefined ? corelib.exposed.named.blocks[type] : null;
+			getBlockNameFromNumber: (id) => {
+				return corelib.exposed.named.blocks[id] != undefined ? corelib.exposed.named.blocks[id] : null;
 			},
-			getParticleNameByType: (type) => {
-				return corelib.exposed.named.particles[type] != undefined ? corelib.exposed.named.particles[type] : null;
+			getParticleNameFromNumber: (id) => {
+				return corelib.exposed.named.particles[id] != undefined ? corelib.exposed.named.particles[id] : null;
 			},
-			getSoilNameByType: (type) => {
-				return corelib.exposed.named.soils[type] != undefined ? corelib.exposed.named.soils[type] : null;
+			getSoilNameFromNumber: (id) => {
+				return corelib.exposed.named.soils[id] != undefined ? corelib.exposed.named.soils[id] : null;
 			},
 			countTechLeaves: (tech) => {
 				// Used internally in the tech UI to fix the line drawing

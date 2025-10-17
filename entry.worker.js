@@ -132,6 +132,9 @@ class CoreLib {
 					corelib.exposed.named.setCell(fluxloaderAPI.gameInstanceState, x, y, data);
 				}
 			},
+			deleteBlocks: (x1, y1, x2, y2) => {
+				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstanceState, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
+			},
 		};
 	}
 }

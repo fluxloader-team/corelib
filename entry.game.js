@@ -32,13 +32,14 @@ class CoreLib {
 				blocks: corelib.exposed.raw.d,
 				matterTypes: corelib.exposed.raw.h,
 				createParticle: corelib.exposed.raw.Fh,
-				createBlock: corelib.exposed.raw.xd,
+				spawnBlock: corelib.exposed.raw.xd,
 				setCell: corelib.exposed.raw.Od,
 				getSelectedItem: corelib.exposed.raw.Ef,
 				notifyUIChange: corelib.exposed.raw.Al,
 				convertHSLtoRGBA: corelib.exposed.raw.pu,
 				getStructureAtPos: corelib.exposed.raw.Oc,
 				checkIfTechUnlocked: corelib.exposed.raw.Xf,
+				deleteBlocks: corelib.exposed.raw.ed,
 			};
 		});
 	}
@@ -85,11 +86,11 @@ class CoreLib {
 			spawnBlock: (x, y, type) => {
 				const blockType = corelib.exposed.named.blocks[type];
 				if (blockType === undefined) return log("error", "corelib", `Block type ${type} does not exist!`);
-				corelib.exposed.named.createBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
+				corelib.exposed.named.spawnBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
 			},
 			deleteBlocks: (x1, y1, x2, y2) => {
 				// The game only deals with deleting blocks in a specific area
-				corelib.exposed.raw.ed(fluxloaderAPI.gameInstance.state, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
+				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstance.state, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
 			revealFog: (x, y) => {
 				fluxloaderAPI.gameInstance.state.environment.multithreading.simulation.postAll(fluxloaderAPI.gameInstance.state, [14, x, y]);

@@ -66,19 +66,19 @@ class CoreLib {
 
 	setupInternals() {
 		corelib.simulation = {
-			spawnParticle: (x, y, type, data = {}) => {
-				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
-				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+			spawnParticle: ({x, y, id, data = {}}) => {
+				const particleType = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
+				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle ${id} does not exist!`);
 				const particle = corelib.exposed.named.createParticle(particleType, x, y, data);
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 			},
-			spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
-				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
-				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+			spawnMovingParticle: ({x, y, velocityX, velocityY, id, data = {}}) => {
+				const particleType = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
+				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle ${id} does not exist!`);
 				const innerParticle = corelib.exposed.named.createParticle(particleType, x, y, data);
 				const outerParticle = corelib.exposed.named.createParticle(corelib.exposed.named.particles.Particle, x, y, {
 					element: innerParticle,
-					velocity: { x: vx, y: vy },
+					velocity: { x: velocityX, y: velocityY },
 				});
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, outerParticle);
 			},

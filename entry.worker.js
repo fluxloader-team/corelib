@@ -40,6 +40,7 @@ class CoreLib {
 				swapCells: corelib.exposed.raw.u.Hc, //You figure it out
 				shouldChunkUpdate: corelib.exposed.raw.u.Do,
 				isEmpty: corelib.exposed.raw.u.lV,
+				deleteBlocks: corelib.exposed.raw.z.Cj,
 				getElementType: corelib.exposed.raw.u.QC, //What type tho?
 				getElementTypeFromMapData: corelib.exposed.raw.u.BQ, //Similar to last?
 				setCellWithAutoWorkerRoute: corelib.exposed.raw.u.Q1, //Doesn't setCell do this too?

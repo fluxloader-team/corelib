@@ -2,7 +2,7 @@ class CoreLib {
 	exposed = { raw: {}, named: {} };
 	simulation = {};
 	events = {};
-	getInfo = {};
+	utils = {};
 	hooks = {};
 	batchData = {};
 	eventNames = ["cell-change", "fog-reveal", "soil-dig"];
@@ -136,7 +136,7 @@ class CoreLib {
 				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstanceState, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
 		};
-		corelib.getInfo = {
+		corelib.utils = {
 			getCellAtPos: (x, y) => {
 				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
 			},

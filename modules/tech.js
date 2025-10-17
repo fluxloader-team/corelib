@@ -119,7 +119,7 @@ class TechModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUIImprovements", {
 			type: "replace",
 			from: 'i_({},t.id===w.Guns1&&t.status!==S.Unknown&&t.status!==S.Visible?{width:"545px",marginLeft:"-63px"}:{})',
-			to: "i_({},t.status!==S.Unknown&&t.status!==S.Visible?corelib.getInfo.getLineStyle(t):{})",
+			to: "i_({},t.status!==S.Unknown&&t.status!==S.Visible?corelib.utils.getLineStyle(t):{})",
 		});
 	}
 }

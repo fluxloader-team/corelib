@@ -10,7 +10,7 @@ class CoreLib {
 	exposed = { raw: {}, named: {} };
 	simulation = {};
 	events = {};
-	utils = {};
+	getInfo = {};
 	hooks = {};
 
 	async init() {
@@ -100,7 +100,7 @@ class CoreLib {
 			},
 		};
 
-		corelib.utils = {
+		corelib.getInfo = {
 			getBlockNameFromNumber: (id) => {
 				return corelib.exposed.named.blocks[id] != undefined ? corelib.exposed.named.blocks[id] : null;
 			},
@@ -120,7 +120,7 @@ class CoreLib {
 					return 1;
 				} else {
 					for (let child of tech.children) {
-						children += corelib.utils.countTechLeaves(child);
+						children += corelib.getInfo.countTechLeaves(child);
 					}
 				}
 				return children;
@@ -130,11 +130,11 @@ class CoreLib {
 				const nodeWidth = 96;
 				const gap = 32; // Technically based on 2rem, so be careful
 
-				let totalLeaves = corelib.utils.countTechLeaves(tech);
+				let totalLeaves = corelib.getInfo.countTechLeaves(tech);
 				// Get leaf count of first child
-				let firstLeaves = corelib.utils.countTechLeaves(tech.children[0]);
+				let firstLeaves = corelib.getInfo.countTechLeaves(tech.children[0]);
 				// Get leaf count of last child
-				let lastLeaves = corelib.utils.countTechLeaves(tech.children[tech.children.length - 1]);
+				let lastLeaves = corelib.getInfo.countTechLeaves(tech.children[tech.children.length - 1]);
 				// Calculate leaves between the first and last nodes
 				let middleLeaves = totalLeaves - (firstLeaves + lastLeaves);
 

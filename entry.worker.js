@@ -2,7 +2,7 @@ class CoreLib {
 	exposed = { raw: {}, named: {} };
 	simulation = {};
 	events = {};
-	utils = {};
+	getInfo = {};
 	hooks = {};
 	batchData = {};
 	eventNames = ["cell-change", "fog-reveal", "soil-dig"];

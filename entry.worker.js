@@ -135,6 +135,15 @@ class CoreLib {
 			deleteBlocks: (x1, y1, x2, y2) => {
 				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstanceState, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
+			getCellAtPos: (x, y) => {
+				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
+			},
+			getThreadFromCellX(x) {
+				return corelib.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
+			},
+			xCoordinateInsideWorker(x) {
+				return fluxloaderAPI.gameInstanceState.environment.threadMeta.startingIndex === getThreadFromCellX(x);
+			},
 		};
 	}
 }

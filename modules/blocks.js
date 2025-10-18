@@ -1,252 +1,202 @@
+const blockSchema = {
+	sourceMod: { type: "string" },
+	id: { type: "string" },
+	name: { type: "string" },
+	description: { type: "string" },
+	shape: {
+		type: "object",
+		// Ensure shape is a 4x4 matrix of integers
+		verifier: (v) => {
+			let valid = true;
+			valid &&= v.length === 4;
+			if (!valid)
+				return {
+					success: false,
+				};
+			for (const i of v) {
+				valid &&= i.length === 4;
+				for (const j of i) {
+					valid &&= Number.isInteger(j);
+				}
+			}
+			return {
+				success: valid,
+				message: `Parameter 'shape' must be a 4x4 matrix of integers`,
+			};
+		},
+	},
+	angles: {
+		type: "object",
+		default: [],
+		// Ensure angles is an array of integers
+		verifier: (v) => {
+			let valid = true;
+			for (const i of v) {
+				valid &&= Number.isInteger(i);
+			}
+			return {
+				success: valid,
+				message: `Parameter 'angles' must be an array of integers`,
+			};
+		},
+	},
+	imagePath: {
+		type: "string",
+		default: "", // Allows using the not provided image
+	},
+	singleBuild: {
+		type: "boolean",
+		default: false,
+	},
+	hasConfigMenu: {
+		type: "boolean",
+		default: false,
+	},
+	hasHoverUI: {
+		type: "boolean",
+		default: false,
+	},
+	// Determines if a block should be given with no tech unlocked
+	// Keep off if you want this unlocked by tech; on if it's unlocked at the start of a new game
+	default: {
+		type: "boolean",
+		default: false,
+	},
+	animationDelay: {
+		type: "number",
+		default: 500,
+		verifier: (v) => {
+			return {
+				success: Number.isInteger(v) && v > 0,
+				message: `Parameter 'animationDelay' must be an integer greater than 0`,
+			};
+		},
+	},
+};
+
+const variantSchema = {
+	parentId: {
+		type: "string",
+	},
+	suffix: {
+		type: "string",
+	},
+	shape: {
+		type: "object",
+		// Ensure shape is a 4x4 matrix of integers
+		verifier: (v) => {
+			let valid = true;
+			valid &&= v.length === 4;
+			if (!valid)
+				return {
+					success: false,
+				};
+			for (const i of v) {
+				valid &&= i.length === 4;
+				for (const j of i) {
+					valid &&= Number.isInteger(j);
+				}
+			}
+			return {
+				success: valid,
+				message: `Parameter 'shape' must be a 4x4 matrix of integers`,
+			};
+		},
+	},
+	angles: {
+		type: "object",
+		default: [],
+		// Ensure angles is an array of integers
+		verifier: (v) => {
+			let valid = true;
+			for (const i of v) {
+				valid &&= Number.isInteger(i);
+			}
+			return {
+				success: valid,
+				message: `Parameter 'angles' must be an array of integers`,
+			};
+		},
+	},
+	imagePath: {
+		type: "string",
+		default: "", // Allows using the not provided image
+	},
+	hasHoverUI: {
+		type: "boolean",
+		default: false,
+	},
+	animationDelay: {
+		type: "number",
+		default: 500,
+		verifier: (v) => {
+			return {
+				success: Number.isInteger(v) && v > 0,
+				message: `Parameter 'animationDelay' must be an integer greater than 0`,
+			};
+		},
+	},
+};
+
 class BlocksModule {
-	blockRegistry = new DefinitionRegistry("Block", 99);
-	idMap = {};
+	registry = corelib.enums.createRegistry({
+		name: "Block",
+		intIdStart: 99,
+		bundleMap: {
+			main: "d",
+			sim: "h",
+			manager: "h",
+		},
+	});
 
-	validateInput() {
-		let res = InputHandler(data, {
-			sourceMod: { type: "string" },
-			id: { type: "string" },
-			name: { type: "string" },
-			description: { type: "string" },
-			shape: {
-				type: "object",
-				// Ensure shape is a 4x4 matrix of integers
-				verifier: (v) => {
-					let valid = true;
-					valid &&= v.length === 4;
-					if (!valid) return false;
-					for (const i of v) {
-						valid &&= i.length === 4;
-						for (const j of i) {
-							valid &&= Number.isInteger(j);
-						}
-					}
-					return valid;
-				},
-			},
-			angles: {
-				type: "object",
-				default: [],
-				// Ensure angles is an array of integers
-				verifier: (v) => {
-					let valid = true;
-					for (const i of v) {
-						valid &&= Number.isInteger(i);
-					}
-					return valid;
-				},
-			},
-			imagePath: {
-				type: "string",
-			},
-			singleBuild: {
-				type: "boolean",
-				default: false,
-			},
-			hasConfigMenu: {
-				type: "boolean",
-				default: false,
-			},
-		});
-		if (!res.success) {
-			let message = res.error.message;
-			if (res.error.argument === "shape" && res.error.message.includes("verifier")) message = "Parameter 'shape' must be a 4x4 matrix of integers";
-			if (res.error.argument === "angles") message = "Parameter 'angles' must be an array of integers";
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(message);
+	register(inputData /* blockSchema */) {
+		const data = validateInput(inputData, blockSchema, true).data;
+
+		if (data.interval > 0) {
+			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
+			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
 		}
-		return res.data;
+
+		let fullImagePath = this.getFullImagePath(data.sourceMod, data.id, data.imagePath);
+		this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data });
 	}
 
-	blockSchema = {
-		sourceMod: { type: "string" },
-		id: { type: "string" },
-		name: { type: "string" },
-		description: { type: "string" },
-		shape: {
-			type: "object",
-			// Ensure shape is a 4x4 matrix of integers
-			verifier: (v) => {
-				let valid = true;
-				valid &&= v.length === 4;
-				if (!valid)
-					return {
-						success: false,
-					};
-				for (const i of v) {
-					valid &&= i.length === 4;
-					for (const j of i) {
-						valid &&= Number.isInteger(j);
-					}
-				}
-				return {
-					success: valid,
-					message: `Parameter 'shape' must be a 4x4 matrix of integers`,
-				};
-			},
-		},
-		angles: {
-			type: "object",
-			default: [],
-			// Ensure angles is an array of integers
-			verifier: (v) => {
-				let valid = true;
-				for (const i of v) {
-					valid &&= Number.isInteger(i);
-				}
-				return {
-					success: valid,
-					message: `Parameter 'angles' must be an array of integers`,
-				};
-			},
-		},
-		imagePath: {
-			type: "string",
-			default: "", // Allows using the not provided image
-		},
-		singleBuild: {
-			type: "boolean",
-			default: false,
-		},
-		hasConfigMenu: {
-			type: "boolean",
-			default: false,
-		},
-		hasHoverUI: {
-			type: "boolean",
-			default: false,
-		},
-		// Determines if a block should be given with no tech unlocked
-		// Keep off if you want this unlocked by tech; on if it's unlocked at the start of a new game
-		default: {
-			type: "boolean",
-			default: false,
-		},
-		animationDelay: {
-			type: "number",
-			default: 500,
-			verifier: (v) => {
-				return {
-					success: Number.isInteger(v) && v > 0,
-					message: `Parameter 'animationDelay' must be an integer greater than 0`,
-				};
-			},
-		},
-	};
-	register(data) {
-		let res = InputHandler(data, this.blockSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
-		let fullImagePath = this._getFullImagePath(data.sourceMod, data.id, data.imagePath);
-		this.idMap[data.id] = this.blockRegistry.register({ isVariant: false, variants: [], fullImagePath, ...data });
-	}
+	registerVariant(inputData /* variantSchema */) {
+		const data = validateInput(inputData, this.variantSchema, true).data;
 
-	variantSchema = {
-		parentId: {
-			type: "string",
-		},
-		suffix: {
-			type: "string",
-		},
-		shape: {
-			type: "object",
-			// Ensure shape is a 4x4 matrix of integers
-			verifier: (v) => {
-				let valid = true;
-				valid &&= v.length === 4;
-				if (!valid)
-					return {
-						success: false,
-					};
-				for (const i of v) {
-					valid &&= i.length === 4;
-					for (const j of i) {
-						valid &&= Number.isInteger(j);
-					}
-				}
-				return {
-					success: valid,
-					message: `Parameter 'shape' must be a 4x4 matrix of integers`,
-				};
-			},
-		},
-		angles: {
-			type: "object",
-			default: [],
-			// Ensure angles is an array of integers
-			verifier: (v) => {
-				let valid = true;
-				for (const i of v) {
-					valid &&= Number.isInteger(i);
-				}
-				return {
-					success: valid,
-					message: `Parameter 'angles' must be an array of integers`,
-				};
-			},
-		},
-		imagePath: {
-			type: "string",
-			default: "", // Allows using the not provided image
-		},
-		hasHoverUI: {
-			type: "boolean",
-			default: false,
-		},
-		animationDelay: {
-			type: "number",
-			default: 500,
-			verifier: (v) => {
-				return {
-					success: Number.isInteger(v) && v > 0,
-					message: `Parameter 'animationDelay' must be an integer greater than 0`,
-				};
-			},
-		},
-	};
-	registerVariant(data) {
-		let res = InputHandler(data, this.variantSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
-		if (!this.idMap.hasOwnProperty(data.parentId)) {
-			return log("error", "corelib", `Parent block id: "${data.parentId}" for variant "${data.parentId}${data.suffix}"not found!`);
+		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
+			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}" not found!`);
 		}
 
 		let id = data.parentId + data.suffix;
-		let parentBlock = this.blockRegistry.definitions[this.idMap[data.parentId]];
-		let fullImagePath = this._getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
-		this.idMap[id] = this.blockRegistry.register({ isVariant: true, fullImagePath, ...data });
+		let parentBlock = this.registry.entries[data.parentId];
+		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
+		let variantData = { isVariant: true, fullImagePath, ...data };
+		variantData.id = id;
 
-		parentBlock.variants.push({ fullImagePath, ...data });
+		if (this.registry.register(id, variantData)) {
+			parentBlock.variants.push(variantData);
+		}
 	}
 
 	unregister(id) {
-		if (!this.idMap.hasOwnProperty(id)) {
-			return log("error", "corelib", `Block with id "${id}" not found! Unable to unregister.`);
+		// manually check here since we don't unregister until we unregister variants
+		if (!this.registry.entries[id]) {
+			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
-
-		if (this.blockRegistry.definitions[this.idMap[id]].isVariant) {
+		if (this.registry.entries[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
-		for (let variant of this.blockRegistry.definitions[this.idMap[id]].variants) {
-			this.blockRegistry.unregister(this.idMap[variant.id]);
-			delete this.idMap[variant.id];
+		for (let variant of this.registry.entries[id].variants) {
+			// unregister each variant entry (they are registered under their own id)
+			this.registry.unregister(variant.id);
 		}
 
-		this.blockRegistry.unregister(this.idMap[id]);
-		delete this.idMap[id];
+		this.registry.unregister(id);
 	}
 
-	_getFullImagePath = function (sourceMod, id, imagePath) {
+	getFullImagePath(sourceMod, id, imagePath) {
 		let _return = path.join(fluxloaderAPI.getModsPath(), sourceMod, (imagePath || id) + ".png").replace(/\\/g, "/");
 
 		if (!fs.existsSync(_return)) {
@@ -254,13 +204,13 @@ class BlocksModule {
 		}
 
 		return _return;
-	};
+	}
 
 	applyPatches() {
-		log("info", "corelib", "Loading block patches");
+		log("info", "corelib", "Loading block module patches");
 
 		const reduceBlocks = (f) => {
-			return Object.values(this.blockRegistry.definitions)
+			return Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 		};
@@ -268,13 +218,6 @@ class BlocksModule {
 		const reduceBlockVariants = (b, f) => {
 			return b.variants.reduce((acc, v) => acc + f(v), "");
 		};
-
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["V"], "js/336.bundle.js": ["e"], "js/546.bundle.js": ["e"] }, "corelib:blockTypes", (v1) => ({
-			type: "replace",
-			from: `${v1}[${v1}.GloomEmitter=27]="GloomEmitter"`,
-			to: `~` + reduceBlocks((b) => `,${v1}[${v1}.${b.id}=${this.idMap[b.id]}]="${b.id}"` + reduceBlockVariants(b, (v) => `,${v1}[${v1}.${v.id}=${this.idMap[v.id]}]="${v.id}"`)),
-			token: `~`,
-		}));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
@@ -342,7 +285,7 @@ class BlocksModule {
 			token: `~`,
 		});
 
-		let blocksWithConfig = Object.values(this.blockRegistry.definitions)
+		let blocksWithConfig = Object.values(this.registry.entries)
 			.filter((b) => !b.isVariant && b.hasConfigMenu)
 			.map((v) => v.id);
 
@@ -475,7 +418,7 @@ class BlocksModule {
 			token: "~",
 		});
 
-		let blocksWithHover = Object.values(this.blockRegistry.definitions)
+		let blocksWithHover = Object.values(this.registry.entries)
 			.filter((b) => b.hasHoverUI)
 			.map((v) => v.id);
 
@@ -494,6 +437,27 @@ class BlocksModule {
 			type: "replace",
 			from: `z.type===d.FilterLeft||z.type===d.FilterRight`,
 			to: "~" + reduceBlocksWithHover((b) => `||z.type===d.${b}`),
+			token: "~",
+		});
+
+		// get ticking blocks
+		let reduceTicking = (f) => {
+			return Object.values(this.registry.entries)
+				.filter((t) => t.interval > 0)
+				.reduce((acc, t) => acc + f(t.id), "");
+		};
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
+			type: "replace",
+			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
+			to: `~${reduceTicking((id) => `,(r.type===d[${id}])&&(n.store.corelibCache[${id}]=n.store.corelibCache[${id}].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
+			token: "~",
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
+			type: "replace",
+			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
+			to: `~${reduceTicking((id) => `,h.type===d[${id}]&&t.store.corelibCache[${id}].push({x:h.x,y:h.y})`)}`,
 			token: "~",
 		});
 	}

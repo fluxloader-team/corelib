@@ -1,6 +1,6 @@
 class EventsModule {
 	applyPatches() {
-		log("info", "corelib", "Loading Event Patches");
+		log("info", "corelib", "Loading event module patches");
 
 		// Code to send batched events at once
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:event-send-batches", {

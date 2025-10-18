@@ -1,72 +1,139 @@
-await import("./shared.game.worker.js");
+class CoreLib {
+	exposed = { raw: {}, named: {} };
+	simulation = {};
+	events = {};
+	utils = {};
+	hooks = {};
+	batchData = {};
+	eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 
-fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
+	init() {
+		this.setupEvents();
+		this.setupHooks();
+		this.setupInternals();
+		console.log(globalThis.corelib.exposed);
+	}
 
-fluxloaderAPI.events.on("cl:raw-api-setup", () => {
-	log("info", "corelib", "Setting up corelib raw API");
-	corelib.simulation.internal = {};
-	corelib.simulation.internal.setCell = (x, y, data) => {
-		corelib.exposed.u.Jx(fluxloaderAPI.gameInstanceState, x, y, data);
-	};
-	corelib.utils = {
-		...corelib.exposed.o.A,
-	};
-});
+	setupEvents() {
+		for (let event of this.eventNames) {
+			fluxloaderAPI.events.registerEvent(`cl:${event}`);
+			this.batchData[event] = [];
+		}
 
-corelib.simulation = {
-	isEmpty: (x, y) => {
-		corelib.exposed.u.lV(fluxloaderAPI.gameInstanceState, x, y);
-	},
-};
+		fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
 
-// Events are batched together because of how many are triggered
-// All batched data is sent when the worker receives the "RunUpdate" message
-let batchData = {};
-const events = ["cell-change", "fog-reveal"];
+		fluxloaderAPI.events.on("cl:raw-api-setup", () => {
+			log("info", "corelib", "Setting up corelib raw API");
 
-for (let event of events) {
-	fluxloaderAPI.events.registerEvent(`cl:${event}`);
-	batchData[event] = [];
+			corelib.exposed.named = {
+				soils: corelib.exposed.raw.i.vZ,
+				tech: corelib.exposed.raw.i.xQ,
+				blocks: corelib.exposed.raw.i.ev,
+				particles: corelib.exposed.raw.i.RJ,
+				items: corelib.exposed.raw.i.Np,
+				createParticle: corelib.exposed.raw.c.n,
+				matterTypes: corelib.exposed.raw.i.es,
+				setCell: corelib.exposed.raw.u.Jx,
+				getCellAtPos: corelib.exposed.raw.u.tT,
+				moveCell: corelib.exposed.raw.u.L3,
+				queueSetCell: corelib.exposed.raw.u.MH,
+				swapCells: corelib.exposed.raw.u.Hc, //You figure it out
+				shouldChunkUpdate: corelib.exposed.raw.u.Do,
+				isEmpty: corelib.exposed.raw.u.lV,
+				getElementType: corelib.exposed.raw.u.QC, //What type tho?
+				getElementTypeFromMapData: corelib.exposed.raw.u.BQ, //Similar to last?
+				setCellWithAutoWorkerRoute: corelib.exposed.raw.u.Q1, //Doesn't setCell do this too?
+				getChunkAtPos: corelib.exposed.raw.u.NK, //At least I think that's what this does
+			};
+
+			corelib.utils = {
+				...corelib.exposed.raw.o.A,
+			};
+		});
+	}
+
+	setupHooks() {
+		// Events are batched together because of how many are triggered
+		// All batched data is sent when the worker receives the "RunUpdate" message
+		corelib.events.sendBatches = () => {
+			for (let event of this.eventNames) {
+				if (this.batchData[event].length === 0) continue;
+				fluxloaderAPI.events.trigger(`cl:${event}`, this.batchData[event], false);
+				this.batchData[event] = [];
+			}
+		};
+
+		corelib.events.processCellChange = (worker, x, y, from, to) => {
+			if (worker === undefined || x === undefined || y === undefined || from === undefined || to === undefined) {
+				return;
+			}
+
+			let data = {
+				raw: { from, to },
+				worker,
+				loc: { x, y },
+			};
+
+			data.fromCellType = typeof data.raw.from === "object" ? data.raw.from.cellType : data.raw.from;
+			data.fromParticleType = data.fromCellType == 1 && typeof data.raw.from === "object" ? data.raw.from.type : null;
+			data.fromBlockType = data.fromCellType == 15 && typeof data.raw.from === "object" ? data.raw.from.type : null;
+
+			data.toCellType = typeof data.raw.to === "object" ? data.raw.to.cellType : data.raw.to;
+			data.toParticleType = data.toCellType == 1 && typeof data.raw.to === "object" ? data.raw.to.type : null;
+			data.toBlockType = data.toCellType == 15 && typeof data.raw.to === "object" ? data.raw.to.type : null;
+
+			this.batchData["cell-change"].push(data);
+
+			if (data.fromCellType && data.fromCellType !== 1) {
+				data.cellFromName = corelib.exposed.named.soils[data.fromCellType];
+				this.batchData["soil-dig"].push(data);
+			}
+		};
+
+		corelib.events.processFogReveal = (x, y) => {
+			if (x === undefined || y === undefined) {
+				return;
+			}
+
+			let data = {
+				loc: { x, y },
+			};
+
+			this.batchData["fog-reveal"].push(data);
+		};
+	}
+
+	setupInternals() {
+		corelib.simulation = {
+			isEmpty: (x, y) => {
+				corelib.exposed.named.isEmpty(fluxloaderAPI.gameInstanceState, x, y);
+			},
+			spawnParticle: ({ x, y, id, data = {}, delayUntilEmpty = true }) => {
+				const particleId = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
+				if (particleId === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleId)) return log("error", "corelib", `Particle type ${id} does not exist!`);
+				const particle = corelib.exposed.named.createParticle(particleId, x, y, data);
+				corelib.simulation.setCell(x, y, particle, delayUntilEmpty);
+			},
+			spawnMovingParticle: ({ x, y, velocityX, velocityY, type, data = {}, delayUntilEmpty = true }) => {
+				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
+				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
+				const innerParticle = corelib.exposed.named.createParticle(particleType, x, y, data);
+				const outerParticle = corelib.exposed.named.createParticle(corelib.exposed.named.particles.Particle, x, y, {
+					element: innerParticle,
+					velocity: { x: velocityX, y: velocityY },
+				});
+				corelib.simulation.setCell(x, y, outerParticle, delayUntilEmpty);
+			},
+			setCell: (x, y, data, delayUntilEmpty = false) => {
+				if (delayUntilEmpty) {
+					corelib.exposed.named.queueSetCell(fluxloaderAPI.gameInstanceState, x, y, data);
+				} else {
+					corelib.exposed.named.setCell(fluxloaderAPI.gameInstanceState, x, y, data);
+				}
+			},
+		};
+	}
 }
 
-corelib.events.sendBatches = () => {
-	for (let event of events) {
-		if (batchData[event].length === 0) continue;
-		fluxloaderAPI.events.trigger(`cl:${event}`, batchData[event], false);
-		batchData[event] = [];
-	}
-};
-
-corelib.events.processCellChange = (worker, x, y, from, to) => {
-	if (worker === undefined || x === undefined || y === undefined || from === undefined || to === undefined) {
-		return;
-	}
-
-	let data = {
-		raw: { from, to },
-		worker,
-		loc: { x, y },
-	};
-
-	data.fromCellType = typeof data.raw.from === "object" ? data.raw.from.cellType : data.raw.from;
-	data.fromParticleType = data.fromCellType == 1 && typeof data.raw.from === "object" ? data.raw.from.type : null;
-	data.fromBlockType = data.fromCellType == 15 && typeof data.raw.from === "object" ? data.raw.from.type : null;
-
-	data.toCellType = typeof data.raw.to === "object" ? data.raw.to.cellType : data.raw.to;
-	data.toParticleType = data.toCellType == 1 && typeof data.raw.to === "object" ? data.raw.to.type : null;
-	data.toBlockType = data.toCellType == 15 && typeof data.raw.to === "object" ? data.raw.to.type : null;
-
-	batchData["cell-change"].push(data);
-};
-
-corelib.events.processFogReveal = (x, y) => {
-	if (x === undefined || y === undefined) {
-		return;
-	}
-
-	let data = {
-		loc: { x, y },
-	};
-
-	batchData["fog-reveal"].push(data);
-};
+globalThis.corelib = new CoreLib();
+corelib.init();

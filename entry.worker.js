@@ -11,6 +11,7 @@ class CoreLib {
 		this.setupEvents();
 		this.setupHooks();
 		this.setupInternals();
+		console.log(globalThis.corelib.exposed);
 	}
 
 	setupEvents() {
@@ -33,6 +34,16 @@ class CoreLib {
 				createParticle: corelib.exposed.raw.c.n,
 				matterTypes: corelib.exposed.raw.i.es,
 				setCell: corelib.exposed.raw.u.Jx,
+				getCellAtPos: corelib.exposed.raw.u.tT,
+				moveCell: corelib.exposed.raw.u.L3,
+				queueSetCell: corelib.exposed.raw.u.MH,
+				swapCells: corelib.exposed.raw.u.Hc, //You figure it out
+				shouldChunkUpdate: corelib.exposed.raw.u.Do,
+				isEmpty: corelib.exposed.raw.u.lV,
+				getElementType: corelib.exposed.raw.u.QC, //What type tho?
+				getElementTypeFromMapData: corelib.exposed.raw.u.BQ, //Similar to last?
+				setCellWithAutoWorkerRoute: corelib.exposed.raw.u.Q1, //Doesn't setCell do this too?
+				getChunkAtPos: corelib.exposed.raw.u.NK, //At least I think that's what this does
 			};
 
 			corelib.utils = {
@@ -95,26 +106,30 @@ class CoreLib {
 	setupInternals() {
 		corelib.simulation = {
 			isEmpty: (x, y) => {
-				corelib.exposed.raw.u.lV(fluxloaderAPI.gameInstanceState, x, y);
+				corelib.exposed.named.isEmpty(fluxloaderAPI.gameInstanceState, x, y);
 			},
-			spawnParticle: (x, y, type, data = {}) => {
-				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
-				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
-				const particle = corelib.exposed.named.createParticle(particleType, x, y, data);
-				corelib.simulation.setCell(x, y, particle);
+			spawnParticle: ({ x, y, id, data = {}, delayUntilEmpty = true }) => {
+				const particleId = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
+				if (particleId === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleId)) return log("error", "corelib", `Particle type ${id} does not exist!`);
+				const particle = corelib.exposed.named.createParticle(particleId, x, y, data);
+				corelib.simulation.setCell(x, y, particle, delayUntilEmpty);
 			},
-			spawnMovingParticle: (x, y, vx, vy, type, data = {}) => {
+			spawnMovingParticle: ({ x, y, velocityX, velocityY, type, data = {}, delayUntilEmpty = true }) => {
 				const particleType = Number.isInteger(type) ? type : corelib.exposed.named.particles[type];
 				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle type ${type} does not exist!`);
 				const innerParticle = corelib.exposed.named.createParticle(particleType, x, y, data);
 				const outerParticle = corelib.exposed.named.createParticle(corelib.exposed.named.particles.Particle, x, y, {
 					element: innerParticle,
-					velocity: { x: vx, y: vy },
+					velocity: { x: velocityX, y: velocityY },
 				});
-				corelib.simulation.setCell(x, y, outerParticle);
+				corelib.simulation.setCell(x, y, outerParticle, delayUntilEmpty);
 			},
-			setCell: (x, y, data) => {
-				corelib.exposed.named.setCell(fluxloaderAPI.gameInstanceState, x, y, data);
+			setCell: (x, y, data, delayUntilEmpty = false) => {
+				if (delayUntilEmpty) {
+					corelib.exposed.named.queueSetCell(fluxloaderAPI.gameInstanceState, x, y, data);
+				} else {
+					corelib.exposed.named.setCell(fluxloaderAPI.gameInstanceState, x, y, data);
+				}
 			},
 		};
 	}

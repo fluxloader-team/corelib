@@ -395,11 +395,21 @@ burnableRecipes = {
 			[i.vZ.Divider]: { output: false },
 			[i.vZ.GoldSoil]: { output: { elementType: i.RJ.Gold, chance: 1 } },
 			[i.vZ.Petal]: { output: { elementType: i.RJ.Petalium, chance: 1 } },
+			[i.vZ.Ice]: { output: { elementType: i.RJ.Water, chance: 1 } },
 		},
 		particles: {
 			[i.RJ.Slag]: {
 				output: { elementType: i.RJ.BurntSlag, chance: 0.25 },
 			},
+			[i.RJ.Basalt]: {
+				output: { elementType: i.RJ.Lava, chance: 1 },
+			},
+			[i.RJ.Water]: {
+				output: { elementType: i.RJ.Steam, chance: 1 },
+			},
+			[i.RJ.FreezingIce]: {
+				output: { elementType: i.RJ.Steam, chance: 1 },
+			}
 		},
 	},
 hasVaporizedWater = !1,

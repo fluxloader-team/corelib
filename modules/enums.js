@@ -1,0 +1,185 @@
+const moduleEnumSchema = {
+	name: {
+		type: "string",
+	},
+	intIdStart: {
+		type: "number",
+	},
+	bundleMap: {
+		type: "object",
+		verifier: (v) => {
+			let bundles = ["main", "sim", "manager"];
+			if (!bundles.some((bundle) => v.hasOwnProperty(bundle))) {
+				return {
+					success: false,
+					message: `Parameter 'bundleMap' does not contain all the required bundles, found [${Object.keys(v).join(", ")}] but needed each of [${bundles.join(", ")}]`,
+				};
+			}
+			for (let key in v) {
+				if (!bundles.includes(key)) {
+					return {
+						success: false,
+						message: `Parameter 'bundleMap' contains invalid bundle '${key}' must be one of [${bundles.join(", ")}]`,
+					};
+				}
+				// this should NOT be what you directly replace in the enumerator, it should be the variable used to access the enumerator
+				// may be typeof undefined
+				if (typeof v[key] != "string") {
+					return {
+						success: false,
+						message: "Parameter 'bundleMap' must have only string variable names",
+					};
+				}
+			}
+			return {
+				success: true,
+			};
+		},
+	},
+};
+
+class EnumDataRegistry {
+	name;
+	entries = {};
+	intIdStart;
+	bundleMap;
+
+	constructor(name, intIdStart, bundleMap) {
+		this.name = name;
+		this.entries = {};
+		this.intIdStart = intIdStart;
+		this.bundleMap = bundleMap;
+	}
+
+	register(id, data) {
+		if (this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} EnumDataRegistry already has an entry with ID '${id}'`);
+			return false;
+		}
+
+		this.entries[id] = data;
+		return true;
+	}
+
+	unregister(id) {
+		if (!this.entries.hasOwnProperty(id)) {
+			log("error", "corelib", `${this.name} EnumDataRegistry does not have an entry with ID '${id}'`);
+			return false;
+		}
+
+		delete this.entries[id];
+		return true;
+	}
+
+	getStringIds() {
+		return Object.keys(this.entries);
+	}
+}
+
+class EnumsModule {
+	registry = new DataRegistry("enums");
+	enumMapping = {};
+
+	createRegistry(inputData /* moduleEnumSchema */) {
+		const data = validateInput(inputData, moduleEnumSchema, true).data;
+		const registry = new EnumDataRegistry(data.name, data.intIdStart, data.bundleMap);
+		this.registry.register(data.name, registry);
+		return registry;
+	}
+
+	updateEnumMapping(newEnumMapping) {
+		// For each module enum registry we have locally
+		for (let moduleName in this.registry.entries) {
+			let enumRegistry = this.registry.entries[moduleName];
+			newEnumMapping[moduleName] ??= {};
+			let moduleEnumMapping = newEnumMapping[moduleName];
+
+			// Update the new enum mapping with any local enum values the game is missing
+			let latestId = Math.max(enumRegistry.intIdStart - 1, ...Object.values(moduleEnumMapping));
+			for (let stringId of enumRegistry.getStringIds()) {
+				if (!moduleEnumMapping[stringId]) {
+					moduleEnumMapping[stringId] = ++latestId;
+				}
+			}
+		}
+
+		// Now use the new game enum mapping with any local additions we made
+		this.enumMapping = newEnumMapping;
+	}
+
+	applyPatches() {
+		log("info", "corelib", "Loading enum module patches");
+
+		// Run this once so that we generate the mappings
+		// This is mainly for during the menu before we have any values
+		// Once the game has started we will get the real enum mapping from the game
+		this.updateEnumMapping(this.enumMapping);
+
+		let reducedEnumStrings = { main: "", sim: "", manager: "" };
+
+		// loop through bundles here
+		for (let moduleName in this.enumMapping) {
+			let moduleRegistry = this.registry.entries[moduleName];
+			let moduleMapping = this.enumMapping[moduleName];
+
+			// example output: _[_["Schedule"]=19]="Schedule";
+			for (let bundle in moduleRegistry.bundleMap) {
+				let identifier = moduleRegistry.bundleMap[bundle];
+				for (let [stringId, intId] of Object.entries(moduleMapping)) {
+					reducedEnumStrings[bundle] += `${identifier}[${identifier}["${stringId}"]=${intId}]="${stringId}";`;
+				}
+			}
+		}
+
+		// This is at the end of each enumerator chain in the code
+		let bundlePatchFroms = {
+			main: "(F||(F={}))",
+			sim: "(L||(L={}))",
+			manager: "(J||(J={}))",
+		};
+
+		fluxloaderAPI.setMappedPatch(
+			{
+				"js/bundle.js": [reducedEnumStrings.main, bundlePatchFroms.main],
+				"js/336.bundle.js": [reducedEnumStrings.sim, bundlePatchFroms.sim],
+				"js/546.bundle.js": [reducedEnumStrings.manager, bundlePatchFroms.manager],
+			},
+			"corelib:addEnums",
+			(text, bundleFrom) => ({
+				type: "replace",
+				from: bundleFrom,
+				to: `${bundleFrom};${text}`, // Account for bad characters like '~' in enum ids by seperating with ';'
+			}),
+		);
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveLoadHook", {
+			type: "replace",
+			from: `var r=JSON.parse(n.target.result);`,
+			to: `~r=globalThis.corelib.hooks.setupSave(r);`,
+			token: `~`,
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:saveCreateHook", {
+			type: "replace",
+			from: `KT(t,n)`,
+			to: `((store)=>{globalThis.corelib.hooks.setupSave(store);return store;})(~)`,
+			token: `~`,
+		});
+
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:changeSceneHook", {
+			type: "replace",
+			from: `function b_(e)`,
+			to: `~{globalThis.corelib.hooks.preSceneChange(e)}globalThis.corelib.hooks.doSceneChange=(e)=>`,
+			token: `~`,
+		});
+
+		// because we turn the function syntax "{...}" into a variable assignment of an anyonymous function, we need to close the variable assignment properly
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:endChangeSceneHookDefinition", {
+			type: "replace",
+			from: ".reload()}var w_",
+			to: ".reload()};var w_",
+		});
+	}
+}
+
+globalThis.EnumsModule = EnumsModule;

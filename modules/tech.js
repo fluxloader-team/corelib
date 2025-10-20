@@ -1,5 +1,44 @@
+const techSchema = {
+	id: {
+		type: "string",
+	},
+	name: {
+		type: "string",
+	},
+	description: {
+		type: "string",
+	},
+	cost: {
+		type: "number",
+		verifier: (v) => {
+			return {
+				success: Number.isInteger(v) && v >= 0,
+				message: "Parameter 'cost' must be an integer >= 0",
+			};
+		},
+	},
+	unlocks: {
+		type: "object",
+		default: {},
+		// game accepts `structures[]` and/or `items[]`
+	},
+	parent: {
+		type: "string",
+		default: "Refining1",
+	},
+};
+
 class TechModule {
-	techRegistry = new DefinitionRegistry("Tech", 38);
+	registry = corelib.enums.createRegistry({
+		name: "Tech",
+		intIdStart: 38,
+		bundleMap: {
+			main: "w",
+			sim: "b",
+			manager: "R",
+		},
+	});
+
 	baseTechs = {};
 
 	constructor() {
@@ -30,57 +69,22 @@ class TechModule {
 		}
 	}
 
-	techSchema = {
-		id: {
-			type: "string",
-		},
-		name: {
-			type: "string",
-		},
-		description: {
-			type: "string",
-		},
-		cost: {
-			type: "number",
-			verifier: (v) => {
-				return {
-					success: Number.isInteger(v) && v >= 0,
-					message: "Parameter 'cost' must be an integer >= 0",
-				};
-			},
-		},
-		unlocks: {
-			type: "object",
-			// game accepts `structures[]` and/or `items[]`
-		},
-		parent: {
-			type: "string",
-			default: "Refining1",
-		},
-	};
-	register(data) {
-		log("debug", "corelib", `Adding Tech "${data.id}"`); // Using unverified id..
+	register(inputData /* techSchema */) {
+		const data = validateInput(inputData, techSchema, true).data;
 
-		let res = InputHandler(data, this.techSchema);
-		if (!res.success) {
-			// Makes mod fail electron entrypoint, instead of failing silently..
-			throw new Error(res.message);
-		}
-		// Use processed data, which includes defaults
-		data = res.data;
+		if (Object.keys(data.unlocks).length === 0) delete data.unlocks;
 
-		this.techRegistry.register(data);
+		this.registry.register(data.id, data);
 	}
 
 	unregister(id) {
-		let numericID = this.idMap[id];
-		delete this.idMap[id];
-		this.techRegistry.unregister(numericID);
+		this.registry.unregister(id);
 	}
 
 	applyPatches() {
-		log("debug", "corelib", "Loading technology patches");
-		let techList = Object.values(this.baseTechs).concat(Object.values(this.techRegistry.definitions));
+		log("info", "corelib", "Loading technology module patches");
+
+		let techList = Object.values(this.baseTechs).concat(Object.values(this.registry.entries));
 
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];
@@ -102,27 +106,20 @@ class TechModule {
 			}
 		}
 
-		let techIDString = "";
-		for (const [id, tech] of Object.entries(this.techRegistry.definitions)) {
-			log("debug", "corelib", `Adding technology "${tech.id}" with id ${id}`);
-			techIDString += `,B[B.${tech.id}=${id}]="${tech.id}"`;
-		}
-
 		// This is the inverse of what we do to the raw string in the constructor
 		let techDefinitionString = JSON.stringify(nestedTechDefinitions);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"id":"([a-zA-Z0-9_]+)"`, "g"), `"id":w.$1`);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"d\\.([a-zA-Z0-9_]+)"`, "g"), `d.$1`);
 		techDefinitionString = techDefinitionString.replace(new RegExp(`"l\\.([a-zA-Z0-9_]+)"`, "g"), `l.$1`);
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techIDs", {
-			type: "replace",
-			from: 'B[B.Guns3=28]="Guns3"',
-			to: `~${techIDString}`,
-			token: `~`,
-		});
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techDefinitions", {
 			type: "regex",
 			pattern: /\$f=function\(\).*?\},Y/,
 			replace: `$f=function(){return${techDefinitionString}},Y`,
+		});
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUIImprovements", {
+			type: "replace",
+			from: 'i_({},t.id===w.Guns1&&t.status!==S.Unknown&&t.status!==S.Visible?{width:"545px",marginLeft:"-63px"}:{})',
+			to: "i_({},t.status!==S.Unknown&&t.status!==S.Visible?corelib.utils.getLineStyle(t):{})",
 		});
 	}
 }

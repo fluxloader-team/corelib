@@ -31,6 +31,7 @@ class CoreLib {
 				particles: corelib.exposed.raw.n,
 				blocks: corelib.exposed.raw.d,
 				matterTypes: corelib.exposed.raw.h,
+				mapColors: corelib.exposed.raw.Fd,
 				createParticle: corelib.exposed.raw.Fh,
 				spawnBlock: corelib.exposed.raw.xd,
 				setCell: corelib.exposed.raw.Od,

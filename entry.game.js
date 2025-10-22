@@ -183,7 +183,7 @@ class CoreLib {
 		// add converted handlers for ticking blocks
 		for (let id of tickingIds) {
 			fluxloaderAPI.events.register(`corelib:block-${id}`);
-			fluxloaderAPI.events.on(`corelib:schedules-_tickingBlock-${id}`, () => {
+			fluxloaderAPI.events.on(`corelib:schedules-block-tick-${id}`, () => {
 				if (!hasSceneLoaded) return;
 				let { store } = fluxloaderAPI.gameInstance.state;
 				let { structures } = fluxloaderAPI.gameInstance.state.session.cache.structures;

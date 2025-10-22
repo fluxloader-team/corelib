@@ -174,7 +174,8 @@ function validateInput(parameters, schema, throwOnFail = false) {
 			continue;
 		}
 
-		if (data.type) {
+		const skipNullType = data.nullable && value === null;
+		if (data.type && !skipNullType) {
 			// Generic error if we don't know the type
 			let error = `Parameter '${parameter}' was expected to be of type ${data.type}, but was not`;
 			switch (data.type) {

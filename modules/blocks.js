@@ -3,137 +3,63 @@ const blockSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
 	description: { type: "string" },
+	imagePath: { type: "string", default: "" },
+	singleBuild: { type: "boolean", default: false },
+	hasConfigMenu: { type: "boolean", default: false },
+	hasHoverUI: { type: "boolean", default: false },
+	unlockedByDefault: { type: "boolean", default: false },
+	tickInterval: { type: "number", default: null, nullable: true },
 	shape: {
 		type: "object",
-		// Ensure shape is a 4x4 matrix of integers
 		verifier: (v) => {
-			let valid = true;
-			valid &&= v.length === 4;
-			if (!valid)
-				return {
-					success: false,
-				};
-			for (const i of v) {
-				valid &&= i.length === 4;
-				for (const j of i) {
-					valid &&= Number.isInteger(j);
-				}
-			}
-			return {
-				success: valid,
-				message: `Parameter 'shape' must be a 4x4 matrix of integers`,
-			};
+			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
+			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
 	},
 	angles: {
 		type: "object",
 		default: [],
-		// Ensure angles is an array of integers
 		verifier: (v) => {
-			let valid = true;
-			for (const i of v) {
-				valid &&= Number.isInteger(i);
-			}
-			return {
-				success: valid,
-				message: `Parameter 'angles' must be an array of integers`,
-			};
+			const success = v.every((i) => Number.isInteger(i));
+			return { success, message: `Parameter 'angles' must be an array of integers` };
 		},
-	},
-	imagePath: {
-		type: "string",
-		default: "", // Allows using the not provided image
-	},
-	singleBuild: {
-		type: "boolean",
-		default: false,
-	},
-	hasConfigMenu: {
-		type: "boolean",
-		default: false,
-	},
-	hasHoverUI: {
-		type: "boolean",
-		default: false,
-	},
-	// Determines if a block should be given with no tech unlocked
-	// Keep off if you want this unlocked by tech; on if it's unlocked at the start of a new game
-	default: {
-		type: "boolean",
-		default: false,
 	},
 	animationDelay: {
 		type: "number",
 		default: 500,
 		verifier: (v) => {
-			return {
-				success: Number.isInteger(v) && v > 0,
-				message: `Parameter 'animationDelay' must be an integer greater than 0`,
-			};
+			const success = Number.isInteger(v) && v > 0;
+			return { success, message: `Parameter 'animationDelay' must be an integer greater than 0` };
 		},
 	},
 };
 
 const variantSchema = {
-	parentId: {
-		type: "string",
-	},
-	suffix: {
-		type: "string",
-	},
+	parentId: { type: "string" },
+	suffix: { type: "string" },
+	imagePath: { type: "string", default: "" },
+	hasHoverUI: { type: "boolean", default: false },
 	shape: {
 		type: "object",
-		// Ensure shape is a 4x4 matrix of integers
 		verifier: (v) => {
-			let valid = true;
-			valid &&= v.length === 4;
-			if (!valid)
-				return {
-					success: false,
-				};
-			for (const i of v) {
-				valid &&= i.length === 4;
-				for (const j of i) {
-					valid &&= Number.isInteger(j);
-				}
-			}
-			return {
-				success: valid,
-				message: `Parameter 'shape' must be a 4x4 matrix of integers`,
-			};
+			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
+			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
 	},
 	angles: {
 		type: "object",
 		default: [],
-		// Ensure angles is an array of integers
 		verifier: (v) => {
-			let valid = true;
-			for (const i of v) {
-				valid &&= Number.isInteger(i);
-			}
-			return {
-				success: valid,
-				message: `Parameter 'angles' must be an array of integers`,
-			};
+			const success = v.every((i) => Number.isInteger(i));
+			return { success, message: `Parameter 'angles' must be an array of integers` };
 		},
-	},
-	imagePath: {
-		type: "string",
-		default: "", // Allows using the not provided image
-	},
-	hasHoverUI: {
-		type: "boolean",
-		default: false,
 	},
 	animationDelay: {
 		type: "number",
 		default: 500,
 		verifier: (v) => {
-			return {
-				success: Number.isInteger(v) && v > 0,
-				message: `Parameter 'animationDelay' must be an integer greater than 0`,
-			};
+			const success = Number.isInteger(v) && v > 0;
+			return { success, message: `Parameter 'animationDelay' must be an integer greater than 0` };
 		},
 	},
 };
@@ -152,17 +78,18 @@ class BlocksModule {
 	register(inputData /* blockSchema */) {
 		const data = validateInput(inputData, blockSchema, true).data;
 
-		if (data.interval > 0) {
-			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
-			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
+		if (data.tickInterval != null) {
+			corelib.schedules.register({ id: `block-tick-${data.id}`, interval: data.tickInterval });
 		}
 
 		let fullImagePath = this.getFullImagePath(data.sourceMod, data.id, data.imagePath);
-		this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data });
+		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
+
+		this.registry.register(data.id, blockData);
 	}
 
 	registerVariant(inputData /* variantSchema */) {
-		const data = validateInput(inputData, this.variantSchema, true).data;
+		const data = validateInput(inputData, variantSchema, true).data;
 
 		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}" not found!`);
@@ -222,8 +149,7 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
 			from: `d.Foundation,d.Collector`,
-			// Only include blocks that have the `default` property
-			to: `~` + reduceBlocks((b) => (b.default ? `,d.${b.id}` : "")),
+			to: `~` + reduceBlocks((b) => (b.unlockedByDefault ? `,d.${b.id}` : "")),
 			token: `~`,
 		});
 
@@ -269,17 +195,15 @@ class BlocksModule {
 			to:
 				reduceBlocks(
 					(b) =>
-						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
-							b.animationDelay || 500
-						})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
+						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],
+						(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationDelay})
+						%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
 						reduceBlockVariants(
 							b,
 							(v) =>
-								`if(n.type===d.${b.id}){l=t.session.rendering.images["${
-									v.fullImagePath
-								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
-									v.animationDelay || 500
-								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
+								`if(n.type===d.${b.id}){l=t.session.rendering.images["${v.fullImagePath}"],
+								(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${v.animationDelay})
+								%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
 						),
 				) + "~",
 			token: `~`,
@@ -443,21 +367,23 @@ class BlocksModule {
 		// get ticking blocks
 		let reduceTicking = (f) => {
 			return Object.values(this.registry.entries)
-				.filter((t) => t.interval > 0)
+				.filter((t) => t.tickInterval != null)
 				.reduce((acc, t) => acc + f(t.id), "");
 		};
+
+		log("info", "corelib", reduceTicking((id) => `${id},`));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
 			type: "replace",
 			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
-			to: `~${reduceTicking((id) => `,(r.type===d[${id}])&&(n.store.corelibCache[${id}]=n.store.corelibCache[${id}].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
+			to: `~${reduceTicking((id) => `,(r.type===d["${id}"])&&(n.store.corelibCache["${id}"]=n.store.corelibCache["${id}"].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
 			type: "replace",
 			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
-			to: `~${reduceTicking((id) => `,h.type===d[${id}]&&t.store.corelibCache[${id}].push({x:h.x,y:h.y})`)}`,
+			to: `~${reduceTicking((id) => `,h.type===d["${id}"]&&t.store.corelibCache["${id}"].push({x:h.x,y:h.y})`)}`,
 			token: "~",
 		});
 	}

@@ -137,8 +137,7 @@ class BlocksModule {
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
-		const reduceBlocks = f =>
-			Object.values(this.registry.entries)
+		const reduceBlocks = f => Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 
@@ -148,6 +147,80 @@ class BlocksModule {
 		const reduceBlocksAndVariants = f =>
 			reduceBlocks(b => f(b) + reduceBlockVariants(b, v => f(v)));
 
+		const reduceBlocksWithConfig = f => Object.values(this.registry.entries)
+			.filter((b) => !b.isVariant && b.hasConfigMenu)
+			.reduce((acc, v) => acc + f(v.id), "");
+
+		const reduceBlocksWithHover = f => Object.values(this.registry.entries)
+			.filter((b) => b.hasHoverUI)
+			.reduce((acc, v) => acc + f(v.id), "");
+
+		let reduceBlocksWithTicking = f => Object.values(this.registry.entries)
+			.filter((t) => t.tickInterval != null)
+			.reduce((acc, t) => acc + f(t.id), "");
+
+		const configUIFunction = function () {
+			const data = {
+				scale: ip,
+				state: e.state,
+				showWindow: Ml,
+				updateWindow: Al,
+				specialUI: US, // I only know of `US.div`, which appears to be a special animated div
+				extra: {},
+				closeConfig: (config) => {
+					e.state.session.windows.building.__BLOCKID__Config = false;
+					e.state.session.windows.building.open = false;
+					e.state.store.options.__BLOCKID__Config = config;
+					e.state.session.building.activeStructureType = d.__BLOCKID__;
+					Al(e.state, k.__BLOCKID__Config);
+					Al(e.state, k.Management);
+					e.state.store.player.hotbar.activeSlotIndex = null;
+					e.state.store.player.action = null;
+					Al(e.state, k.Hotbar);
+				},
+			};
+			data.showWindow(data.state, k.__BLOCKID__Config);
+			let targetChecker = React.useRef(null);
+			// pre UI render - by mod that registered the block
+			data.extra = globalThis["block__BLOCKID__PreConfigUI"] ? globalThis["block__BLOCKID__PreConfigUI"](data) : {};
+			if (!data.state.session.windows.building.__BLOCKID__Config) return null;
+			return React.createElement(
+				"div",
+				{
+					className: "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50",
+					onClick: (check) => {
+						// Only closes UI if clicked element was not part of the menu
+						targetChecker.current && !targetChecker.current.contains(check.target) && ((data.state.session.windows.building.__BLOCKID__Config = !1), Al(data.state, k.__BLOCKID__Config));
+					},
+				},
+				React.createElement(
+					"div",
+					{
+						ref: targetChecker,
+						style: {
+							// Overflow is used if either height or width aren't provided
+							overflow: "auto",
+							height: data.extra.height,
+							width: data.extra.width,
+							transform: `scale(${data.scale(data.state)})`,
+							transformOrigin: "center",
+						},
+					},
+					React.createElement(
+						data.specialUI.div,
+						{
+							initial: { y: 10 },
+							animate: { y: 0 },
+							transition: { y: { duration: 0.1 } },
+							className: "h-full bg-black bg-opacity-85 p-4 shadow-lg ui-box card-2 overflow-y-auto",
+						},
+						// use UI returned by mod
+						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined,
+					),
+				),
+			);
+		};
+		
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
 			from: `d.Foundation,d.Collector`,
@@ -212,13 +285,6 @@ class BlocksModule {
 			token: `~`
 		});
 		
-		let blocksWithConfig = Object.values(this.registry.entries)
-			.filter((b) => !b.isVariant && b.hasConfigMenu)
-			.map((v) => v.id);
-
-		const reduceBlocksWithConfig = f =>
-			blocksWithConfig.reduce((acc, v) => acc + f(v), "");
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockConfigMenu", {
 			type: "replace",
 			from: "n.id===d.FilterRight&&(e.session.windows.building.filterConfig=!0,Al(e,k.FilterConfig))",
@@ -246,68 +312,6 @@ class BlocksModule {
 			to: "~Al(e,k.FilterConfig);" + reduceBlocksWithConfig((id) => `e.session.windows.building.${id}Config=!1;Al(e,k.${id}Config);`),
 			token: "~",
 		});
-
-		const configUIFunction = function () {
-			const data = {
-				scale: ip,
-				state: e.state,
-				showWindow: Ml,
-				updateWindow: Al,
-				specialUI: US, // I only know of `US.div`, which appears to be a special animated div
-				extra: {},
-				closeConfig: (config) => {
-					e.state.session.windows.building.__BLOCKID__Config = false;
-					e.state.session.windows.building.open = false;
-					e.state.store.options.__BLOCKID__Config = config;
-					e.state.session.building.activeStructureType = d.__BLOCKID__;
-					Al(e.state, k.__BLOCKID__Config);
-					Al(e.state, k.Management);
-					e.state.store.player.hotbar.activeSlotIndex = null;
-					e.state.store.player.action = null;
-					Al(e.state, k.Hotbar);
-				},
-			};
-			data.showWindow(data.state, k.__BLOCKID__Config);
-			let targetChecker = React.useRef(null);
-			// pre UI render - by mod that registered the block
-			data.extra = globalThis["block__BLOCKID__PreConfigUI"] ? globalThis["block__BLOCKID__PreConfigUI"](data) : {};
-			if (!data.state.session.windows.building.__BLOCKID__Config) return null;
-			return React.createElement(
-				"div",
-				{
-					className: "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50",
-					onClick: (check) => {
-						// Only closes UI if clicked element was not part of the menu
-						targetChecker.current && !targetChecker.current.contains(check.target) && ((data.state.session.windows.building.__BLOCKID__Config = !1), Al(data.state, k.__BLOCKID__Config));
-					},
-				},
-				React.createElement(
-					"div",
-					{
-						ref: targetChecker,
-						style: {
-							// Overflow is used if either height or width aren't provided
-							overflow: "auto",
-							height: data.extra.height,
-							width: data.extra.width,
-							transform: `scale(${data.scale(data.state)})`,
-							transformOrigin: "center",
-						},
-					},
-					React.createElement(
-						data.specialUI.div,
-						{
-							initial: { y: 10 },
-							animate: { y: 0 },
-							transition: { y: { duration: 0.1 } },
-							className: "h-full bg-black bg-opacity-85 p-4 shadow-lg ui-box card-2 overflow-y-auto",
-						},
-						// use UI returned by mod
-						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined,
-					),
-				),
-			);
-		};
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockSetupReact", {
 			type: "replace",
@@ -344,13 +348,6 @@ class BlocksModule {
 			token: "~",
 		});
 
-		let blocksWithHover = Object.values(this.registry.entries)
-			.filter((b) => b.hasHoverUI)
-			.map((v) => v.id);
-
-		const reduceBlocksWithHover = f =>
-			blocksWithHover.reduce((acc, v) => acc + f(v), "");
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockHover", {
 			type: "replace",
 			from: `n=hu[e.groundCellType];`,
@@ -365,22 +362,17 @@ class BlocksModule {
 			token: "~",
 		});
 
-		let reduceTicking = f => Object.values(this.registry.entries)
-			.filter((t) => t.tickInterval != null)
-			.reduce((acc, t) => acc + f(t.id), "");
-
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
 			type: "replace",
 			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
-			to: `~${reduceTicking((id) => `,(r.type===d["${id}"])&&(n.store.corelibCache["${id}"]=n.store.corelibCache["${id}"].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
+			to: `~${reduceBlocksWithTicking((id) => `,(r.type===d["${id}"])&&(n.store.corelibCache["${id}"]=n.store.corelibCache["${id}"].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
 			token: "~",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
 			type: "replace",
 			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
-			to: `~${reduceTicking((id) => `,h.type===d["${id}"]&&t.store.corelibCache["${id}"].push({x:h.x,y:h.y})`)}`,
+			to: `~${reduceBlocksWithTicking((id) => `,h.type===d["${id}"]&&t.store.corelibCache["${id}"].push({x:h.x,y:h.y})`)}`,
 			token: "~",
 		});
 	}

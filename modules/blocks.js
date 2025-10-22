@@ -82,7 +82,7 @@ class BlocksModule {
 			corelib.schedules.register({ id: `block-tick-${data.id}`, interval: data.tickInterval });
 		}
 
-		let fullImagePath = this.getFullImagePath(data.sourceMod, data.id, data.imagePath);
+		let fullImagePath = this.getFullImagePath(data.sourceMod, data.imagePath);
 		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
 
 		this.registry.register(data.id, blockData);
@@ -97,7 +97,7 @@ class BlocksModule {
 
 		let id = data.parentId + data.suffix;
 		let parentBlock = this.registry.entries[data.parentId];
-		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
+		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, data.imagePath);
 		let variantData = { isVariant: true, fullImagePath, ...data };
 		variantData.id = id;
 
@@ -115,18 +115,19 @@ class BlocksModule {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
+		// unregister each variant entry (they are registered under their own id)
 		for (let variant of this.registry.entries[id].variants) {
-			// unregister each variant entry (they are registered under their own id)
 			this.registry.unregister(variant.id);
 		}
 
 		this.registry.unregister(id);
 	}
 
-	getFullImagePath(sourceMod, id, imagePath) {
-		let _return = path.join(fluxloaderAPI.getModsPath(), sourceMod, (imagePath || id) + ".png").replace(/\\/g, "/");
+	getFullImagePath(sourceMod, imagePath) {
+		let _return = path.join(fluxloaderAPI.getModsPath(), sourceMod, imagePath + ".png").replace(/\\/g, "/");
 
 		if (!fs.existsSync(_return)) {
+			log("warn", "corelib", `Image not found: ${_return}`);
 			_return = path.join(fluxloaderAPI.getModsPath(), "corelib", "assets/noimage.png").replace(/\\/g, "/");
 		}
 
@@ -136,15 +137,16 @@ class BlocksModule {
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
-		const reduceBlocks = (f) => {
-			return Object.values(this.registry.entries)
+		const reduceBlocks = f =>
+			Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
-		};
 
-		const reduceBlockVariants = (b, f) => {
-			return b.variants.reduce((acc, v) => acc + f(v), "");
-		};
+		const reduceBlockVariants = (b, f) =>
+			b.variants.reduce((acc, v) => acc + f(v), "");
+
+		const reduceBlocksAndVariants = f =>
+			reduceBlocks(b => f(b) + reduceBlockVariants(b, v => f(v)));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
@@ -156,66 +158,66 @@ class BlocksModule {
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [], "js/515.bundle.js": [] }, "corelib:blockShapes", (v) => ({
 			type: "replace",
 			from: `"grower":[[12,12,12,12],[0,0,0,0],[0,0,0,0],[0,0,0,0]]`,
-			to: `~` + reduceBlocks((b) => `,"${b.id}":${JSON.stringify(b.shape)}` + reduceBlockVariants(b, (v) => `,"${v.id}":${JSON.stringify(v.shape)}`)),
+			to: `~` +
+				reduceBlocks((b) => `,"${b.id}":${JSON.stringify(b.shape)}` +
+				reduceBlockVariants(b, v => `,"${v.id}":${JSON.stringify(v.shape)}`)),
 			token: `~`,
 		}));
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Vh", "d", "ud"], "js/336.bundle.js": ["n", "l.ev", "u"], "js/546.bundle.js": ["a", "o.ev", "l"] }, "corelib:blockTypeDefinitions", (v1, v2, v3) => ({
 			type: "replace",
 			from: `${v1}[${v2}.FoundationAngledRight]={shape:${v3}["foundation-triangle-right"]}`,
-			to:
-				`~` +
-				reduceBlocks(
-					(b) =>
-						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
-						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
-						`],name:"${b.name}",description:"${b.description}",singleBuild:${b.singleBuild}}` +
-						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`),
-				),
+			to: `~` + reduceBlocks(b =>
+				`,${v1}[${v2}.${b.id}]={
+					shape:${v3}["${b.id}"],
+					variants:[
+						{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
+						reduceBlockVariants(b, v => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
+					`],
+					name:"${b.name}",
+					description:"${b.description}",
+					singleBuild:${b.singleBuild}
+				}` +
+				reduceBlockVariants(b, v => `,${v1}[${v2}.${v.id}]={
+					shape:${v3}["${v.id}"],
+					singleBuild:${b.singleBuild}
+				}`)),
 			token: `~`,
 		}));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}` + reduceBlockVariants(b, (v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true}`)),
+			to: `~` + reduceBlocksAndVariants(b => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}`),
 			token: `~`,
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockLoadTextures", {
 			type: "replace",
 			from: `sm("frame_block")`,
-			to: `~` + reduceBlocks((b) => `,sm("${b.fullImagePath}")` + reduceBlockVariants(b, (v) => `,sm("${v.fullImagePath}")`)),
+			to: `~` + reduceBlocksAndVariants(b => `,sm("${b.fullImagePath}")`),
 			token: `~`,
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockDrawTextures", {
 			type: "replace",
 			from: `if(n.type!==d.Collector)`,
-			to:
-				reduceBlocks(
-					(b) =>
-						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],
-						(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationDelay})
-						%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
-						reduceBlockVariants(
-							b,
-							(v) =>
-								`if(n.type===d.${b.id}){l=t.session.rendering.images["${v.fullImagePath}"],
-								(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${v.animationDelay})
-								%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
-						),
-				) + "~",
-			token: `~`,
+			to: `~` + reduceBlocksAndVariants(b =>
+				`if(n.type===d.${b.id}){
+					l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));` +
+					(b.animationDelay != null
+						? `h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationDelay})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);`
+						: `h.drawImage(l.image,0,0,l.image.width,l.image.height,c.x,c.y,u,u);`) +
+				`}else `) + "~",
+			token: `~`
 		});
-
+		
 		let blocksWithConfig = Object.values(this.registry.entries)
 			.filter((b) => !b.isVariant && b.hasConfigMenu)
 			.map((v) => v.id);
 
-		const reduceBlocksWithConfig = (f) => {
-			return blocksWithConfig.reduce((acc, v) => acc + f(v), "");
-		};
+		const reduceBlocksWithConfig = f =>
+			blocksWithConfig.reduce((acc, v) => acc + f(v), "");
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockConfigMenu", {
 			type: "replace",
@@ -346,9 +348,8 @@ class BlocksModule {
 			.filter((b) => b.hasHoverUI)
 			.map((v) => v.id);
 
-		const reduceBlocksWithHover = (f) => {
-			return blocksWithHover.reduce((acc, v) => acc + f(v), "");
-		};
+		const reduceBlocksWithHover = f =>
+			blocksWithHover.reduce((acc, v) => acc + f(v), "");
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockHover", {
 			type: "replace",
@@ -364,14 +365,10 @@ class BlocksModule {
 			token: "~",
 		});
 
-		// get ticking blocks
-		let reduceTicking = (f) => {
-			return Object.values(this.registry.entries)
-				.filter((t) => t.tickInterval != null)
-				.reduce((acc, t) => acc + f(t.id), "");
-		};
+		let reduceTicking = f => Object.values(this.registry.entries)
+			.filter((t) => t.tickInterval != null)
+			.reduce((acc, t) => acc + f(t.id), "");
 
-		log("info", "corelib", reduceTicking((id) => `${id},`));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
 			type: "replace",

@@ -1,7 +1,5 @@
 const scheduleSchema = {
-	id: {
-		type: "string",
-	},
+	id: { type: "string" },
 	interval: {
 		type: "number",
 		verifier: (v) => {
@@ -25,9 +23,9 @@ class SchedulesModule {
 		},
 	});
 
-	register(id, interval /* scheduleSchema */) {
-		const data = validateInput({ id, interval }, scheduleSchema, true).data;
-
+	register(inputData /* scheduleSchema */) {
+		const data = validateInput(inputData, scheduleSchema, true).data;
+		
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 		this.registry.register(data.id, data.interval);
 	}
@@ -39,17 +37,13 @@ class SchedulesModule {
 	applyPatches() {
 		log("info", "corelib", "Loading schedule module patches");
 
-		let scheduleDefinitionString = "";
-
-		for (let [id, interval] of Object.entries(this.registry.entries)) {
-			scheduleDefinitionString += `up[_["${id}"]]= {interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`;
-		}
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleDefinitions", {
 			type: "replace",
 			from: `up[_.Autosave]=`,
-			to: `${scheduleDefinitionString}~`,
-			token: `~`,
+			to: Object.entries(this.registry.entries).reduce((acc, [ id, interval ]) => acc +
+					`up[_["${id}"]]={interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`, ``) +
+				`~`,
+			token: `~`
 		});
 	}
 }

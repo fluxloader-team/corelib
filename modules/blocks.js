@@ -24,12 +24,12 @@ const blockSchema = {
 			return { success, message: `Parameter 'angles' must be an array of integers` };
 		},
 	},
-	animationDelay: {
+	animationInterval: {
 		type: "number",
 		default: 500,
 		verifier: (v) => {
 			const success = Number.isInteger(v) && v > 0;
-			return { success, message: `Parameter 'animationDelay' must be an integer greater than 0` };
+			return { success, message: `Parameter 'animationInterval' must be an integer greater than 0` };
 		},
 	},
 };
@@ -54,12 +54,12 @@ const variantSchema = {
 			return { success, message: `Parameter 'angles' must be an array of integers` };
 		},
 	},
-	animationDelay: {
+	animationInterval: {
 		type: "number",
 		default: 500,
 		verifier: (v) => {
 			const success = Number.isInteger(v) && v > 0;
-			return { success, message: `Parameter 'animationDelay' must be an integer greater than 0` };
+			return { success, message: `Parameter 'animationInterval' must be an integer greater than 0` };
 		},
 	},
 };
@@ -78,13 +78,13 @@ class BlocksModule {
 	register(inputData /* blockSchema */) {
 		const data = validateInput(inputData, blockSchema, true).data;
 
+		let fullImagePath = this.getFullImagePath(data.sourceMod, data.imagePath);
+		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
+		
 		if (data.tickInterval != null) {
 			corelib.schedules.register({ id: `block-tick-${data.id}`, interval: data.tickInterval });
 		}
-
-		let fullImagePath = this.getFullImagePath(data.sourceMod, data.imagePath);
-		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
-
+			
 		this.registry.register(data.id, blockData);
 	}
 
@@ -115,7 +115,11 @@ class BlocksModule {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
-		// unregister each variant entry (they are registered under their own id)
+		if (data.tickInterval != null) {
+			corelib.schedules.unregister(`block-tick-${data.id}`);
+		}
+
+		// Unregister each variant entry (they are registered under their own id)
 		for (let variant of this.registry.entries[id].variants) {
 			this.registry.unregister(variant.id);
 		}
@@ -278,8 +282,8 @@ class BlocksModule {
 			to: reduceBlocksAndVariants(b =>
 				`if(n.type===d.${b.id}){
 					l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));` +
-					(b.animationDelay != null
-						? `h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationDelay})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);`
+					(b.animationInterval != null
+						? `h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationInterval})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);`
 						: `h.drawImage(l.image,0,0,l.image.width,l.image.height,c.x,c.y,u,u);`) +
 				`}else `) + "~",
 			token: `~`
@@ -362,17 +366,17 @@ class BlocksModule {
 			token: "~",
 		});
 
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingRegister", {
 			type: "replace",
-			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
-			to: `~${reduceBlocksWithTicking((id) => `,(r.type===d["${id}"])&&(n.store.corelibCache["${id}"]=n.store.corelibCache["${id}"].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
+			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
+			to: `~${reduceBlocksWithTicking((id) => `,h.type===d["${id}"]&&t.store.corelib.tickingBlockPositions["${id}"].push({x:h.x,y:h.y})`)}`,
 			token: "~",
 		});
 
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingUnregister", {
 			type: "replace",
-			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
-			to: `~${reduceBlocksWithTicking((id) => `,h.type===d["${id}"]&&t.store.corelibCache["${id}"].push({x:h.x,y:h.y})`)}`,
+			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
+			to: `~${reduceBlocksWithTicking((id) => `,(r.type===d["${id}"])&&(n.store.corelib.tickingBlockPositions["${id}"]=n.store.corelib.tickingBlockPositions["${id}"].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
 			token: "~",
 		});
 	}

@@ -1,10 +1,6 @@
 const moduleEnumSchema = {
-	name: {
-		type: "string",
-	},
-	intIdStart: {
-		type: "number",
-	},
+	name: { type: "string" },
+	intIdStart: { type: "number" },
 	bundleMap: {
 		type: "object",
 		verifier: (v) => {

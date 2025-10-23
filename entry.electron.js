@@ -36,6 +36,24 @@ class CoreLib {
 		this.elements = new ElementsModule();
 	}
 
+	setupInternals() {
+		fluxloaderAPI.events.registerEvent("cl:patches-applied");
+
+		fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
+
+		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
+			let data = {};
+			data.schedules = corelib.schedules.registry.entries;
+			data.blocks = corelib.blocks.registry.entries;
+			data.enumMapping = corelib.enums.enumMapping;
+			return data;
+		});
+
+		fluxloaderAPI.handleGameIPC("corelib:updateEnumMapping", (internal, enumMapping) => {
+			corelib.enums.updateEnumMapping(enumMapping);
+		});
+	}
+
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
@@ -84,24 +102,6 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L},
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
-		});
-	}
-
-	setupInternals() {
-		fluxloaderAPI.events.registerEvent("cl:patches-applied");
-
-		fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
-
-		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
-			let data = {};
-			data.schedules = corelib.schedules.registry.entries;
-			data.blocks = corelib.blocks.registry.entries;
-			data.enumMapping = corelib.enums.enumMapping;
-			return data;
-		});
-
-		fluxloaderAPI.handleGameIPC("corelib:updateEnumMapping", (internal, enumMapping) => {
-			corelib.enums.updateEnumMapping(enumMapping);
 		});
 	}
 }

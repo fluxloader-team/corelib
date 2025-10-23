@@ -43,7 +43,7 @@ class ElementsModule {
  		this.registerBasicRecipe({ inputTop: "Lava", inputBottom: "Water", outputTop: "Steam", outputBottom: "Lava" });
 		this.registerBasicRecipe({ inputTop: "Flame", inputBottom: "Water", outputTop: "Steam", outputBottom: "Steam" });
 		this.registerBasicRecipe({ inputTop: "Petalium", inputBottom: "Sandium", outputTop: "Gloom", outputBottom: "Gloom" });
-		this.registerPressRecipe({input: "BurntSlag", "output": [ ["Spore", 1], ["Gold", 1] ] });
+		this.registerPressRecipe({input: "BurntSlag", outputs: [ ["Spore", 1], ["Gold", 1] ] });
 		this.registerConveyorBeltIgnores("Water");
 		this.registerConveyorBeltIgnores("Steam");
 		this.registerConveyorBeltIgnores("Lava");
@@ -108,9 +108,9 @@ class ElementsModule {
 		// Remove hardcoded top / bottom seperation and add in custom logic using our recipes
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:basicReactionsFunctionChange", {
 			type: "replace",
-			from: `[t.type,r.type].includes(n.RJ.Spore)?(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)
-				   :[t.type,r.type].includes(n.RJ.Lava)?(0,a.Jx)(e,r.x,r.y,(0,o.n)(n.RJ.Lava,r.x,r.y))
-				   :(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[1],r.x,r.y))`,
+			from: `[t.type,r.type].includes(n.RJ.Spore)?(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)` +
+			      `:[t.type,r.type].includes(n.RJ.Lava)?(0,a.Jx)(e,r.x,r.y,(0,o.n)(n.RJ.Lava,r.x,r.y))` +
+				  `:(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[1],r.x,r.y))`,
 			to: `i[2]?(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[2],r.x,r.y))
 					 :(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)`,
 		});

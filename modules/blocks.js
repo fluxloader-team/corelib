@@ -275,7 +275,7 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockDrawTextures", {
 			type: "replace",
 			from: `if(n.type!==d.Collector)`,
-			to: `~` + reduceBlocksAndVariants(b =>
+			to: reduceBlocksAndVariants(b =>
 				`if(n.type===d.${b.id}){
 					l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));` +
 					(b.animationDelay != null

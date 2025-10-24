@@ -99,7 +99,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			type: "replace",
 			from: `const O=function()`,
 			to: `globalThis.corelib.exposed.raw = {
-a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L},
+a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L,r},
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});

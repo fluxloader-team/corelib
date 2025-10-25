@@ -116,10 +116,24 @@ class TechModule {
 			pattern: /\$f=function\(\).*?\},Y/,
 			replace: `$f=function(){return${techDefinitionString}},Y`,
 		});
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUIImprovements", {
+		// Idk, I'm calling this the "branch bar" but it's what connects nodes with more than 1 child
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUI-branchBar", {
 			type: "replace",
 			from: 'i_({},t.id===w.Guns1&&t.status!==S.Unknown&&t.status!==S.Visible?{width:"545px",marginLeft:"-63px"}:{})',
 			to: "i_({},t.status!==S.Unknown&&t.status!==S.Visible?corelib.utils.getLineStyle(t):{})",
+		});
+		// Make the connector coming off any node half the length
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUI-shortenConnector", {
+			type: "replace",
+			from: "w-px h-8 bg-gray-400",
+			to: "w-px h-4 bg-gray-400",
+		});
+		// Add the other half of the connector above each node
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUI-addConnectors", {
+			type: "replace",
+			from: "children:l(e)",
+			// Insert the connector element right before any children
+			to: 'children:[(0,bm.jsx)("div",{className:"w-px h-4 bg-gray-400"})].concat(l(e))',
 		});
 	}
 }

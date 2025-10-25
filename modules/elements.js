@@ -390,36 +390,40 @@ class ElementsModule {
 globalThis.ElementsModule = ElementsModule;
 
 burnableRecipes = {
-		soils: {
-			[i.vZ.Moss]: { output: false },
-			[i.vZ.Divider]: { output: false },
-			[i.vZ.GoldSoil]: { output: { elementType: i.RJ.Gold, chance: 1 } },
-			[i.vZ.Petal]: { output: { elementType: i.RJ.Petalium, chance: 1 } },
-			[i.vZ.Ice]: { output: { elementType: i.RJ.Water, chance: 1 } },
+	soils: {
+		[i.vZ.Moss]: { output: false, spreadFlame: true },
+		[i.vZ.Divider]: { output: false, spreadFlame: true },
+		[i.vZ.GoldSoil]: { output: { elementType: i.RJ.Gold, chance: 1 }, spreadFlame: true },
+		[i.vZ.Petal]: { output: { elementType: i.RJ.Petalium, chance: 1 }, spreadFlame: true },
+		[i.vZ.Ice]: { output: { elementType: i.RJ.Water, chance: 1 } },
+	},
+	particles: {
+		[i.RJ.Slag]: {
+			output: { elementType: i.RJ.BurntSlag, chance: 0.25 },
+			spreadFlame: true,
 		},
-		particles: {
-			[i.RJ.Slag]: {
-				output: { elementType: i.RJ.BurntSlag, chance: 0.25 },
-			},
-			[i.RJ.Basalt]: {
-				output: { elementType: i.RJ.Lava, chance: 1 },
-			},
-			[i.RJ.Water]: {
-				output: { elementType: i.RJ.Steam, chance: 1 },
-			},
-			[i.RJ.FreezingIce]: {
-				output: { elementType: i.RJ.Steam, chance: 1 },
-			}
+		[i.RJ.Basalt]: {
+			output: { elementType: i.RJ.Lava, chance: 1 },
+			spreadFlame: false,
+		},
+		[i.RJ.Water]: {
+			output: { elementType: i.RJ.Steam, chance: 1 },
+			spreadFlame: false,
+		},
+		[i.RJ.FreezingIce]: {
+			output: { elementType: i.RJ.Steam, chance: 1 },
+			spreadFlame: false,
 		},
 	},
-hasVaporizedWater = !1,
-g = function (e, t, r, a) {
+},
+	hasVaporizedWater = !1,
+	g = function (e, t, r, a) {
 		if (!(t < 0 || r < 0 || t >= e.store.world.size.width || r >= e.store.world.size.height)) {
-			var n = (0, c.tT)(e.store, t, r);
-			if ((0, c.Ol)(n)) return ((d = (0, s.n)(i.RJ.Fire, t, r)).duration.left = d.duration.max = d.duration.left * Math.max(0.25, 1 - a / 0.64)), void (0, c.Jx)(e, t, r, d);
-			if ((0, c.W)(n, i.vZ.Ice)) (0, u.jE)(e, t, r);
+			var cellAtPos = (0, c.tT)(e.store, t, r);
+			if ((0, c.Ol)(cellAtPos)) return ((d = (0, s.n)(i.RJ.Fire, t, r)).duration.left = d.duration.max = d.duration.left * Math.max(0.25, 1 - a / 0.64)), void (0, c.Jx)(e, t, r, d);
+			if ((0, c.W)(cellAtPos, i.vZ.Ice)) (0, u.jE)(e, t, r);
 			else {
-				if ((0, c.af)(n, [i.RJ.Water, i.RJ.FreezingIce])) {
+				if ((0, c.af)(cellAtPos, [i.RJ.Water, i.RJ.FreezingIce])) {
 					var d = (0, s.n)(i.RJ.Steam, t, r);
 					return (
 						(0, c.Jx)(e, t, r, d),
@@ -430,8 +434,8 @@ g = function (e, t, r, a) {
 						])
 					);
 				}
-				if ((0, c.af)(n, i.RJ.Slag)) return ((d = (0, s.n)(i.RJ.Flame, t, r)).data = p[i.RJ.Slag]()), (d.duration.left = d.duration.max = d.duration.left - a), void (0, c.Jx)(e, t, r, d);
-				x(e, t, r, n) || ((0, c.af)(n, i.RJ.Basalt) && (0, c.Jx)(e, t, r, (0, s.n)(i.RJ.Lava, t, r)));
+				if ((0, c.af)(cellAtPos, i.RJ.Slag)) return ((d = (0, s.n)(i.RJ.Flame, t, r)).data = p[i.RJ.Slag]()), (d.duration.left = d.duration.max = d.duration.left - a), void (0, c.Jx)(e, t, r, d);
+				x(e, t, r, cellAtPos) || ((0, c.af)(cellAtPos, i.RJ.Basalt) && (0, c.Jx)(e, t, r, (0, s.n)(i.RJ.Lava, t, r)));
 			}
 		}
 	},
@@ -490,15 +494,13 @@ g = function (e, t, r, a) {
 		}
 		(0, h.x)(e, n, t, r), x(e, t, r, n);
 	},
-	
-	x = function (e, t, r, a) {
-		if (((a = null != a ? a : (0, c.tT)(e.store, t, r)), (0, c.ez)(a))) {
-			if ((0, c.kw)(a, [i.vZ.Moss, i.vZ.Divider, i.vZ.GoldSoil, i.vZ.Petal])) {
+	x = function (e, t, r, cellAtPos) {
+		if (((a = null != cellAtPos ? cellAtPos : (0, c.tT)(e.store, t, r)), (0, c.ez)(cellAtPos))) {
+			if ((0, c.kw)(cellAtPos, [i.vZ.Moss, i.vZ.Divider, i.vZ.GoldSoil, i.vZ.Petal])) {
 				var n = (0, s.n)(i.RJ.Flame, t, r);
-				return (n.skipPhysics = !0), (n.data = { output: { elementType: S[a] } }), (0, c.Jx)(e, t, r, n), !0;
+				return (n.skipPhysics = !0), (n.data = { output: { elementType: S[cellAtPos] } }), (0, c.Jx)(e, t, r, n), !0;
 			}
 			(0, d.zT)(e, t, r, 4);
 		}
 		return !1;
-	}
-
+	};

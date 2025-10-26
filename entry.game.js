@@ -87,8 +87,8 @@ class CoreLib {
 					// But it works in at least a simple test with several techs added
 					marginLeft: `${middleWidth + firstWidth - finalWidth}px`,
 				};
-			}
-		}
+			},
+		};
 	}
 
 	setupInternals() {
@@ -162,7 +162,7 @@ class CoreLib {
 			},
 			getSelectedItem() {
 				return corelib.exposed.named.getSelectedItem(fluxloaderAPI.gameInstance.state);
-			}
+			},
 		};
 	}
 
@@ -175,8 +175,10 @@ class CoreLib {
 		}
 
 		// Calculate the ticking blocks
-		let tickingBlockIds = Object.values(registrations.blocks).filter((b) => b.tickInterval > 0).map(b => b.id);
-		
+		let tickingBlockIds = Object.values(registrations.blocks)
+			.filter((b) => b.tickInterval > 0)
+			.map((b) => b.id);
+
 		let hasSceneLoaded = false;
 		fluxloaderAPI.events.on("fl:scene-loaded", () => {
 			hasSceneLoaded = true;

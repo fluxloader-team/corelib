@@ -10,14 +10,14 @@ const blockSchema = {
 	unlockedByDefault: { type: "boolean", default: false },
 	tickInterval: { type: "number", default: null, nullable: true },
 	shape: {
-		type: "object",
+		type: "array",
 		verifier: (v) => {
 			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
 			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
 	},
 	angles: {
-		type: "object",
+		type: "array",
 		default: [],
 		verifier: (v) => {
 			const success = v.every((i) => Number.isInteger(i));
@@ -40,14 +40,14 @@ const variantSchema = {
 	imagePath: { type: "string", default: "" },
 	hasHoverUI: { type: "boolean", default: false },
 	shape: {
-		type: "object",
+		type: "array",
 		verifier: (v) => {
 			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
 			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
 	},
 	angles: {
-		type: "object",
+		type: "array",
 		default: [],
 		verifier: (v) => {
 			const success = v.every((i) => Number.isInteger(i));
@@ -76,20 +76,20 @@ class BlocksModule {
 	});
 
 	register(inputData /* blockSchema */) {
-		const data = validateInput(inputData, blockSchema, true).data;
+		const data = validateInput(inputData, blockSchema);
 
 		let fullImagePath = this.getFullImagePath(data.sourceMod, data.imagePath);
 		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
-		
+
 		if (data.tickInterval != null) {
-			corelib.schedules.register({ id: `block-tick-${data.id}`, interval: data.tickInterval });
+			corelib.schedules.register(`block-tick-${data.id}`, data.tickInterval);
 		}
-			
+
 		this.registry.register(data.id, blockData);
 	}
 
 	registerVariant(inputData /* variantSchema */) {
-		const data = validateInput(inputData, variantSchema, true).data;
+		const data = validateInput(inputData, variantSchema);
 
 		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}" not found!`);
@@ -141,27 +141,29 @@ class BlocksModule {
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
-		const reduceBlocks = f => Object.values(this.registry.entries)
+		const reduceBlocks = (f) =>
+			Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 
-		const reduceBlockVariants = (b, f) =>
-			b.variants.reduce((acc, v) => acc + f(v), "");
+		const reduceBlockVariants = (b, f) => b.variants.reduce((acc, v) => acc + f(v), "");
 
-		const reduceBlocksAndVariants = f =>
-			reduceBlocks(b => f(b) + reduceBlockVariants(b, v => f(v)));
+		const reduceBlocksAndVariants = (f) => reduceBlocks((b) => f(b) + reduceBlockVariants(b, (v) => f(v)));
 
-		const reduceBlocksWithConfig = f => Object.values(this.registry.entries)
-			.filter((b) => !b.isVariant && b.hasConfigMenu)
-			.reduce((acc, v) => acc + f(v.id), "");
+		const reduceBlocksWithConfig = (f) =>
+			Object.values(this.registry.entries)
+				.filter((b) => !b.isVariant && b.hasConfigMenu)
+				.reduce((acc, v) => acc + f(v.id), "");
 
-		const reduceBlocksWithHover = f => Object.values(this.registry.entries)
-			.filter((b) => b.hasHoverUI)
-			.reduce((acc, v) => acc + f(v.id), "");
+		const reduceBlocksWithHover = (f) =>
+			Object.values(this.registry.entries)
+				.filter((b) => b.hasHoverUI)
+				.reduce((acc, v) => acc + f(v.id), "");
 
-		let reduceBlocksWithTicking = f => Object.values(this.registry.entries)
-			.filter((t) => t.tickInterval != null)
-			.reduce((acc, t) => acc + f(t.id), "");
+		let reduceBlocksWithTicking = (f) =>
+			Object.values(this.registry.entries)
+				.filter((t) => t.tickInterval != null)
+				.reduce((acc, t) => acc + f(t.id), "");
 
 		const configUIFunction = function () {
 			const data = {
@@ -224,7 +226,7 @@ class BlocksModule {
 				),
 			);
 		};
-		
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
 			from: `d.Foundation,d.Collector`,
@@ -235,60 +237,68 @@ class BlocksModule {
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [], "js/515.bundle.js": [] }, "corelib:blockShapes", (v) => ({
 			type: "replace",
 			from: `"grower":[[12,12,12,12],[0,0,0,0],[0,0,0,0],[0,0,0,0]]`,
-			to: `~` +
-				reduceBlocks((b) => `,"${b.id}":${JSON.stringify(b.shape)}` +
-				reduceBlockVariants(b, v => `,"${v.id}":${JSON.stringify(v.shape)}`)),
+			to: `~` + reduceBlocks((b) => `,"${b.id}":${JSON.stringify(b.shape)}` + reduceBlockVariants(b, (v) => `,"${v.id}":${JSON.stringify(v.shape)}`)),
 			token: `~`,
 		}));
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Vh", "d", "ud"], "js/336.bundle.js": ["n", "l.ev", "u"], "js/546.bundle.js": ["a", "o.ev", "l"] }, "corelib:blockTypeDefinitions", (v1, v2, v3) => ({
 			type: "replace",
 			from: `${v1}[${v2}.FoundationAngledRight]={shape:${v3}["foundation-triangle-right"]}`,
-			to: `~` + reduceBlocks(b =>
-				`,${v1}[${v2}.${b.id}]={
+			to:
+				`~` +
+				reduceBlocks(
+					(b) =>
+						`,${v1}[${v2}.${b.id}]={
 					shape:${v3}["${b.id}"],
 					variants:[
 						{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
-						reduceBlockVariants(b, v => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
-					`],
+						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
+						`],
 					name:"${b.name}",
 					description:"${b.description}",
 					singleBuild:${b.singleBuild}
 				}` +
-				reduceBlockVariants(b, v => `,${v1}[${v2}.${v.id}]={
+						reduceBlockVariants(
+							b,
+							(v) => `,${v1}[${v2}.${v.id}]={
 					shape:${v3}["${v.id}"],
 					singleBuild:${b.singleBuild}
-				}`)),
+				}`,
+						),
+				),
 			token: `~`,
 		}));
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to: `~` + reduceBlocksAndVariants(b => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}`),
+			to: `~` + reduceBlocksAndVariants((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}`),
 			token: `~`,
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockLoadTextures", {
 			type: "replace",
 			from: `sm("frame_block")`,
-			to: `~` + reduceBlocksAndVariants(b => `,sm("${b.fullImagePath}")`),
+			to: `~` + reduceBlocksAndVariants((b) => `,sm("${b.fullImagePath}")`),
 			token: `~`,
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockDrawTextures", {
 			type: "replace",
 			from: `if(n.type!==d.Collector)`,
-			to: reduceBlocksAndVariants(b =>
-				`if(n.type===d.${b.id}){
+			to:
+				reduceBlocksAndVariants(
+					(b) =>
+						`if(n.type===d.${b.id}){
 					l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));` +
-					(b.animationInterval != null
-						? `h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationInterval})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);`
-						: `h.drawImage(l.image,0,0,l.image.width,l.image.height,c.x,c.y,u,u);`) +
-				`}else `) + "~",
-			token: `~`
+						(b.animationInterval != null
+							? `h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationInterval})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);`
+							: `h.drawImage(l.image,0,0,l.image.width,l.image.height,c.x,c.y,u,u);`) +
+						`}else `,
+				) + "~",
+			token: `~`,
 		});
-		
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockConfigMenu", {
 			type: "replace",
 			from: "n.id===d.FilterRight&&(e.session.windows.building.filterConfig=!0,Al(e,k.FilterConfig))",

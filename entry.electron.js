@@ -133,7 +133,7 @@ class DataRegistry {
 	}
 }
 
-function validateInput(parameters, schema, throwOnFail = false) {
+function validateInput(parameters, schema, throwOnFail = true) {
 	// args should be an object of any:any (should match schema keys, and have valid values)
 	// schema should be an object which maps keys of arguments to expected data
 	// - schema items without `default` will be assumed to be required parameters
@@ -225,6 +225,9 @@ function validateInput(parameters, schema, throwOnFail = false) {
 				.join("; ")}`,
 		);
 	}
+
+	// If throwOnFail is true, then result.success must also be true here
+	if (throwOnFail) return result.data;
 
 	return result;
 }

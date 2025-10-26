@@ -23,9 +23,9 @@ class SchedulesModule {
 		},
 	});
 
-	register(inputData /* scheduleSchema */) {
-		const data = validateInput(inputData, scheduleSchema, true).data;
-		
+	register(id, interval) {
+		const data = validateInput({ id, interval }, scheduleSchema);
+
 		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
 		this.registry.register(data.id, data.interval);
 	}
@@ -40,10 +40,12 @@ class SchedulesModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:scheduleDefinitions", {
 			type: "replace",
 			from: `up[_.Autosave]=`,
-			to: Object.entries(this.registry.entries).reduce((acc, [ id, interval ]) => acc +
-					`up[_["${id}"]]={interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`, ``) +
-				`~`,
-			token: `~`
+			to:
+				Object.entries(this.registry.entries).reduce(
+					(acc, [id, interval]) => acc + `up[_["${id}"]]={interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`,
+					``,
+				) + `~`,
+			token: `~`,
 		});
 	}
 }

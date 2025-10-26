@@ -19,7 +19,7 @@ class TechModule {
 	registry = corelib.enums.createRegistry({
 		name: "Tech",
 		intIdStart: 38,
-		bundleMap: { main: "w", sim: "b", manager: "R" }
+		bundleMap: { main: "w", sim: "b", manager: "R" },
 	});
 
 	baseTechs = {};
@@ -53,7 +53,7 @@ class TechModule {
 	}
 
 	register(inputData /* techSchema */) {
-		const data = validateInput(inputData, techSchema, true).data;
+		const data = validateInput(inputData, techSchema);
 
 		if (Object.keys(data.unlocks).length === 0) delete data.unlocks;
 
@@ -100,9 +100,9 @@ class TechModule {
 			type: "replace",
 			from: "<title>Sandustry Demo</title>",
 			to: `$<link rel="stylesheet" type="text/css" href="${styleFilePath}" />`,
-			token: "$"
+			token: "$",
 		});
-	
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:definitions", {
 			type: "regex",
 			pattern: /\$f=function\(\).*?\},Y/,
@@ -118,22 +118,22 @@ class TechModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:UIScrollImprovements1", {
 			type: "replace",
 			from: `,style:{width:t.id===w.Refining1?"608px":null}`,
-			to: ""
+			to: "",
 		});
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:UIScrollImprovements2", {
 			type: "replace",
 			from: `{className:"overflow-auto pl-2 relative"},`,
-			to: ""
+			to: "",
 		});
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:UIScrollImprovements3", {
 			type: "replace",
 			from: `{className:"flex-grow overflow-auto"}`,
-			to: `{className:"flex-grow overflow-auto relative"}`
+			to: `{className:"flex-grow overflow-auto relative"}`,
 		});
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:UIScrollImprovements4", {
 			type: "replace",
 			from: `{className:"flex justify-end"},`,
-			to: `{className:"flex"},`
+			to: `{className:"flex"},`,
 		});
 	}
 }

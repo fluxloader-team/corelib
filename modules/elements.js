@@ -3,13 +3,13 @@ const basicRecipeRegisterSchema = {
 	inputBottom: { type: "string" },
 	outputTop: { type: "string" },
 	outputBottom: { type: "string", default: "Empty" },
-	bothWays: { type: "boolean", default: true }
+	bothWays: { type: "boolean", default: true },
 };
 
 const basicRecipeUnregisterSchema = {
 	inputTop: { type: "string" },
 	inputBottom: { type: "string" },
-	bothWays: { type: "boolean", default: true }
+	bothWays: { type: "boolean", default: true },
 };
 
 const pressRecipeRegisterSchema = {
@@ -23,12 +23,12 @@ const pressRecipeRegisterSchema = {
 				success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
 				message: `Parameter 'outputs' must be an array of arrays with the output in the first and the chance in the second`,
 			};
-		}
-	}
+		},
+	},
 };
 
 const pressRecipeUnregisterSchema = {
-	input: { type: "string" }
+	input: { type: "string" },
 };
 
 class ElementsModule {
@@ -40,10 +40,16 @@ class ElementsModule {
 	constructor() {
 		this.registerBasicRecipe({ inputTop: "Sand", inputBottom: "Water", outputTop: "WetSand", outputBottom: "WetSand" });
 		this.registerBasicRecipe({ inputTop: "Spore", inputBottom: "Water", outputTop: "WetSpore" });
- 		this.registerBasicRecipe({ inputTop: "Lava", inputBottom: "Water", outputTop: "Steam", outputBottom: "Lava" });
+		this.registerBasicRecipe({ inputTop: "Lava", inputBottom: "Water", outputTop: "Steam", outputBottom: "Lava" });
 		this.registerBasicRecipe({ inputTop: "Flame", inputBottom: "Water", outputTop: "Steam", outputBottom: "Steam" });
 		this.registerBasicRecipe({ inputTop: "Petalium", inputBottom: "Sandium", outputTop: "Gloom", outputBottom: "Gloom" });
-		this.registerPressRecipe({input: "BurntSlag", outputs: [ ["Spore", 1], ["Gold", 1] ] });
+		this.registerPressRecipe({
+			input: "BurntSlag",
+			outputs: [
+				["Spore", 1],
+				["Gold", 1],
+			],
+		});
 		this.registerConveyorBeltIgnores("Water");
 		this.registerConveyorBeltIgnores("Steam");
 		this.registerConveyorBeltIgnores("Lava");
@@ -51,7 +57,7 @@ class ElementsModule {
 	}
 
 	registerBasicRecipe(inputData /* basicRecipeRegisterSchema */) {
-		const data = validateInput(inputData, basicRecipeRegisterSchema, true).data;
+		const data = validateInput(inputData, basicRecipeRegisterSchema);
 		const add = (from, to) => {
 			this.recipes.basic[from] ??= [];
 			this.recipes.basic[from].push([to, data.outputTop, data.outputBottom]);
@@ -61,7 +67,7 @@ class ElementsModule {
 	}
 
 	unregisterBasicRecipe(inputData /* basicRecipeUnregisterSchema */) {
-		const data = validateInput(inputData, basicRecipeUnregisterSchema, true).data;
+		const data = validateInput(inputData, basicRecipeUnregisterSchema);
 		const removeBasicRecipe = (inputTop, inputBottom) => {
 			if (!this.recipes.basic[inputTop]) return log("error", "corelib", `Could not unregister basic recipe with elements "${element1}" and "${element2}"!`);
 			this.recipes.basic[inputTop] = this.recipes.basic[inputTop].filter(([target]) => target !== inputBottom);
@@ -72,12 +78,12 @@ class ElementsModule {
 	}
 
 	registerPressRecipe(inputData /* pressRecipeRegisterSchema */) {
-		const data = validateInput(inputData, pressRecipeRegisterSchema, true).data;
+		const data = validateInput(inputData, pressRecipeRegisterSchema);
 		this.recipes.press[data.input] = [data.requiredVelocity, data.outputs];
 	}
 
 	unregisterPressRecipe(inputData /* pressRecipeUnregisterSchema */) {
-		const data = validateInput(inputData, pressRecipeUnregisterSchema, true).data;
+		const data = validateInput(inputData, pressRecipeUnregisterSchema);
 		if (!this.recipes.press[data.input]) return log("error", "corelib", `Could not unregister press recipe with id "${data.input}", not found!`);
 		delete this.recipes.press[data.input];
 	}
@@ -95,22 +101,23 @@ class ElementsModule {
 	applyPatches() {
 		log("info", "corelib", "Loading element module patches");
 
-		const prependJoin = (prefix, array) => array.map(v => prefix + v).join(", ");
+		const prependJoin = (prefix, array) => array.map((v) => prefix + v).join(", ");
 
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:basicReactionsList", {
 			type: "replace",
 			from: `c=((i={})[n.RJ.Water]=[[n.RJ.Sand,n.RJ.WetSand],[n.RJ.Spore,n.RJ.WetSpore],[n.RJ.Lava,n.RJ.Steam],[n.RJ.Flame,n.RJ.Steam]],i[n.RJ.Sand]=[[n.RJ.Water,n.RJ.WetSand]],i[n.RJ.Spore]=[[n.RJ.Water,n.RJ.WetSpore]],i[n.RJ.Lava]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Flame]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Sandium]=[[n.RJ.Petalium,n.RJ.Gloom]],i[n.RJ.Petalium]=[[n.RJ.Sandium,n.RJ.Gloom]],i)`,
-			to: `c=((i={}),` + Object.entries(this.recipes.basic)
-				.map(([inputTop, recipe]) => `i[n.RJ.${inputTop}]=[` + recipe.map(v => `[${ prependJoin("n.RJ.", v)}]`).join(",") +`]`)
-				.join(",") + `,i)`,
+			to:
+				`c=((i={}),` +
+				Object.entries(this.recipes.basic)
+					.map(([inputTop, recipe]) => `i[n.RJ.${inputTop}]=[` + recipe.map((v) => `[${prependJoin("n.RJ.", v)}]`).join(",") + `]`)
+					.join(",") +
+				`,i)`,
 		});
 
 		// Remove hardcoded top / bottom seperation and add in custom logic using our recipes
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:basicReactionsFunctionChange", {
 			type: "replace",
-			from: `[t.type,r.type].includes(n.RJ.Spore)?(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)` +
-			      `:[t.type,r.type].includes(n.RJ.Lava)?(0,a.Jx)(e,r.x,r.y,(0,o.n)(n.RJ.Lava,r.x,r.y))` +
-				  `:(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[1],r.x,r.y))`,
+			from: `[t.type,r.type].includes(n.RJ.Spore)?(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)` + `:[t.type,r.type].includes(n.RJ.Lava)?(0,a.Jx)(e,r.x,r.y,(0,o.n)(n.RJ.Lava,r.x,r.y))` + `:(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[1],r.x,r.y))`,
 			to: `i[2]?(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[2],r.x,r.y))
 					 :(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)`,
 		});

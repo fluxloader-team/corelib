@@ -82,7 +82,7 @@ class CoreLib {
 				let lastWidth = lastLeaves * nodeWidth + (lastLeaves - 1) * gap;
 				let finalWidth = firstWidth / 2 + middleWidth + lastWidth / 2;
 				return {
-					width: `${finalWidth}px`,
+					width: `${finalWidth + 1}px`,
 					// I'm not 100% sure this margin checks works in all cases tbh..
 					// But it works in at least a simple test with several techs added
 					marginLeft: `${middleWidth + firstWidth - finalWidth}px`,

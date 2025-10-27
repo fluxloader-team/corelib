@@ -148,19 +148,6 @@ class TechModule {
 			// Insert the connector element right before any children
 			to: 'children:[(0,bm.jsx)("div",{className:"w-px h-4 bg-gray-400"})].concat(l(e))',
 		});
-		// Make the connector coming off any node half the length
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUI-shortenConnector", {
-			type: "replace",
-			from: "w-px h-8 bg-gray-400",
-			to: "w-px h-4 bg-gray-400",
-		});
-		// Add the other half of the connector above each node
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUI-addConnectors", {
-			type: "replace",
-			from: "children:l(e)",
-			// Insert the connector element right before any children
-			to: 'children:[(0,bm.jsx)("div",{className:"w-px h-4 bg-gray-400"})].concat(l(e))',
-		});
 	}
 }
 

@@ -104,6 +104,7 @@ class CoreLib {
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 			},
 			spawnParticle: ({ id, x, y, velocityX = 0, velocityY = 0, data = {} }) => {
+				// If something is breaking make sure youre not spawning a "meta" particle type like 2 (Particle) or 9 (Shake)
 				let intId = id;
 				if (!Number.isInteger(id)) {
 					intId = corelib.exposed.named.particles[id];

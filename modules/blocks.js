@@ -237,7 +237,7 @@ class BlocksModule {
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [], "js/515.bundle.js": [] }, "corelib:blockShapes", (v) => ({
 			type: "replace",
 			from: `"grower":[[12,12,12,12],[0,0,0,0],[0,0,0,0],[0,0,0,0]]`,
-			to: `~` + reduceBlocks((b) => `,"${b.id}":${JSON.stringify(b.shape)}` + reduceBlockVariants(b, (v) => `,"${v.id}":${JSON.stringify(v.shape)}`)),
+			to: `~` + reduceBlocksAndVariants((b) => `,"${b.id}":${JSON.stringify(b.shape)}`),
 			token: `~`,
 		}));
 

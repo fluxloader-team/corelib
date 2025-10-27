@@ -166,6 +166,12 @@ class BlocksModule {
 				.reduce((acc, t) => acc + f(t.id), "");
 
 		const configUIFunction = function () {
+			// This function is stringified and templated with __BLOCKID__ then patched into corelib
+			// - e.state.session.windows.building.__BLOCKID__Config is the bool for if the config is open
+			// - e.state.store.options.__BLOCKID__Config is where the config data is stored
+			// - k.__BLOCKID__Config is the key for the config window
+
+			// Extract scope variables we can get when we are passed into the games code
 			const data = {
 				scale: ip,
 				state: e.state,
@@ -185,17 +191,24 @@ class BlocksModule {
 					Al(e.state, k.Hotbar);
 				},
 			};
+			
 			data.showWindow(data.state, k.__BLOCKID__Config);
+	
+			// Ref that we put the wrapper div into for click checking
 			let targetChecker = React.useRef(null);
-			// pre UI render - by mod that registered the block
+	
+			// Run the `block__BLOCKID__PreConfigUI` function if the mod provides it for the `extra` information
 			data.extra = globalThis["block__BLOCKID__PreConfigUI"] ? globalThis["block__BLOCKID__PreConfigUI"](data) : {};
+
+			// If the config is not open, return null to not render anything
 			if (!data.state.session.windows.building.__BLOCKID__Config) return null;
+	
 			return React.createElement(
 				"div",
 				{
 					className: "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50",
 					onClick: (check) => {
-						// Only closes UI if clicked element was not part of the menu
+						// Only closes UI if clicked element was not part of the "targetChecker" menu ref
 						targetChecker.current && !targetChecker.current.contains(check.target) && ((data.state.session.windows.building.__BLOCKID__Config = !1), Al(data.state, k.__BLOCKID__Config));
 					},
 				},
@@ -220,7 +233,7 @@ class BlocksModule {
 							transition: { y: { duration: 0.1 } },
 							className: "h-full bg-black bg-opacity-85 p-4 shadow-lg ui-box card-2 overflow-y-auto",
 						},
-						// use UI returned by mod
+						// use the mod provided `block__BLOCKID__ConfigUI` function to get the actual content of the config UI
 						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined,
 					),
 				),

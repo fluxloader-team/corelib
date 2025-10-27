@@ -32,7 +32,7 @@ class CoreLib {
 				blocks: corelib.exposed.raw.d,
 				matterTypes: corelib.exposed.raw.h,
 				mapColors: corelib.exposed.raw.Fd,
-				createParticle: corelib.exposed.raw.Fh,
+				createCellData: corelib.exposed.raw.Fh,
 				spawnBlock: corelib.exposed.raw.xd,
 				setCell: corelib.exposed.raw.Od,
 				getSelectedItem: corelib.exposed.raw.Ef,
@@ -93,27 +93,28 @@ class CoreLib {
 
 	setupInternals() {
 		this.simulation = {
-			spawnParticle: ({ x, y, id, data = {} }) => {
+			spawnElement: ({ id, x, y, data = {} }) => {
+				// Typically prefer to use spawnParticle for moving elements in the world
 				let intId = id;
 				if (!Number.isInteger(id)) {
 					intId = corelib.exposed.named.particles[id];
 					if (intId === undefined) return log("error", "corelib", `Could not find particle with ID '${id}' in exposed.named.particles!`);
 				}
-				const particle = corelib.exposed.named.createParticle(intId, x, y, data);
+				const particle = corelib.exposed.named.createCellData(intId, x, y, data);
 				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 			},
-			spawnMovingParticle: ({ x, y, velocityX, velocityY, id, data = {} }) => {
+			spawnParticle: ({ id, x, y, velocityX = 0, velocityY = 0, data = {} }) => {
 				let intId = id;
 				if (!Number.isInteger(id)) {
 					intId = corelib.exposed.named.particles[id];
 					if (intId === undefined) return log("error", "corelib", `Could not find particle with ID '${id}' in exposed.named.particles!`);
 				}
-				const innerParticle = corelib.exposed.named.createParticle(intId, x, y, data);
-				const outerParticle = corelib.exposed.named.createParticle(corelib.exposed.named.particles.Particle, x, y, {
-					element: innerParticle,
+				const element = corelib.exposed.named.createCellData(intId, x, y, data);
+				const particle = corelib.exposed.named.createCellData(corelib.exposed.named.particles.Particle, x, y, {
+					element: element,
 					velocity: { x: velocityX, y: velocityY },
 				});
-				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, outerParticle);
+				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
 			},
 			spawnBlock: (x, y, id) => {
 				let intId = id;

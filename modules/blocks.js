@@ -191,18 +191,18 @@ class BlocksModule {
 					Al(e.state, k.Hotbar);
 				},
 			};
-			
+
 			data.showWindow(data.state, k.__BLOCKID__Config);
-	
+
 			// Ref that we put the wrapper div into for click checking
 			let targetChecker = React.useRef(null);
-	
+
 			// Run the `block__BLOCKID__PreConfigUI` function if the mod provides it for the `extra` information
 			data.extra = globalThis["block__BLOCKID__PreConfigUI"] ? globalThis["block__BLOCKID__PreConfigUI"](data) : {};
 
 			// If the config is not open, return null to not render anything
 			if (!data.state.session.windows.building.__BLOCKID__Config) return null;
-	
+
 			return React.createElement(
 				"div",
 				{

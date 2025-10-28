@@ -79,16 +79,10 @@ const upgradeSchema = {
 		},
 	},
 	costs: {
-		type: "object",
+		type: "array",
 		verifier: (v) => {
-			let valid = Array.isArray(v);
-			if (valid) {
-				for (const x of v) {
-					valid &&= Number.isInteger(x) && x >= 0;
-				}
-			}
 			return {
-				success: valid,
+				success: v.every((cost) => Number.isInteger(cost) && cost >= 0),
 				message: "Parameter 'cost' must be an array of integers >= 0",
 			};
 		},
@@ -125,7 +119,7 @@ class UpgradesModule {
 	}
 
 	registerTab(inputData /* tabSchema */) {
-		const data = validateInput(inputData, tabSchema, true).data;
+		const data = validateInput(inputData, tabSchema);
 
 		if (Object.keys(data.requirement).length === 0) delete data.requirement;
 
@@ -133,7 +127,7 @@ class UpgradesModule {
 	}
 
 	registerCategory(inputData /* categorySchema */) {
-		const data = validateInput(inputData, categorySchema, true).data;
+		const data = validateInput(inputData, categorySchema);
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
@@ -146,7 +140,7 @@ class UpgradesModule {
 	}
 
 	registerUpgrade(inputData /* upgradeSchema */) {
-		const data = validateInput(inputData, upgradeSchema, true).data;
+		const data = validateInput(inputData, upgradeSchema);
 
 		if (!this.upgrades.hasOwnProperty(data.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);

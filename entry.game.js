@@ -17,7 +17,7 @@ class CoreLib {
 		this.setupEvents();
 		this.setupHooks();
 		this.setupInternals();
-		await this.setupTickingBlocks();
+		await this.setupSchedules();
 	}
 
 	setupEvents() {
@@ -32,7 +32,7 @@ class CoreLib {
 				blocks: corelib.exposed.raw.d,
 				matterTypes: corelib.exposed.raw.h,
 				mapColors: corelib.exposed.raw.Fd,
-				createParticle: corelib.exposed.raw.Fh,
+				createCellData: corelib.exposed.raw.Fh,
 				spawnBlock: corelib.exposed.raw.xd,
 				setCell: corelib.exposed.raw.Od,
 				getSelectedItem: corelib.exposed.raw.Ef,
@@ -46,87 +46,25 @@ class CoreLib {
 	}
 
 	setupHooks() {
-		globalThis.corelib.hooks.setupSave = (store) => {
-			return store;
-		};
+		this.hooks = {
+			setupSave(store) {
+				return store;
+			},
+			async preSceneChange(param) {
+				disableScreen();
 
-		globalThis.corelib.hooks.preSceneChange = async (param) => {
-			disableScreen();
-
-			// Main menu loading game and not new game
-			if (typeof param == "string" && param.includes("db_load")) {
-				let url = param.substring(8); // "db_load="
-				let results = await window.electron.load(url);
-				let data = results.data;
-				let enumMapping = data?.corelibEnumMapping ?? {};
-				await fluxloaderAPI.invokeElectronIPC("corelib:updateEnumMapping", enumMapping);
-			}
-
-			corelib.hooks.doSceneChange(param);
-		};
-	}
-
-	setupInternals() {
-		corelib.simulation = {
-			spawnParticle: ({ x, y, id, data = {} }) => {
-				const particleType = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
-				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle ${id} does not exist!`);
-				const particle = corelib.exposed.named.createParticle(particleType, x, y, data);
-				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
-			},
-			spawnMovingParticle: ({ x, y, velocityX, velocityY, id, data = {} }) => {
-				const particleType = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
-				if (particleType === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleType)) return log("error", "corelib", `Particle ${id} does not exist!`);
-				const innerParticle = corelib.exposed.named.createParticle(particleType, x, y, data);
-				const outerParticle = corelib.exposed.named.createParticle(corelib.exposed.named.particles.Particle, x, y, {
-					element: innerParticle,
-					velocity: { x: velocityX, y: velocityY },
-				});
-				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, outerParticle);
-			},
-			spawnBlock: (x, y, type) => {
-				const blockType = corelib.exposed.named.blocks[type];
-				if (blockType === undefined) return log("error", "corelib", `Block type ${type} does not exist!`);
-				corelib.exposed.named.spawnBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: blockType });
-			},
-			deleteBlocks: (x1, y1, x2, y2) => {
-				// The game only deals with deleting blocks in a specific area
-				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstance.state, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
-			},
-			revealFog: (x, y) => {
-				fluxloaderAPI.gameInstance.state.environment.multithreading.simulation.postAll(fluxloaderAPI.gameInstance.state, [14, x, y]);
-			},
-			isEmpty: (x, y) => {
-				return corelib.exposed.raw.tf(fluxloaderAPI.gameInstance.state, x, y);
-			},
-		};
-
-		corelib.utils = {
-			getBlockNameFromNumber: (id) => {
-				return corelib.exposed.named.blocks[id] != undefined ? corelib.exposed.named.blocks[id] : null;
-			},
-			getParticleNameFromNumber: (id) => {
-				return corelib.exposed.named.particles[id] != undefined ? corelib.exposed.named.particles[id] : null;
-			},
-			getSoilNameFromNumber: (id) => {
-				return corelib.exposed.named.soils[id] != undefined ? corelib.exposed.named.soils[id] : null;
-			},
-			countTechLeaves: (tech) => {
-				// Used internally in the tech UI to fix the line drawing
-				// counts how many techs are at the very bottom, to get the width
-				let children = 0;
-				// If there are no children, increment leaf count
-				// Otherwise, count leaves of children
-				if (!tech.children || tech.children.length === 0) {
-					return 1;
-				} else {
-					for (let child of tech.children) {
-						children += corelib.utils.countTechLeaves(child);
-					}
+				// Main menu loading game and not new game
+				if (typeof param == "string" && param.includes("db_load")) {
+					let url = param.substring(8); // "db_load="
+					let results = await window.electron.load(url);
+					let data = results.data;
+					let enumMapping = data?.corelib?.enumMapping ?? {};
+					await fluxloaderAPI.invokeElectronIPC("corelib:updateEnumMapping", enumMapping);
 				}
-				return children;
+
+				corelib.hooks.doSceneChange(param);
 			},
-			getLineStyle: (tech) => {
+			getLineStyle(tech) {
 				// Used internally in the tech UI to fix the line drawing
 				const nodeWidth = 96;
 				const gap = 32; // Technically based on 2rem, so be careful
@@ -144,11 +82,85 @@ class CoreLib {
 				let lastWidth = lastLeaves * nodeWidth + (lastLeaves - 1) * gap;
 				let finalWidth = firstWidth / 2 + middleWidth + lastWidth / 2;
 				return {
-					width: `${finalWidth}px`,
+					width: `${finalWidth + 1}px`,
 					// I'm not 100% sure this margin checks works in all cases tbh..
 					// But it works in at least a simple test with several techs added
 					marginLeft: `${middleWidth + firstWidth - finalWidth}px`,
 				};
+			},
+		};
+	}
+
+	setupInternals() {
+		this.simulation = {
+			spawnElement: ({ id, x, y, data = {} }) => {
+				// Typically prefer to use spawnParticle for moving elements in the world
+				let intId = id;
+				if (!Number.isInteger(id)) {
+					intId = corelib.exposed.named.particles[id];
+					if (intId === undefined) return log("error", "corelib", `Could not find particle with ID '${id}' in exposed.named.particles!`);
+				}
+				const particle = corelib.exposed.named.createCellData(intId, x, y, data);
+				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
+			},
+			spawnParticle: ({ id, x, y, velocityX = 0, velocityY = 0, data = {} }) => {
+				// If something is breaking make sure youre not spawning a "meta" particle type like 2 (Particle) or 9 (Shake)
+				let intId = id;
+				if (!Number.isInteger(id)) {
+					intId = corelib.exposed.named.particles[id];
+					if (intId === undefined) return log("error", "corelib", `Could not find particle with ID '${id}' in exposed.named.particles!`);
+				}
+				const element = corelib.exposed.named.createCellData(intId, x, y, data);
+				const particle = corelib.exposed.named.createCellData(corelib.exposed.named.particles.Particle, x, y, {
+					element: element,
+					velocity: { x: velocityX, y: velocityY },
+				});
+				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, particle);
+			},
+			spawnBlock: (x, y, id) => {
+				let intId = id;
+				if (!Number.isInteger(id)) {
+					intId = corelib.exposed.named.blocks[id];
+					if (intId === undefined) return log("error", "corelib", `Could not find block with ID '${id}' in exposed.named.blocks!`);
+				}
+				corelib.exposed.named.spawnBlock(fluxloaderAPI.gameInstance.state, { x, y }, { structureType: intId });
+			},
+			deleteBlocks: (x1, y1, x2, y2) => {
+				// The game only deals with deleting blocks in a specific area
+				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstance.state, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
+			},
+			revealFog: (x, y) => {
+				fluxloaderAPI.gameInstance.state.environment.multithreading.simulation.postAll(fluxloaderAPI.gameInstance.state, [14, x, y]);
+			},
+			isEmpty: (x, y) => {
+				return corelib.exposed.raw.tf(fluxloaderAPI.gameInstance.state, x, y);
+			},
+		};
+
+		this.utils = {
+			getBlockNameFromNumber(id) {
+				return corelib.exposed.named.blocks[id] != undefined ? corelib.exposed.named.blocks[id] : null;
+			},
+			getParticleNameFromNumber(id) {
+				return corelib.exposed.named.particles[id] != undefined ? corelib.exposed.named.particles[id] : null;
+			},
+			getSoilNameFromNumber(id) {
+				return corelib.exposed.named.soils[id] != undefined ? corelib.exposed.named.soils[id] : null;
+			},
+			countTechLeaves(tech) {
+				// Used internally in the tech UI to fix the line drawing
+				// counts how many techs are at the very bottom, to get the width
+				let children = 0;
+				// If there are no children, increment leaf count
+				// Otherwise, count leaves of children
+				if (!tech.children || tech.children.length === 0) {
+					return 1;
+				} else {
+					for (let child of tech.children) {
+						children += corelib.utils.countTechLeaves(child);
+					}
+				}
+				return children;
 			},
 			getSelectedItem() {
 				return corelib.exposed.named.getSelectedItem(fluxloaderAPI.gameInstance.state);
@@ -156,48 +168,55 @@ class CoreLib {
 		};
 	}
 
-	async setupTickingBlocks() {
-		// get the schedules to register immediately so mods can start listening immediately
+	async setupSchedules() {
 		let registrations = await fluxloaderAPI.invokeElectronIPC("corelib:getModuleRegistrations");
 
-		// we don't need the ids so just get values
+		// Register each schedule event
 		for (let schedule of Object.keys(registrations.schedules)) {
 			fluxloaderAPI.events.registerEvent(`corelib:schedule-${schedule}`);
 		}
 
-		let tickingIds = Object.values(registrations.blocks).filter((b) => b.interval > 0);
+		// Calculate the ticking blocks
+		let tickingBlockIds = Object.values(registrations.blocks)
+			.filter((b) => b.tickInterval > 0)
+			.map((b) => b.id);
 
-		// only allow running after scene loading to ensure state and store exist properly; debating making this a part of corelib's api because it could be a bit useful
 		let hasSceneLoaded = false;
 		fluxloaderAPI.events.on("fl:scene-loaded", () => {
 			hasSceneLoaded = true;
 
 			let { store } = fluxloaderAPI.gameInstance.state;
-			store.corelibEnumMapping = registrations.enumMapping;
-			store.corelibCache ??= {};
-			for (let id of tickingIds) {
-				store.corelibCache[id] ??= {};
+			store.corelib ??= {};
+
+			// This is read in the preSceneChange hook to reload enums
+			store.corelib.enumMapping = registrations.enumMapping;
+
+			// This is populated by patches in the blocks module
+			store.corelib.tickingBlockPositions ??= {};
+			for (let id of tickingBlockIds) {
+				store.corelib.tickingBlockPositions[id] ??= [];
 			}
 		});
 
-		// add converted handlers for ticking blocks
-		for (let id of tickingIds) {
-			fluxloaderAPI.events.register(`corelib:block-${id}`);
-			fluxloaderAPI.events.on(`corelib:schedules-_tickingBlock-${id}`, () => {
+		for (let id of tickingBlockIds) {
+			// Listen for general 'corelib:schedules-block-tick-{ID}' and redirect to 'corelib:schedules-block-{ID}' for each block
+			fluxloaderAPI.events.registerEvent(`corelib:block-${id}`);
+			fluxloaderAPI.events.on(`corelib:schedule-block-tick-${id}`, () => {
 				if (!hasSceneLoaded) return;
-				let { store } = fluxloaderAPI.gameInstance.state;
-				let { structures } = fluxloaderAPI.gameInstance.state.session.cache.structures;
 
-				// use for...in instead of for...of so we can right away remove it, could use indexOf but this is better
-				for (let blockIndex in store.corelibCache[id]) {
-					let block = store.corelibCache[id][blockIndex];
-					const realBlock = structures?.[block.y]?.[block.x];
+				let store = fluxloaderAPI.gameInstance.state.store;
+				let structures = fluxloaderAPI.gameInstance.state.session.cache.structures;
 
-					if (!realBlock) {
-						store.corelibCache[id].splice(blockIndex, 1);
+				// For each active block find its structure and trigger the event
+				for (let blockIndex in store.corelib.tickingBlockPositions[id]) {
+					let position = store.corelib.tickingBlockPositions[id][blockIndex];
+					const block = structures?.[position.y]?.[position.x];
+					if (!block) {
+						store.corelib.tickingBlockPositions[id].splice(blockIndex, 1);
 						continue;
 					}
-					fluxloaderAPI.events.trigger(`corelib:block-${id}`, realBlock);
+
+					fluxloaderAPI.events.trigger(`corelib:block-${id}`, block);
 				}
 			});
 		}

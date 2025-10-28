@@ -3,137 +3,63 @@ const blockSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
 	description: { type: "string" },
+	imagePath: { type: "string", default: "" },
+	singleBuild: { type: "boolean", default: false },
+	hasConfigMenu: { type: "boolean", default: false },
+	hasHoverUI: { type: "boolean", default: false },
+	unlockedByDefault: { type: "boolean", default: false },
+	tickInterval: { type: "number", default: null, nullable: true },
 	shape: {
-		type: "object",
-		// Ensure shape is a 4x4 matrix of integers
+		type: "array",
 		verifier: (v) => {
-			let valid = true;
-			valid &&= v.length === 4;
-			if (!valid)
-				return {
-					success: false,
-				};
-			for (const i of v) {
-				valid &&= i.length === 4;
-				for (const j of i) {
-					valid &&= Number.isInteger(j);
-				}
-			}
-			return {
-				success: valid,
-				message: `Parameter 'shape' must be a 4x4 matrix of integers`,
-			};
+			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
+			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
 	},
 	angles: {
-		type: "object",
+		type: "array",
 		default: [],
-		// Ensure angles is an array of integers
 		verifier: (v) => {
-			let valid = true;
-			for (const i of v) {
-				valid &&= Number.isInteger(i);
-			}
-			return {
-				success: valid,
-				message: `Parameter 'angles' must be an array of integers`,
-			};
+			const success = v.every((i) => Number.isInteger(i));
+			return { success, message: `Parameter 'angles' must be an array of integers` };
 		},
 	},
-	imagePath: {
-		type: "string",
-		default: "", // Allows using the not provided image
-	},
-	singleBuild: {
-		type: "boolean",
-		default: false,
-	},
-	hasConfigMenu: {
-		type: "boolean",
-		default: false,
-	},
-	hasHoverUI: {
-		type: "boolean",
-		default: false,
-	},
-	// Determines if a block should be given with no tech unlocked
-	// Keep off if you want this unlocked by tech; on if it's unlocked at the start of a new game
-	default: {
-		type: "boolean",
-		default: false,
-	},
-	animationDelay: {
+	animationInterval: {
 		type: "number",
 		default: 500,
 		verifier: (v) => {
-			return {
-				success: Number.isInteger(v) && v > 0,
-				message: `Parameter 'animationDelay' must be an integer greater than 0`,
-			};
+			const success = Number.isInteger(v) && v > 0;
+			return { success, message: `Parameter 'animationInterval' must be an integer greater than 0` };
 		},
 	},
 };
 
 const variantSchema = {
-	parentId: {
-		type: "string",
-	},
-	suffix: {
-		type: "string",
-	},
+	parentId: { type: "string" },
+	suffix: { type: "string" },
+	imagePath: { type: "string", default: "" },
+	hasHoverUI: { type: "boolean", default: false },
 	shape: {
-		type: "object",
-		// Ensure shape is a 4x4 matrix of integers
+		type: "array",
 		verifier: (v) => {
-			let valid = true;
-			valid &&= v.length === 4;
-			if (!valid)
-				return {
-					success: false,
-				};
-			for (const i of v) {
-				valid &&= i.length === 4;
-				for (const j of i) {
-					valid &&= Number.isInteger(j);
-				}
-			}
-			return {
-				success: valid,
-				message: `Parameter 'shape' must be a 4x4 matrix of integers`,
-			};
+			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
+			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
 	},
 	angles: {
-		type: "object",
+		type: "array",
 		default: [],
-		// Ensure angles is an array of integers
 		verifier: (v) => {
-			let valid = true;
-			for (const i of v) {
-				valid &&= Number.isInteger(i);
-			}
-			return {
-				success: valid,
-				message: `Parameter 'angles' must be an array of integers`,
-			};
+			const success = v.every((i) => Number.isInteger(i));
+			return { success, message: `Parameter 'angles' must be an array of integers` };
 		},
 	},
-	imagePath: {
-		type: "string",
-		default: "", // Allows using the not provided image
-	},
-	hasHoverUI: {
-		type: "boolean",
-		default: false,
-	},
-	animationDelay: {
+	animationInterval: {
 		type: "number",
 		default: 500,
 		verifier: (v) => {
-			return {
-				success: Number.isInteger(v) && v > 0,
-				message: `Parameter 'animationDelay' must be an integer greater than 0`,
-			};
+			const success = Number.isInteger(v) && v > 0;
+			return { success, message: `Parameter 'animationInterval' must be an integer greater than 0` };
 		},
 	},
 };
@@ -150,19 +76,20 @@ class BlocksModule {
 	});
 
 	register(inputData /* blockSchema */) {
-		const data = validateInput(inputData, blockSchema, true).data;
+		const data = validateInput(inputData, blockSchema);
 
-		if (data.interval > 0) {
-			// format in events is corelib:schedules-_tickingBlock-{id}, may want to improve this but it seems fine to me for internal naming and is verbose like the rest of corelib
-			corelib.schedules.register({ id: `_tickingBlock-${data.id}`, interval: data.interval });
+		let fullImagePath = this.getFullImagePath(data.sourceMod, data.imagePath);
+		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
+
+		if (data.tickInterval != null) {
+			corelib.schedules.register(`block-tick-${data.id}`, data.tickInterval);
 		}
 
-		let fullImagePath = this.getFullImagePath(data.sourceMod, data.id, data.imagePath);
-		this.registry.register(data.id, { isVariant: false, variants: [], fullImagePath, ...data });
+		this.registry.register(data.id, blockData);
 	}
 
 	registerVariant(inputData /* variantSchema */) {
-		const data = validateInput(inputData, this.variantSchema, true).data;
+		const data = validateInput(inputData, variantSchema);
 
 		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
 			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}" not found!`);
@@ -170,7 +97,7 @@ class BlocksModule {
 
 		let id = data.parentId + data.suffix;
 		let parentBlock = this.registry.entries[data.parentId];
-		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, id, data.imagePath);
+		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, data.imagePath);
 		let variantData = { isVariant: true, fullImagePath, ...data };
 		variantData.id = id;
 
@@ -188,18 +115,23 @@ class BlocksModule {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
+		if (data.tickInterval != null) {
+			corelib.schedules.unregister(`block-tick-${data.id}`);
+		}
+
+		// Unregister each variant entry (they are registered under their own id)
 		for (let variant of this.registry.entries[id].variants) {
-			// unregister each variant entry (they are registered under their own id)
 			this.registry.unregister(variant.id);
 		}
 
 		this.registry.unregister(id);
 	}
 
-	getFullImagePath(sourceMod, id, imagePath) {
-		let _return = path.join(fluxloaderAPI.getModsPath(), sourceMod, (imagePath || id) + ".png").replace(/\\/g, "/");
+	getFullImagePath(sourceMod, imagePath) {
+		let _return = path.join(fluxloaderAPI.getModsPath(), sourceMod, imagePath + ".png").replace(/\\/g, "/");
 
 		if (!fs.existsSync(_return)) {
+			log("warn", "corelib", `Image not found: ${_return}`);
 			_return = path.join(fluxloaderAPI.getModsPath(), "corelib", "assets/noimage.png").replace(/\\/g, "/");
 		}
 
@@ -209,28 +141,116 @@ class BlocksModule {
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
-		const reduceBlocks = (f) => {
-			return Object.values(this.registry.entries)
+		const reduceBlocks = (f) =>
+			Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
-		};
 
-		const reduceBlockVariants = (b, f) => {
-			return b.variants.reduce((acc, v) => acc + f(v), "");
+		const reduceBlockVariants = (b, f) => b.variants.reduce((acc, v) => acc + f(v), "");
+
+		const reduceBlocksAndVariants = (f) => reduceBlocks((b) => f(b) + reduceBlockVariants(b, (v) => f(v)));
+
+		const reduceBlocksWithConfig = (f) =>
+			Object.values(this.registry.entries)
+				.filter((b) => !b.isVariant && b.hasConfigMenu)
+				.reduce((acc, v) => acc + f(v.id), "");
+
+		const reduceBlocksWithHover = (f) =>
+			Object.values(this.registry.entries)
+				.filter((b) => b.hasHoverUI)
+				.reduce((acc, v) => acc + f(v.id), "");
+
+		let reduceBlocksWithTicking = (f) =>
+			Object.values(this.registry.entries)
+				.filter((t) => t.tickInterval != null)
+				.reduce((acc, t) => acc + f(t.id), "");
+
+		const configUIFunction = function () {
+			// This function is stringified and templated with __BLOCKID__ then patched into corelib
+			// - e.state.session.windows.building.__BLOCKID__Config is the bool for if the config is open
+			// - e.state.store.options.__BLOCKID__Config is where the config data is stored
+			// - k.__BLOCKID__Config is the key for the config window
+
+			// Extract scope variables we can get when we are passed into the games code
+			const data = {
+				scale: ip,
+				state: e.state,
+				showWindow: Ml,
+				updateWindow: Al,
+				specialUI: US, // I only know of `US.div`, which appears to be a special animated div
+				extra: {},
+				closeConfig: (config) => {
+					e.state.session.windows.building.__BLOCKID__Config = false;
+					e.state.session.windows.building.open = false;
+					e.state.store.options.__BLOCKID__Config = config;
+					e.state.session.building.activeStructureType = d.__BLOCKID__;
+					Al(e.state, k.__BLOCKID__Config);
+					Al(e.state, k.Management);
+					e.state.store.player.hotbar.activeSlotIndex = null;
+					e.state.store.player.action = null;
+					Al(e.state, k.Hotbar);
+				},
+			};
+
+			data.showWindow(data.state, k.__BLOCKID__Config);
+
+			// Ref that we put the wrapper div into for click checking
+			let targetChecker = React.useRef(null);
+
+			// Run the `block__BLOCKID__PreConfigUI` function if the mod provides it for the `extra` information
+			data.extra = globalThis["block__BLOCKID__PreConfigUI"] ? globalThis["block__BLOCKID__PreConfigUI"](data) : {};
+
+			// If the config is not open, return null to not render anything
+			if (!data.state.session.windows.building.__BLOCKID__Config) return null;
+
+			return React.createElement(
+				"div",
+				{
+					className: "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50",
+					onClick: (check) => {
+						// Only closes UI if clicked element was not part of the "targetChecker" menu ref
+						targetChecker.current && !targetChecker.current.contains(check.target) && ((data.state.session.windows.building.__BLOCKID__Config = !1), Al(data.state, k.__BLOCKID__Config));
+					},
+				},
+				React.createElement(
+					"div",
+					{
+						ref: targetChecker,
+						style: {
+							// Overflow is used if either height or width aren't provided
+							overflow: "auto",
+							height: data.extra.height,
+							width: data.extra.width,
+							transform: `scale(${data.scale(data.state)})`,
+							transformOrigin: "center",
+						},
+					},
+					React.createElement(
+						data.specialUI.div,
+						{
+							initial: { y: 10 },
+							animate: { y: 0 },
+							transition: { y: { duration: 0.1 } },
+							className: "h-full bg-black bg-opacity-85 p-4 shadow-lg ui-box card-2 overflow-y-auto",
+						},
+						// use the mod provided `block__BLOCKID__ConfigUI` function to get the actual content of the config UI
+						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined,
+					),
+				),
+			);
 		};
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockInventory", {
 			type: "replace",
 			from: `d.Foundation,d.Collector`,
-			// Only include blocks that have the `default` property
-			to: `~` + reduceBlocks((b) => (b.default ? `,d.${b.id}` : "")),
+			to: `~` + reduceBlocks((b) => (b.unlockedByDefault ? `,d.${b.id}` : "")),
 			token: `~`,
 		});
 
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": [], "js/515.bundle.js": [] }, "corelib:blockShapes", (v) => ({
 			type: "replace",
 			from: `"grower":[[12,12,12,12],[0,0,0,0],[0,0,0,0],[0,0,0,0]]`,
-			to: `~` + reduceBlocks((b) => `,"${b.id}":${JSON.stringify(b.shape)}` + reduceBlockVariants(b, (v) => `,"${v.id}":${JSON.stringify(v.shape)}`)),
+			to: `~` + reduceBlocksAndVariants((b) => `,"${b.id}":${JSON.stringify(b.shape)}`),
 			token: `~`,
 		}));
 
@@ -241,10 +261,23 @@ class BlocksModule {
 				`~` +
 				reduceBlocks(
 					(b) =>
-						`,${v1}[${v2}.${b.id}]={shape:${v3}["${b.id}"],variants:[{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
+						`,${v1}[${v2}.${b.id}]={
+					shape:${v3}["${b.id}"],
+					variants:[
+						{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
 						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +
-						`],name:"${b.name}",description:"${b.description}",singleBuild:${b.singleBuild}}` +
-						reduceBlockVariants(b, (v) => `,${v1}[${v2}.${v.id}]={shape:${v3}["${v.id}"]}`),
+						`],
+					name:"${b.name}",
+					description:"${b.description}",
+					singleBuild:${b.singleBuild}
+				}` +
+						reduceBlockVariants(
+							b,
+							(v) => `,${v1}[${v2}.${v.id}]={
+					shape:${v3}["${v.id}"],
+					singleBuild:${b.singleBuild}
+				}`,
+						),
 				),
 			token: `~`,
 		}));
@@ -252,14 +285,14 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockImages", {
 			type: "replace",
 			from: `Rf[d.Foundation]={imageName:"block"}`,
-			to: `~` + reduceBlocks((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}` + reduceBlockVariants(b, (v) => `,Rf[d.${v.id}]={imageName:"${v.fullImagePath}",isAbsolute:true}`)),
+			to: `~` + reduceBlocksAndVariants((b) => `,Rf[d.${b.id}]={imageName:"${b.fullImagePath}",isAbsolute:true}`),
 			token: `~`,
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockLoadTextures", {
 			type: "replace",
 			from: `sm("frame_block")`,
-			to: `~` + reduceBlocks((b) => `,sm("${b.fullImagePath}")` + reduceBlockVariants(b, (v) => `,sm("${v.fullImagePath}")`)),
+			to: `~` + reduceBlocksAndVariants((b) => `,sm("${b.fullImagePath}")`),
 			token: `~`,
 		});
 
@@ -267,31 +300,17 @@ class BlocksModule {
 			type: "replace",
 			from: `if(n.type!==d.Collector)`,
 			to:
-				reduceBlocks(
+				reduceBlocksAndVariants(
 					(b) =>
-						`if(n.type===d.${b.id}){l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
-							b.animationDelay || 500
-						})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else ` +
-						reduceBlockVariants(
-							b,
-							(v) =>
-								`if(n.type===d.${b.id}){l=t.session.rendering.images["${
-									v.fullImagePath
-								}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${
-									v.animationDelay || 500
-								})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);}else `,
-						),
+						`if(n.type===d.${b.id}){
+					l=t.session.rendering.images["${b.fullImagePath}"],(u=e.snapGridCellSize*e.cellSize),(c=Nf(t,n.x*e.cellSize,n.y*e.cellSize));` +
+						(b.animationInterval != null
+							? `h.drawImage(l.image,l.image.height*(Math.floor(t.store.meta.time/${b.animationInterval})%(l.image.width/l.image.height)),0,l.image.height,l.image.height,c.x,c.y,u,u);`
+							: `h.drawImage(l.image,0,0,l.image.width,l.image.height,c.x,c.y,u,u);`) +
+						`}else `,
 				) + "~",
 			token: `~`,
 		});
-
-		let blocksWithConfig = Object.values(this.registry.entries)
-			.filter((b) => !b.isVariant && b.hasConfigMenu)
-			.map((v) => v.id);
-
-		const reduceBlocksWithConfig = (f) => {
-			return blocksWithConfig.reduce((acc, v) => acc + f(v), "");
-		};
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockConfigMenu", {
 			type: "replace",
@@ -320,68 +339,6 @@ class BlocksModule {
 			to: "~Al(e,k.FilterConfig);" + reduceBlocksWithConfig((id) => `e.session.windows.building.${id}Config=!1;Al(e,k.${id}Config);`),
 			token: "~",
 		});
-
-		const configUIFunction = function () {
-			const data = {
-				scale: ip,
-				state: e.state,
-				showWindow: Ml,
-				updateWindow: Al,
-				specialUI: US, // I only know of `US.div`, which appears to be a special animated div
-				extra: {},
-				closeConfig: (config) => {
-					e.state.session.windows.building.__BLOCKID__Config = false;
-					e.state.session.windows.building.open = false;
-					e.state.store.options.__BLOCKID__Config = config;
-					e.state.session.building.activeStructureType = d.__BLOCKID__;
-					Al(e.state, k.__BLOCKID__Config);
-					Al(e.state, k.Management);
-					e.state.store.player.hotbar.activeSlotIndex = null;
-					e.state.store.player.action = null;
-					Al(e.state, k.Hotbar);
-				},
-			};
-			data.showWindow(data.state, k.__BLOCKID__Config);
-			let targetChecker = React.useRef(null);
-			// pre UI render - by mod that registered the block
-			data.extra = globalThis["block__BLOCKID__PreConfigUI"] ? globalThis["block__BLOCKID__PreConfigUI"](data) : {};
-			if (!data.state.session.windows.building.__BLOCKID__Config) return null;
-			return React.createElement(
-				"div",
-				{
-					className: "fixed inset-0 flex items-center justify-center bg-black bg-opacity-50",
-					onClick: (check) => {
-						// Only closes UI if clicked element was not part of the menu
-						targetChecker.current && !targetChecker.current.contains(check.target) && ((data.state.session.windows.building.__BLOCKID__Config = !1), Al(data.state, k.__BLOCKID__Config));
-					},
-				},
-				React.createElement(
-					"div",
-					{
-						ref: targetChecker,
-						style: {
-							// Overflow is used if either height or width aren't provided
-							overflow: "auto",
-							height: data.extra.height,
-							width: data.extra.width,
-							transform: `scale(${data.scale(data.state)})`,
-							transformOrigin: "center",
-						},
-					},
-					React.createElement(
-						data.specialUI.div,
-						{
-							initial: { y: 10 },
-							animate: { y: 0 },
-							transition: { y: { duration: 0.1 } },
-							className: "h-full bg-black bg-opacity-85 p-4 shadow-lg ui-box card-2 overflow-y-auto",
-						},
-						// use UI returned by mod
-						globalThis["block__BLOCKID__ConfigUI"] ? globalThis["block__BLOCKID__ConfigUI"](data) : undefined,
-					),
-				),
-			);
-		};
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockSetupReact", {
 			type: "replace",
@@ -418,14 +375,6 @@ class BlocksModule {
 			token: "~",
 		});
 
-		let blocksWithHover = Object.values(this.registry.entries)
-			.filter((b) => b.hasHoverUI)
-			.map((v) => v.id);
-
-		const reduceBlocksWithHover = (f) => {
-			return blocksWithHover.reduce((acc, v) => acc + f(v), "");
-		};
-
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:blockHover", {
 			type: "replace",
 			from: `n=hu[e.groundCellType];`,
@@ -440,24 +389,17 @@ class BlocksModule {
 			token: "~",
 		});
 
-		// get ticking blocks
-		let reduceTicking = (f) => {
-			return Object.values(this.registry.entries)
-				.filter((t) => t.interval > 0)
-				.reduce((acc, t) => acc + f(t.id), "");
-		};
-
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingDeleteCache", {
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingRegister", {
 			type: "replace",
-			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
-			to: `~${reduceTicking((id) => `,(r.type===d[${id}])&&(n.store.corelibCache[${id}]=n.store.corelibCache[${id}].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
+			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
+			to: `~${reduceBlocksWithTicking((id) => `,h.type===d["${id}"]&&t.store.corelib.tickingBlockPositions["${id}"].push({x:h.x,y:h.y})`)}`,
 			token: "~",
 		});
 
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingAddCache", {
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tickingUnregister", {
 			type: "replace",
-			from: "h.type===d.GloomEmitter&&t.store.gloom.emitterPositions.push({x:h.x,y:h.y})",
-			to: `~${reduceTicking((id) => `,h.type===d[${id}]&&t.store.corelibCache[${id}].push({x:h.x,y:h.y})`)}`,
+			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
+			to: `~${reduceBlocksWithTicking((id) => `,(r.type===d["${id}"])&&(n.store.corelib.tickingBlockPositions["${id}"]=n.store.corelib.tickingBlockPositions["${id}"].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
 			token: "~",
 		});
 	}

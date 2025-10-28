@@ -31,7 +31,7 @@ class ItemsModule {
 	});
 
 	register(inputData /* itemSchema */) {
-		const data = validateInput(inputData, itemSchema, true).data;
+		const data = validateInput(inputData, itemSchema);
 
 		if (data.type === "Consumable") {
 			// For now just silently continue but with a warning

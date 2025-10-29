@@ -36,6 +36,24 @@ class CoreLib {
 		this.elements = new ElementsModule();
 	}
 
+	setupInternals() {
+		fluxloaderAPI.events.registerEvent("cl:patches-applied");
+
+		fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
+
+		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
+			let data = {};
+			data.schedules = corelib.schedules.registry.entries;
+			data.blocks = corelib.blocks.registry.entries;
+			data.enumMapping = corelib.enums.enumMapping;
+			return data;
+		});
+
+		fluxloaderAPI.handleGameIPC("corelib:updateEnumMapping", (internal, enumMapping) => {
+			corelib.enums.updateEnumMapping(enumMapping);
+		});
+	}
+
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
@@ -81,27 +99,9 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			type: "replace",
 			from: `const O=function()`,
 			to: `globalThis.corelib.exposed.raw = {
-a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L},
+a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L,r},
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
-		});
-	}
-
-	setupInternals() {
-		fluxloaderAPI.events.registerEvent("cl:patches-applied");
-
-		fluxloaderAPI.events.on("fl:pre-scene-loaded", () => globalThis.corelib.applyPatches());
-
-		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
-			let data = {};
-			data.schedules = corelib.schedules.registry.entries;
-			data.blocks = corelib.blocks.registry.entries;
-			data.enumMapping = corelib.enums.enumMapping;
-			return data;
-		});
-
-		fluxloaderAPI.handleGameIPC("corelib:updateEnumMapping", (internal, enumMapping) => {
-			corelib.enums.updateEnumMapping(enumMapping);
 		});
 	}
 }
@@ -133,7 +133,7 @@ class DataRegistry {
 	}
 }
 
-function validateInput(parameters, schema, throwOnFail = false) {
+function validateInput(parameters, schema, throwOnFail = true) {
 	// args should be an object of any:any (should match schema keys, and have valid values)
 	// schema should be an object which maps keys of arguments to expected data
 	// - schema items without `default` will be assumed to be required parameters
@@ -174,7 +174,8 @@ function validateInput(parameters, schema, throwOnFail = false) {
 			continue;
 		}
 
-		if (data.type) {
+		const skipNullType = data.nullable && value === null;
+		if (data.type && !skipNullType) {
 			// Generic error if we don't know the type
 			let error = `Parameter '${parameter}' was expected to be of type ${data.type}, but was not`;
 			switch (data.type) {
@@ -224,6 +225,9 @@ function validateInput(parameters, schema, throwOnFail = false) {
 				.join("; ")}`
 		);
 	}
+
+	// If throwOnFail is true, then result.success must also be true here
+	if (throwOnFail) return result.data;
 
 	return result;
 }

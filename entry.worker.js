@@ -143,6 +143,9 @@ class CoreLib {
 			getThreadIndexFromCellX(x) {
 				return corelib.exposed.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
 			},
+			isCellXInThread(x) {
+				return corelib.exposed.utils.isCellXInThread(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.startingIndex, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
+			},
 			getBlockNameFromNumber: (type) => {
 				return corelib.exposed.named.blocks[type] != undefined ? corelib.exposed.named.blocks[type] : null;
 			},

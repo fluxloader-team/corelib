@@ -42,6 +42,10 @@ class CoreLib {
 				checkIfTechUnlocked: corelib.exposed.raw.Xf,
 				deleteBlocks: corelib.exposed.raw.ed,
 			};
+
+			corelib.exposed.utils = {
+				...corelib.exposed.raw.q,
+			};
 		});
 	}
 

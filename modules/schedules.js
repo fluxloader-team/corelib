@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 /**
  * @typedef {object} ScheduleConfig
  * @property {string} id id of the schedule

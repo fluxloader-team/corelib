@@ -248,4 +248,5 @@ globalThis.validateInput = validateInput;
  * @version 2.0.0
  */
 globalThis.corelib = new CoreLib();
+
 corelib.init();

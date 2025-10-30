@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 /**
  * @typedef {object} UpgradeRequirement
  * @property {string[]} [tech] Tech required to unlock the tab

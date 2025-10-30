@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 /**
  * @typedef {object} ItemConfig
  * @property {string} id id of the item

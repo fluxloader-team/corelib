@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 /**
  * @typedef {object} TechUnlocks
  * @property {string[]} [structures] array of structure ids to give
@@ -37,7 +39,6 @@ class TechModule {
 		intIdStart: 38,
 		bundleMap: { main: "w", sim: "b", manager: "R" },
 	});
-
 	#baseTechs = {};
 
 	constructor() {

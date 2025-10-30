@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 class EventsModule {
 	applyPatches() {
 		log("info", "corelib", "Loading event module patches");

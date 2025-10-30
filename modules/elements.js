@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 /**
  * @typedef {object} BasicRecipeRegisterConfig
  * @property {string} inputTop The element on the top input

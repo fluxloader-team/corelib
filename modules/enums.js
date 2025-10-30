@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 const moduleEnumSchema = {
 	name: { type: "string" },
 	intIdStart: { type: "number" },

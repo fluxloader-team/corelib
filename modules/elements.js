@@ -1,3 +1,11 @@
+/**
+ * @typedef {object} basicRecipeRegisterSchema
+ * @property {string} inputTop - The element on the top input
+ * @property {string} inputBottom - The element on the bottom input
+ * @property {string} outputTop - The element to output on the top
+ * @property {string} [outputBottom="Empty"] - The element to output on the bottom
+ * @property {boolean} [bothWays=true] - Whether to register the recipe both ways
+ */
 const basicRecipeRegisterSchema = {
 	inputTop: { type: "string" },
 	inputBottom: { type: "string" },
@@ -6,12 +14,24 @@ const basicRecipeRegisterSchema = {
 	bothWays: { type: "boolean", default: true },
 };
 
+/**
+ * @typedef {object} basicRecipeUnregisterSchema
+ * @property {string} inputTop - The element on the top input
+ * @property {string} inputBottom - The element on the bottom input
+ * @property {boolean} [bothWays=true] - Whether to unregister the recipe both ways
+ */
 const basicRecipeUnregisterSchema = {
 	inputTop: { type: "string" },
 	inputBottom: { type: "string" },
 	bothWays: { type: "boolean", default: true },
 };
 
+/**
+ * @typedef {object} pressRecipeRegisterSchema
+ * @property {string} input - The element to input
+ * @property {number} [requiredVelocity=200] - The required velocity to trigger the recipe
+ * @property {Array<[string, number]>} outputs - An array of arrays, each containing the output element and the chance (0-1) to produce it
+ */
 const pressRecipeRegisterSchema = {
 	input: { type: "string" },
 	requiredVelocity: { type: "number", default: 200 },
@@ -27,14 +47,22 @@ const pressRecipeRegisterSchema = {
 	},
 };
 
+/**
+ * @typedef {object} pressRecipeUnregisterSchema
+ * @property {string} input - The input element
+ */
 const pressRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
 
 class ElementsModule {
+	/**@private*/
 	elementRegistry = {};
+	/**@private*/
 	soilRegistry = {};
+	/**@private*/
 	recipes = { basic: {}, press: {} };
+	/**@private*/
 	otherFeatures = { conveyorBeltIgnores: [] };
 
 	constructor() {
@@ -56,6 +84,10 @@ class ElementsModule {
 		this.registerConveyorBeltIgnores("Fire");
 	}
 
+	/**
+	 * register a basic recipe
+	 * @param {basicRecipeRegisterSchema} inputData 
+	 */
 	registerBasicRecipe(inputData /* basicRecipeRegisterSchema */) {
 		const data = validateInput(inputData, basicRecipeRegisterSchema);
 		const add = (from, to) => {
@@ -65,7 +97,10 @@ class ElementsModule {
 		if (data.bothWays) add(data.inputTop, data.inputBottom);
 		add(data.inputBottom, data.inputTop);
 	}
-
+	/**
+	 * unregister a basic recipe
+	 * @param {basicRecipeUnregisterSchema} inputData 
+	 */
 	unregisterBasicRecipe(inputData /* basicRecipeUnregisterSchema */) {
 		const data = validateInput(inputData, basicRecipeUnregisterSchema);
 		const removeBasicRecipe = (inputTop, inputBottom) => {
@@ -77,27 +112,44 @@ class ElementsModule {
 		removeBasicRecipe(data.element2, data.element1);
 	}
 
+	/**
+	 * Register a press recipe
+	 * @param {pressRecipeRegisterSchema} inputData 
+	 */
 	registerPressRecipe(inputData /* pressRecipeRegisterSchema */) {
 		const data = validateInput(inputData, pressRecipeRegisterSchema);
 		this.recipes.press[data.input] = [data.requiredVelocity, data.outputs];
 	}
 
+	/**
+	 * Unregister a press recipe
+	 * @param {pressRecipeUnregisterSchema} inputData 
+	 */
 	unregisterPressRecipe(inputData /* pressRecipeUnregisterSchema */) {
 		const data = validateInput(inputData, pressRecipeUnregisterSchema);
 		if (!this.recipes.press[data.input]) return log("error", "corelib", `Could not unregister press recipe with id "${data.input}", not found!`);
 		delete this.recipes.press[data.input];
 	}
 
+	/**
+	 * Register an element to be ignored by conveyor belts
+	 * @param {string} id - element to make conveyors ignore
+	 */
 	registerConveyorBeltIgnores(id) {
 		this.otherFeatures.conveyorBeltIgnores.push(id);
 	}
 
+	/**
+	 * Unregister an element from being ignored by conveyor belts
+	 * @param {*} id - element to remove from conveyor belt ignores
+	 */
 	unregisterConveyorBeltIgnores(id) {
 		const index = this.otherFeatures.conveyorBeltIgnores.indexOf(id);
 		if (index == -1) return log("error", "corelib", `Could not unregister conveyorBeltIgnore with id "${id}", not found!`);
 		this.otherFeatures.conveyorBeltIgnores.splice(index, 1);
 	}
 
+	/**@private*/
 	applyPatches() {
 		log("info", "corelib", "Loading element module patches");
 

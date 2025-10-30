@@ -1,5 +1,11 @@
 const config = fluxloaderAPI.modConfig.get("corelib");
 
+/** @typedef {import('./modules/blocks.js')} */
+/** @typedef {import('./modules/items.js')} */
+/** @typedef {import('./modules/tech.js')} */
+/** @typedef {import('./modules/upgrades.js')} */
+/** @typedef {import('./modules/schedules.js')} */
+/** @typedef {import('./modules/elements.js')} */
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
@@ -11,20 +17,24 @@ includeVMScript("modules/enums.js");
 
 class CoreLib {
 	constructor() {
+		/**@private*/
 		this.enums = null;
 		this.blocks = null;
 		this.tech = null;
 		this.upgrades = null;
 		this.items = null;
+		/**@private*/
 		this.events = null;
 		this.schedules = null;
 	}
 
+	/**@private*/
 	init() {
 		this.initModules();
 		this.setupInternals();
 	}
 
+	/**@private*/
 	initModules() {
 		this.enums = new EnumsModule();
 		this.blocks = new BlocksModule();
@@ -36,6 +46,7 @@ class CoreLib {
 		this.elements = new ElementsModule();
 	}
 
+	/**@private*/
 	setupInternals() {
 		fluxloaderAPI.events.registerEvent("cl:patches-applied");
 
@@ -54,6 +65,7 @@ class CoreLib {
 		});
 	}
 
+	/**@private*/
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
@@ -69,6 +81,7 @@ class CoreLib {
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}
 
+	/**@private*/
 	applyCorePatches() {
 		log("debug", "corelib", "Loading expose patches");
 
@@ -235,5 +248,9 @@ function validateInput(parameters, schema, throwOnFail = true) {
 globalThis.DataRegistry = DataRegistry;
 globalThis.validateInput = validateInput;
 
+/**
+ * Electron Env of corelib
+ * @version 2.0.0
+ */
 globalThis.corelib = new CoreLib();
 corelib.init();

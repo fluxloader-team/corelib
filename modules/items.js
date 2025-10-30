@@ -1,3 +1,11 @@
+
+/**
+ * @typedef {object} itemSchema
+ * @property {string} id - id of the item
+ * @property {"Tool"|"Weapon"|"Consumable"} type - type of the item
+ * @property {string} name - display name of the item
+ * @property {string} description - description of the item
+ */
 const itemSchema = {
 	id: {
 		type: "string",
@@ -20,6 +28,7 @@ const itemSchema = {
 };
 
 class ItemsModule {
+	/**@private*/
 	registry = corelib.enums.createRegistry({
 		name: "Item",
 		intIdStart: 25,
@@ -30,6 +39,10 @@ class ItemsModule {
 		},
 	});
 
+	/**
+	 * Register an item
+	 * @param {itemSchema} inputData
+	 */
 	register(inputData /* itemSchema */) {
 		const data = validateInput(inputData, itemSchema);
 
@@ -41,10 +54,15 @@ class ItemsModule {
 		this.registry.register(data.id, data);
 	}
 
+	/**
+	 * Unregister an item
+	 * @param {string} id - The item to unregister
+	 */
 	unregister(id) {
 		this.registry.unregister(id);
 	}
 
+	/**@private*/
 	applyPatches() {
 		log("info", "corelib", "Loading item module patches");
 

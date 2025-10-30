@@ -1,3 +1,20 @@
+
+
+/**
+ * @typedef {object} techUnlocks
+ * @property {string[]} [structures] - array of structure ids to give
+ * @property {string[]} [item] - array of item ids to give
+ */
+
+/**
+ * @typedef {object} techSchema
+ * @property {string} id - id of the tech
+ * @property {string} name - name of the tech
+ * @property {string} description - description of the tech
+ * @property {techUnlocks} [unlocks={}] - what this tech unlocks
+ * @property {string} [parent="Refining1"] - id of the parent tech
+ * @property {number} cost - cost of the tech
+ */
 const techSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
@@ -16,12 +33,14 @@ const techSchema = {
 };
 
 class TechModule {
+	/**@private*/
 	registry = corelib.enums.createRegistry({
 		name: "Tech",
 		intIdStart: 38,
 		bundleMap: { main: "w", sim: "b", manager: "R" },
 	});
 
+	/**@private*/
 	baseTechs = {};
 
 	constructor() {
@@ -52,6 +71,10 @@ class TechModule {
 		}
 	}
 
+	/**
+	 * Register a new tech
+	 * @param {techSchema} inputData 
+	 */
 	register(inputData /* techSchema */) {
 		const data = validateInput(inputData, techSchema);
 
@@ -60,10 +83,15 @@ class TechModule {
 		this.registry.register(data.id, data);
 	}
 
+	/**
+	 * Unregister a tech
+	 * @param {string} id - The tech to unregister
+	 */
 	unregister(id) {
 		this.registry.unregister(id);
 	}
 
+	/**@private*/
 	applyPatches() {
 		log("info", "corelib", "Loading technology module patches");
 

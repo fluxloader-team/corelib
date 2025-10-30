@@ -1,3 +1,29 @@
+
+/**
+ * @typedef {[Number, Number, Number, Number]} shapeRow
+ */
+
+/**
+ * @typedef {[shapeRow, shapeRow, shapeRow, shapeRow]} shapeSchema
+ */
+
+/**
+ * @typedef {object} blockData
+ * @property {string} sourceMod - Your mod, use the name of your mods folder
+ * @property {string} id - Id of block
+ * @property {string} name - Name of block
+ * @property {string} description - Description of block
+ * @property {string} [imagePath=""] - Path to the blocks image relative to your mod folder
+ * @property {boolean} [singleBuild=false] - Whether the block is placed one at a time or is draggable
+ * @property {boolean} [hasConfigMenu=false] - Whether a config menu should open when the block is selected
+ * @property {boolean} [hasHoverUI=false] - If the block has a UI when hovered on
+ * @property {boolean} [unlockedByDefault=false] - If the block is avaliable by default
+ * @property {number} [tickInterval=null] - Interval in ms that the block ticks
+ * @property {shapeSchema} shape - Shape of the block
+ * @property {number[]} [angles=[]] - Angles that the block can be dragged and placed at 
+ * @property {number} [animationInterval=500] - How fast your block's animation cycles frames
+ */
+
 const blockSchema = {
 	sourceMod: { type: "string" },
 	id: { type: "string" },
@@ -34,6 +60,16 @@ const blockSchema = {
 	},
 };
 
+/**
+ * @typedef {object} variantSchema
+ * @property {string} parentId - The parent block
+ * @property {string} suffix - Suffix to parent id for this variant
+ * @property {string} [imagePath=""] - Path to the blocks image relative to your mod folder
+ * @property {boolean} [hasHoverUI=false] - Whether this block has a UI when hovered on
+ * @property {shapeSchema} shape - shape of block
+ * @property {number[]} [angles=[]] - Angles the block can be dragged at and placed at
+ * @property {number} [animationInterval=500] - How fast your block's animation cycles frames
+ */
 const variantSchema = {
 	parentId: { type: "string" },
 	suffix: { type: "string" },
@@ -65,6 +101,7 @@ const variantSchema = {
 };
 
 class BlocksModule {
+	/**@private*/
 	registry = corelib.enums.createRegistry({
 		name: "Block",
 		intIdStart: 99,
@@ -75,6 +112,10 @@ class BlocksModule {
 		},
 	});
 
+	/**
+	 * register a block
+	 * @param {blockData} inputData 
+	 */
 	register(inputData /* blockSchema */) {
 		const data = validateInput(inputData, blockSchema);
 
@@ -88,6 +129,10 @@ class BlocksModule {
 		this.registry.register(data.id, blockData);
 	}
 
+	/**
+	 * Register a block variant
+	 * @param {variantSchema} inputData
+	 */
 	registerVariant(inputData /* variantSchema */) {
 		const data = validateInput(inputData, variantSchema);
 
@@ -106,6 +151,10 @@ class BlocksModule {
 		}
 	}
 
+	/**
+	 * Unregister a block, cannot directly unregister variants
+	 * @param {number} id - Block to unregister
+	 */
 	unregister(id) {
 		// manually check here since we don't unregister until we unregister variants
 		if (!this.registry.entries[id]) {
@@ -127,6 +176,7 @@ class BlocksModule {
 		this.registry.unregister(id);
 	}
 
+	/**@private*/
 	getFullImagePath(sourceMod, imagePath) {
 		let _return = path.join(fluxloaderAPI.getModsPath(), sourceMod, imagePath + ".png").replace(/\\/g, "/");
 
@@ -138,6 +188,7 @@ class BlocksModule {
 		return _return;
 	}
 
+	/**@private*/
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 

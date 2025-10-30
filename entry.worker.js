@@ -1,12 +1,39 @@
+
 class CoreLib {
-	exposed = { raw: {}, named: {} };
+	/**
+	 * 
+	 */
+	/**
+	 * Exposed bundle variables
+	 */
+	exposed = {
+		/**
+		 * Raw variables from the bundle files, see source of entry.electron.js for a complete list
+		 */
+		raw: {},
+		/**
+		 * General miscellanous functions
+		 */
+		named: {}
+	};
+	/**
+	 * Functions for interacting with the game world
+	 */
 	simulation = {};
+	/**@private*/
 	events = {};
+	/**
+	 * Functions for checking miscellanous data
+	 */
 	utils = {};
+	/**@private*/
 	hooks = {};
+	/**@private*/
 	batchData = {};
+	/**@private*/
 	eventNames = ["cell-change", "fog-reveal", "soil-dig"];
 
+	/**@private*/
 	init() {
 		this.setupEvents();
 		this.setupHooks();
@@ -14,6 +41,7 @@ class CoreLib {
 		console.log(globalThis.corelib.exposed);
 	}
 
+	/**@private*/
 	setupEvents() {
 		for (let event of this.eventNames) {
 			fluxloaderAPI.events.registerEvent(`cl:${event}`);
@@ -53,6 +81,7 @@ class CoreLib {
 		});
 	}
 
+	/**@private*/
 	setupHooks() {
 		// Events are batched together because of how many are triggered
 		// All batched data is sent when the worker receives the "RunUpdate" message
@@ -104,6 +133,7 @@ class CoreLib {
 		};
 	}
 
+	/**@private*/
 	setupInternals() {
 		corelib.simulation = {
 			isEmpty: (x, y) => {
@@ -159,5 +189,9 @@ class CoreLib {
 	}
 }
 
+/**
+ * Worker Env of corelib
+ * @version 2.0.0
+ */
 globalThis.corelib = new CoreLib();
 corelib.init();

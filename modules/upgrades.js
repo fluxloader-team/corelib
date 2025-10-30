@@ -1,3 +1,17 @@
+
+/**
+ * @typedef {object} upgradeRequirement
+ * @property {string[]} [tech] - Tech required to unlock the tab
+ * @property {string[]} [building] - Block required to unlock the tab
+ * @property {string[]} [item] - Item required to unlock the tab
+ */
+
+/**
+ * @typedef {object} tabSchema
+ * @property {string} id - The id of the tab
+ * @property {string} name - The name of the tab
+ * @property {upgradeRequirement} [requirement={}] - What the player must have to see this tab
+ */
 const tabSchema = {
 	id: {
 		type: "string",
@@ -17,6 +31,13 @@ const tabSchema = {
 	},
 };
 
+/**
+ * @typedef {object} categorySchema
+ * @property {string} tabID - Tab holding this category
+ * @property {string} id - Id of this category
+ * @property {string} name - Name of the category
+ * @property {upgradeRequirement} [requirement={}] - What the player must have to see this category
+ */
 const categorySchema = {
 	tabID: {
 		type: "string",
@@ -43,6 +64,18 @@ const categorySchema = {
 // - costs is an array of integers representing the cost, in fluxite, for each level of the upgrade
 // - maxLevel is an integer that must be one more than the length of costs (highest level of the upgrade)
 // - oneOff is a boolean representing if the upgrade can only be bought once (creates a checkbox in game)
+/**
+ * @typedef {object} upgradeSchema
+ * @property {string} tabID - Tab this upgrade is inside of
+ * @property {string} categoryID - Category holding this upgrade
+ * @property {string} id - Id of this upgrade
+ * @property {string} name - Name of this upgrade
+ * @property {string} description - Description of this upgrade
+ * @property {upgradeRequirement} [requirement={}] - What the player must have to see this upgrade
+ * @property {number} maxLevel - Highest level your upgrade has, must be the length of costs + 1
+ * @property {number[]} costs - Costs for each upgrade, each must be an integer > 0
+ * @property {boolean} [oneoff=false] - Makes the upgrade buyable as a checkmark, requires 1 cost
+ */
 const upgradeSchema = {
 	tabID: {
 		type: "string",
@@ -94,6 +127,7 @@ const upgradeSchema = {
 };
 
 class UpgradesModule {
+	/**@private*/
 	upgrades = {};
 
 	constructor() {
@@ -118,6 +152,10 @@ class UpgradesModule {
 		}
 	}
 
+	/**
+	 * Register a new tab
+	 * @param {tabSchema} inputData
+	 */
 	registerTab(inputData /* tabSchema */) {
 		const data = validateInput(inputData, tabSchema);
 
@@ -126,6 +164,10 @@ class UpgradesModule {
 		this.upgrades[data.id] = { ...data, items: {} };
 	}
 
+	/**
+	 * Register a new category
+	 * @param {categorySchema} inputData
+	 */
 	registerCategory(inputData /* categorySchema */) {
 		const data = validateInput(inputData, categorySchema);
 
@@ -139,6 +181,10 @@ class UpgradesModule {
 		this.upgrades[data.tabID].items[data.id] = { ...data, upgrades: {} };
 	}
 
+	/**
+	 * Register a new upgrade
+	 * @param {upgradeSchema} inputData
+	 */
 	registerUpgrade(inputData /* upgradeSchema */) {
 		const data = validateInput(inputData, upgradeSchema);
 
@@ -161,6 +207,10 @@ class UpgradesModule {
 		this.upgrades[data.tabID].items[data.categoryID].upgrades[data.id] = data;
 	}
 
+	/**
+	 * Unregister a tab
+	 * @param {number} id - Tab to unregister
+	 */
 	unregisterTab(id) {
 		if (!this.upgrades.hasOwnProperty(id)) {
 			log("warn", "corelib", `Tried to unregister non-existent upgrade category "${id}"`);
@@ -169,6 +219,11 @@ class UpgradesModule {
 		delete this.upgrades[id];
 	}
 
+	/**
+	 * Unregister a category
+	 * @param {number} tabID - Tab to unregister from
+	 * @param {number} id - Category to unregister
+	 */
 	unregisterCategory(tabID, id) {
 		if (!this.upgrades.hasOwnProperty(tabID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
@@ -181,6 +236,13 @@ class UpgradesModule {
 		delete this.upgrades[tabID].items[id];
 	}
 
+	/**
+	 * Unregister an upgrade
+	 * @param {*} tabID - Tab to unregister from
+	 * @param {*} categoryID - Category to unregister from
+	 * @param {*} id - Upgrade to unregister
+	 * @returns 
+	 */
 	unregisterUpgrade(tabID, categoryID, id) {
 		if (!this.upgrades.hasOwnProperty(tabID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
@@ -193,6 +255,7 @@ class UpgradesModule {
 		delete this.upgrades[tabID].items[categoryID].upgrades[id];
 	}
 
+	/**@private*/
 	applyPatches() {
 		log("info", "corelib", "Loading upgrades module patches");
 

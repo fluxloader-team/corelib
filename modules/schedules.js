@@ -1,3 +1,9 @@
+
+/**
+ * @typedef {object} scheduleSchema
+ * @property {string} id - id of the schedule
+ * @property {number} interval - interval in ticks
+ */
 const scheduleSchema = {
 	id: { type: "string" },
 	interval: {
@@ -13,6 +19,7 @@ const scheduleSchema = {
 };
 
 class SchedulesModule {
+	/**@private*/
 	registry = corelib.enums.createRegistry({
 		name: "Schedule",
 		intIdStart: 19,
@@ -23,6 +30,11 @@ class SchedulesModule {
 		},
 	});
 
+	/**
+	 * Register a schedule
+	 * @param {string} id - The id to assign the schedule
+	 * @param {number} interval - The interval in ms the schedule will run
+	 */
 	register(id, interval) {
 		const data = validateInput({ id, interval }, scheduleSchema);
 
@@ -30,10 +42,15 @@ class SchedulesModule {
 		this.registry.register(data.id, data.interval);
 	}
 
+	/**
+	 * Unregister a schedule
+	 * @param {string} id - The schedule to unregister
+	 */
 	unregister(id) {
 		this.registry.unregister(id);
 	}
 
+	/**@private*/
 	applyPatches() {
 		log("info", "corelib", "Loading schedule module patches");
 

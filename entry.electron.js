@@ -5,7 +5,10 @@ const config = fluxloaderAPI.modConfig.get("corelib");
 /** @typedef {import('./modules/tech.js')} */
 /** @typedef {import('./modules/upgrades.js')} */
 /** @typedef {import('./modules/schedules.js')} */
+/** @typedef {import('./modules/events.js')} */
 /** @typedef {import('./modules/elements.js')} */
+/** @typedef {import('./modules/enums.js')} */
+
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
@@ -16,25 +19,19 @@ includeVMScript("modules/elements.js");
 includeVMScript("modules/enums.js");
 
 class CoreLib {
-	constructor() {
-		/**@private*/
-		this.enums = null;
-		this.blocks = null;
-		this.tech = null;
-		this.upgrades = null;
-		this.items = null;
-		/**@private*/
-		this.events = null;
-		this.schedules = null;
-	}
+	/** @type {EnumsModule} */ enums;
+	/** @type {BlocksModule} */ blocks;
+	/** @type {TechModule} */ tech;
+	/** @type {UpgradesModule} */ upgrades;
+	/** @type {ItemsModule} */ items;
+	/** @type {EventsModule} */ events;
+	/** @type {SchedulesModule} */ schedules;
 
-	/**@private*/
 	init() {
 		this.initModules();
 		this.setupInternals();
 	}
 
-	/**@private*/
 	initModules() {
 		this.enums = new EnumsModule();
 		this.blocks = new BlocksModule();
@@ -46,7 +43,6 @@ class CoreLib {
 		this.elements = new ElementsModule();
 	}
 
-	/**@private*/
 	setupInternals() {
 		fluxloaderAPI.events.registerEvent("cl:patches-applied");
 
@@ -54,9 +50,9 @@ class CoreLib {
 
 		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
 			let data = {};
-			data.schedules = corelib.schedules.registry.entries;
-			data.blocks = corelib.blocks.registry.entries;
-			data.enumMapping = corelib.enums.enumMapping;
+			data.schedules = corelib.schedules.getEntries();
+			data.blocks = corelib.blocks.getEntries();
+			data.enumMapping = corelib.enums.getMapping();
 			return data;
 		});
 
@@ -65,7 +61,6 @@ class CoreLib {
 		});
 	}
 
-	/**@private*/
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();

@@ -1,9 +1,9 @@
-
 /**
- * @typedef {object} scheduleSchema
+ * @typedef {object} ScheduleConfig
  * @property {string} id - id of the schedule
  * @property {number} interval - interval in ticks
  */
+
 const scheduleSchema = {
 	id: { type: "string" },
 	interval: {
@@ -19,8 +19,7 @@ const scheduleSchema = {
 };
 
 class SchedulesModule {
-	/**@private*/
-	registry = corelib.enums.createRegistry({
+	#registry = corelib.enums.createRegistry({
 		name: "Schedule",
 		intIdStart: 19,
 		bundleMap: {
@@ -30,27 +29,19 @@ class SchedulesModule {
 		},
 	});
 
-	/**
-	 * Register a schedule
-	 * @param {string} id - The id to assign the schedule
-	 * @param {number} interval - The interval in ms the schedule will run
-	 */
-	register(id, interval) {
+	register(/** @type {string } */ id, /** @type {number} */ interval) {
 		const data = validateInput({ id, interval }, scheduleSchema);
-
-		// Schedule will be registered and triggered by the `corelib:schedule-${id}` event
-		this.registry.register(data.id, data.interval);
+		this.#registry.register(data.id, data.interval);
 	}
 
-	/**
-	 * Unregister a schedule
-	 * @param {string} id - The schedule to unregister
-	 */
-	unregister(id) {
-		this.registry.unregister(id);
+	unregister(/** @type {string} */ id) {
+		this.#registry.unregister(id);
 	}
 
-	/**@private*/
+	getEntries() {
+		return this.#registry.entries;
+	}
+
 	applyPatches() {
 		log("info", "corelib", "Loading schedule module patches");
 
@@ -58,7 +49,7 @@ class SchedulesModule {
 			type: "replace",
 			from: `up[_.Autosave]=`,
 			to:
-				Object.entries(this.registry.entries).reduce(
+				Object.entries(this.#registry.entries).reduce(
 					(acc, [id, interval]) => acc + `up[_["${id}"]]={interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`,
 					``,
 				) + `~`,

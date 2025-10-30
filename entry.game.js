@@ -18,7 +18,7 @@ class CoreLib {
 		/**
 		 * General miscellanous functions
 		 */
-		named: {}
+		named: {},
 	};
 	/**
 	 * Functions for interacting with the game world

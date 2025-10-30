@@ -1,14 +1,13 @@
-
 /**
- * @typedef {[Number, Number, Number, Number]} shapeRow
+ * @typedef {[
+ *   [number, number, number, number],
+ * 	 [number, number, number, number],
+ * 	 [number, number, number, number],
+ * 	 [number, number, number, number]]} ShapeConfig
  */
 
 /**
- * @typedef {[shapeRow, shapeRow, shapeRow, shapeRow]} shapeSchema
- */
-
-/**
- * @typedef {object} blockData
+ * @typedef {object} BlockConfig
  * @property {string} sourceMod - Your mod, use the name of your mods folder
  * @property {string} id - Id of block
  * @property {string} name - Name of block
@@ -19,8 +18,8 @@
  * @property {boolean} [hasHoverUI=false] - If the block has a UI when hovered on
  * @property {boolean} [unlockedByDefault=false] - If the block is avaliable by default
  * @property {number} [tickInterval=null] - Interval in ms that the block ticks
- * @property {shapeSchema} shape - Shape of the block
- * @property {number[]} [angles=[]] - Angles that the block can be dragged and placed at 
+ * @property {ShapeConfig} shape - Shape of the block
+ * @property {number[]} [angles=[]] - Angles that the block can be dragged and placed at
  * @property {number} [animationInterval=500] - How fast your block's animation cycles frames
  */
 
@@ -61,7 +60,7 @@ const blockSchema = {
 };
 
 /**
- * @typedef {object} variantSchema
+ * @typedef {object} BlockVariantConfig
  * @property {string} parentId - The parent block
  * @property {string} suffix - Suffix to parent id for this variant
  * @property {string} [imagePath=""] - Path to the blocks image relative to your mod folder
@@ -70,7 +69,8 @@ const blockSchema = {
  * @property {number[]} [angles=[]] - Angles the block can be dragged at and placed at
  * @property {number} [animationInterval=500] - How fast your block's animation cycles frames
  */
-const variantSchema = {
+
+const blockVariantSchema = {
 	parentId: { type: "string" },
 	suffix: { type: "string" },
 	imagePath: { type: "string", default: "" },
@@ -101,8 +101,7 @@ const variantSchema = {
 };
 
 class BlocksModule {
-	/**@private*/
-	registry = corelib.enums.createRegistry({
+	#registry = corelib.enums.createRegistry({
 		name: "Block",
 		intIdStart: 99,
 		bundleMap: {
@@ -112,71 +111,59 @@ class BlocksModule {
 		},
 	});
 
-	/**
-	 * register a block
-	 * @param {blockData} inputData 
-	 */
-	register(inputData /* blockSchema */) {
-		const data = validateInput(inputData, blockSchema);
+	register(/** @type {BlockConfig} */ config) {
+		const validConfig = validateInput(config, blockSchema);
 
-		let fullImagePath = this.getFullImagePath(data.sourceMod, data.imagePath);
-		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
+		let fullImagePath = this.getFullImagePath(validConfig.sourceMod, validConfig.imagePath);
+		const entry = { isVariant: false, variants: [], fullImagePath, ...validConfig };
 
-		if (data.tickInterval != null) {
-			corelib.schedules.register(`block-tick-${data.id}`, data.tickInterval);
+		if (validConfig.tickInterval != null) {
+			corelib.schedules.register(`block-tick-${validConfig.id}`, validConfig.tickInterval);
 		}
 
-		this.registry.register(data.id, blockData);
+		this.#registry.register(validConfig.id, entry);
 	}
 
-	/**
-	 * Register a block variant
-	 * @param {variantSchema} inputData
-	 */
-	registerVariant(inputData /* variantSchema */) {
-		const data = validateInput(inputData, variantSchema);
+	registerVariant(/** @type {BlockVariantConfig} */ config) {
+		const validConfig = validateInput(config, blockVariantSchema);
 
-		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
-			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}" not found!`);
+		if (!this.#registry.entries.hasOwnProperty(validConfig.parentId)) {
+			return log("error", "corelib", `Parent block name: "${validConfig.parentId}" for variant "${validConfig.parentId}${validConfig.suffix}" not found!`);
 		}
 
-		let id = data.parentId + data.suffix;
-		let parentBlock = this.registry.entries[data.parentId];
-		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, data.imagePath);
-		let variantData = { isVariant: true, fullImagePath, ...data };
-		variantData.id = id;
+		let id = validConfig.parentId + validConfig.suffix;
+		let parentEntry = this.#registry.entries[validConfig.parentId];
+		let fullImagePath = this.getFullImagePath(parentEntry.sourceMod, validConfig.imagePath);
+		let entry = { isVariant: true, fullImagePath, ...validConfig };
+		entry.id = id;
 
-		if (this.registry.register(id, variantData)) {
-			parentBlock.variants.push(variantData);
+		if (this.#registry.register(id, entry)) {
+			parentEntry.variants.push(entry);
 		}
 	}
 
-	/**
-	 * Unregister a block, cannot directly unregister variants
-	 * @param {number} id - Block to unregister
-	 */
-	unregister(id) {
+	unregister(/** @type {string} */ id) {
 		// manually check here since we don't unregister until we unregister variants
-		if (!this.registry.entries[id]) {
+		if (!this.#registry.entries[id]) {
 			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
-		if (this.registry.entries[id].isVariant) {
+		if (this.#registry.entries[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
+
+		const data = this.#registry.entries[id];
 
 		if (data.tickInterval != null) {
 			corelib.schedules.unregister(`block-tick-${data.id}`);
 		}
 
-		// Unregister each variant entry (they are registered under their own id)
-		for (let variant of this.registry.entries[id].variants) {
-			this.registry.unregister(variant.id);
+		for (let variant of data.variants) {
+			this.#registry.unregister(variant.id);
 		}
 
-		this.registry.unregister(id);
+		this.#registry.unregister(id);
 	}
 
-	/**@private*/
 	getFullImagePath(sourceMod, imagePath) {
 		let _return = path.join(fluxloaderAPI.getModsPath(), sourceMod, imagePath + ".png").replace(/\\/g, "/");
 
@@ -188,12 +175,15 @@ class BlocksModule {
 		return _return;
 	}
 
-	/**@private*/
+	getEntries() {
+		return this.#registry.entries;
+	}
+
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
 		const reduceBlocks = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 
@@ -202,17 +192,17 @@ class BlocksModule {
 		const reduceBlocksAndVariants = (f) => reduceBlocks((b) => f(b) + reduceBlockVariants(b, (v) => f(v)));
 
 		const reduceBlocksWithConfig = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => !b.isVariant && b.hasConfigMenu)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		const reduceBlocksWithHover = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => b.hasHoverUI)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		let reduceBlocksWithTicking = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((t) => t.tickInterval != null)
 				.reduce((acc, t) => acc + f(t.id), "");
 

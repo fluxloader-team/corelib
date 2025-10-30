@@ -1,9 +1,9 @@
 /**
  * @typedef {object} ItemConfig
- * @property {string} id - id of the item
- * @property {"Tool"|"Weapon"|"Consumable"} type - type of the item
- * @property {string} name - display name of the item
- * @property {string} description - description of the item
+ * @property {string} id id of the item
+ * @property {"Tool"|"Weapon"|"Consumable"} type type of the item
+ * @property {string} name display name of the item
+ * @property {string} description description of the item
  */
 
 const itemSchema = {

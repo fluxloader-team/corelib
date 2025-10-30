@@ -1,7 +1,7 @@
 /**
  * @typedef {object} ScheduleConfig
- * @property {string} id - id of the schedule
- * @property {number} interval - interval in ticks
+ * @property {string} id id of the schedule
+ * @property {number} interval interval in ticks
  */
 
 const scheduleSchema = {

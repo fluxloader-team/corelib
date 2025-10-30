@@ -1,17 +1,17 @@
 /**
  * @typedef {object} TechUnlocks
- * @property {string[]} [structures] - array of structure ids to give
- * @property {string[]} [item] - array of item ids to give
+ * @property {string[]} [structures] array of structure ids to give
+ * @property {string[]} [item] array of item ids to give
  */
 
 /**
  * @typedef {object} TechConfig
- * @property {string} id - id of the tech
- * @property {string} name - name of the tech
- * @property {string} description - description of the tech
- * @property {TechUnlocks} [unlocks={}] - what this tech unlocks
- * @property {string} [parent="Refining1"] - id of the parent tech
- * @property {number} cost - cost of the tech
+ * @property {string} id id of the tech
+ * @property {string} name name of the tech
+ * @property {string} description description of the tech
+ * @property {TechUnlocks} [unlocks={}] what this tech unlocks
+ * @property {string} [parent="Refining1"] id of the parent tech
+ * @property {number} cost cost of the tech
  */
 
 const techSchema = {

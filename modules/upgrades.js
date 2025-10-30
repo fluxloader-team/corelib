@@ -1,15 +1,15 @@
 /**
  * @typedef {object} UpgradeRequirement
- * @property {string[]} [tech] - Tech required to unlock the tab
- * @property {string[]} [building] - Block required to unlock the tab
- * @property {string[]} [item] - Item required to unlock the tab
+ * @property {string[]} [tech] Tech required to unlock the tab
+ * @property {string[]} [building] Block required to unlock the tab
+ * @property {string[]} [item] Item required to unlock the tab
  */
 
 /**
  * @typedef {object} TabConfig
- * @property {string} id - The id of the tab
- * @property {string} name - The name of the tab
- * @property {UpgradeRequirement} [requirement={}] - What the player must have to see this tab
+ * @property {string} id The id of the tab
+ * @property {string} name The name of the tab
+ * @property {UpgradeRequirement} [requirement={}] What the player must have to see this tab
  */
 
 const tabSchema = {
@@ -29,10 +29,10 @@ const tabSchema = {
 
 /**
  * @typedef {object} CategoryConfig
- * @property {string} tabID - Tab holding this category
- * @property {string} id - Id of this category
- * @property {string} name - Name of the category
- * @property {UpgradeRequirement} [requirement={}] - What the player must have to see this category
+ * @property {string} tabID Tab holding this category
+ * @property {string} id Id of this category
+ * @property {string} name Name of the category
+ * @property {UpgradeRequirement} [requirement={}] What the player must have to see this category
  */
 
 const categorySchema = {
@@ -57,15 +57,15 @@ const categorySchema = {
 // - oneOff is a boolean representing if the upgrade can only be bought once (creates a checkbox in game)
 /**
  * @typedef {object} UpgradeConfig
- * @property {string} tabID - Tab this upgrade is inside of
- * @property {string} categoryID - Category holding this upgrade
- * @property {string} id - Id of this upgrade
- * @property {string} name - Name of this upgrade
- * @property {string} description - Description of this upgrade
- * @property {UpgradeRequirement} [requirement={}] - What the player must have to see this upgrade
- * @property {number} maxLevel - Highest level your upgrade has, must be the length of costs + 1
- * @property {number[]} costs - Costs for each upgrade, each must be an integer > 0
- * @property {boolean} [oneoff=false] - Makes the upgrade buyable as a checkmark, requires 1 cost
+ * @property {string} tabID Tab this upgrade is inside of
+ * @property {string} categoryID Category holding this upgrade
+ * @property {string} id Id of this upgrade
+ * @property {string} name Name of this upgrade
+ * @property {string} description Description of this upgrade
+ * @property {UpgradeRequirement} [requirement={}] What the player must have to see this upgrade
+ * @property {number} maxLevel Highest level your upgrade has, must be the length of costs + 1
+ * @property {number[]} costs Costs for each upgrade, each must be an integer > 0
+ * @property {boolean} [oneoff=false] Makes the upgrade buyable as a checkmark, requires 1 cost
  */
 
 const upgradeSchema = {

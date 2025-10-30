@@ -8,19 +8,19 @@
 
 /**
  * @typedef {object} BlockConfig
- * @property {string} sourceMod - Your mod, use the name of your mods folder
- * @property {string} id - Id of block
- * @property {string} name - Name of block
- * @property {string} description - Description of block
- * @property {string} [imagePath=""] - Path to the blocks image relative to your mod folder
- * @property {boolean} [singleBuild=false] - Whether the block is placed one at a time or is draggable
- * @property {boolean} [hasConfigMenu=false] - Whether a config menu should open when the block is selected
- * @property {boolean} [hasHoverUI=false] - If the block has a UI when hovered on
- * @property {boolean} [unlockedByDefault=false] - If the block is avaliable by default
- * @property {number} [tickInterval=null] - Interval in ms that the block ticks
- * @property {ShapeConfig} shape - Shape of the block
- * @property {number[]} [angles=[]] - Angles that the block can be dragged and placed at
- * @property {number} [animationInterval=500] - How fast your block's animation cycles frames
+ * @property {string} sourceMod Your mod, use the name of your mods folder
+ * @property {string} id Id of block
+ * @property {string} name Name of block
+ * @property {string} description Description of block
+ * @property {string} [imagePath=""] Path to the blocks image relative to your mod folder
+ * @property {boolean} [singleBuild=false] Whether the block is placed one at a time or is draggable
+ * @property {boolean} [hasConfigMenu=false] Whether a config menu should open when the block is selected
+ * @property {boolean} [hasHoverUI=false] If the block has a UI when hovered on
+ * @property {boolean} [unlockedByDefault=false] If the block is avaliable by default
+ * @property {number} [tickInterval=null] Interval in ms that the block ticks
+ * @property {ShapeConfig} shape Shape of the block
+ * @property {number[]} [angles=[]] Angles that the block can be dragged and placed at
+ * @property {number} [animationInterval=500] How fast your block's animation cycles frames
  */
 
 const blockSchema = {
@@ -61,13 +61,13 @@ const blockSchema = {
 
 /**
  * @typedef {object} BlockVariantConfig
- * @property {string} parentId - The parent block
- * @property {string} suffix - Suffix to parent id for this variant
- * @property {string} [imagePath=""] - Path to the blocks image relative to your mod folder
- * @property {boolean} [hasHoverUI=false] - Whether this block has a UI when hovered on
- * @property {shapeSchema} shape - shape of block
- * @property {number[]} [angles=[]] - Angles the block can be dragged at and placed at
- * @property {number} [animationInterval=500] - How fast your block's animation cycles frames
+ * @property {string} parentId The parent block
+ * @property {string} suffix Suffix to parent id for this variant
+ * @property {string} [imagePath=""] Path to the blocks image relative to your mod folder
+ * @property {boolean} [hasHoverUI=false] Whether this block has a UI when hovered on
+ * @property {shapeSchema} shape shape of block
+ * @property {number[]} [angles=[]] Angles the block can be dragged at and placed at
+ * @property {number} [animationInterval=500] How fast your block's animation cycles frames
  */
 
 const blockVariantSchema = {

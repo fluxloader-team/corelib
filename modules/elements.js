@@ -1,10 +1,10 @@
 /**
  * @typedef {object} BasicRecipeRegisterConfig
- * @property {string} inputTop - The element on the top input
- * @property {string} inputBottom - The element on the bottom input
- * @property {string} outputTop - The element to output on the top
- * @property {string} [outputBottom="Empty"] - The element to output on the bottom
- * @property {boolean} [bothWays=true] - Whether to register the recipe both ways
+ * @property {string} inputTop The element on the top input
+ * @property {string} inputBottom The element on the bottom input
+ * @property {string} outputTop The element to output on the top
+ * @property {string} [outputBottom="Empty"] The element to output on the bottom
+ * @property {boolean} [bothWays=true] Whether to register the recipe both ways
  */
 
 const basicRecipeRegisterSchema = {
@@ -17,9 +17,9 @@ const basicRecipeRegisterSchema = {
 
 /**
  * @typedef {object} BasicRecipeUnregisterConfig
- * @property {string} inputTop - The element on the top input
- * @property {string} inputBottom - The element on the bottom input
- * @property {boolean} [bothWays=true] - Whether to unregister the recipe both ways
+ * @property {string} inputTop The element on the top input
+ * @property {string} inputBottom The element on the bottom input
+ * @property {boolean} [bothWays=true] Whether to unregister the recipe both ways
  */
 
 const basicRecipeUnregisterSchema = {
@@ -30,9 +30,9 @@ const basicRecipeUnregisterSchema = {
 
 /**
  * @typedef {object} PressRecipeRegisterConfig
- * @property {string} input - The element to input
- * @property {number} [requiredVelocity=200] - The required velocity to trigger the recipe
- * @property {Array<[string, number]>} outputs - An array of arrays, each containing the output element and the chance (0-1) to produce it
+ * @property {string} input The element to input
+ * @property {number} [requiredVelocity=200] The required velocity to trigger the recipe
+ * @property {Array<[string, number]>} outputs An array of arrays, each containing the output element and the chance (0-1) to produce it
  */
 
 const pressRecipeRegisterSchema = {
@@ -51,7 +51,7 @@ const pressRecipeRegisterSchema = {
 
 /**
  * @typedef {object} PressRecipeUnregisterConfig
- * @property {string} input - The input element
+ * @property {string} input The input element
  */
 
 const pressRecipeUnregisterSchema = {

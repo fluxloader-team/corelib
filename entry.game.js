@@ -41,6 +41,15 @@ class CoreLib {
 				getStructureAtPos: corelib.exposed.raw.Oc,
 				checkIfTechUnlocked: corelib.exposed.raw.Xf,
 				deleteBlocks: corelib.exposed.raw.ed,
+				buttonStates: corelib.exposed.raw.y,
+				actionTypes: corelib.exposed.raw.o,
+				actionStates: corelib.exposed.raw.u,
+				toolTypes: corelib.exposed.raw.a,
+				uiNames: corelib.exposed.raw.k,
+				workerMessages: corelib.exposed.raw.f,
+				tutorialStages: corelib.exposed.raw.b,
+				authorizationLimits: corelib.exposed.raw.P,
+				scenes: corelib.exposed.raw.z,
 			};
 
 			corelib.exposed.utils = {
@@ -138,6 +147,9 @@ class CoreLib {
 			},
 			isEmpty: (x, y) => {
 				return corelib.exposed.raw.tf(fluxloaderAPI.gameInstance.state, x, y);
+			},
+			getPlayerAction: () => {
+				return corelib.exposed.raw.Ef(fluxloaderAPI.gameInstance.state);
 			},
 		};
 

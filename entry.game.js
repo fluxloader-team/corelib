@@ -30,6 +30,7 @@ class CoreLib {
 				soils: corelib.exposed.raw.t,
 				particles: corelib.exposed.raw.n,
 				blocks: corelib.exposed.raw.d,
+				tools: corelib.exposed.raw.H,
 				matterTypes: corelib.exposed.raw.h,
 				mapColors: corelib.exposed.raw.Fd,
 				createCellData: corelib.exposed.raw.Fh,

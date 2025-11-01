@@ -35,7 +35,6 @@ class CoreLib {
 				createCellData: corelib.exposed.raw.Fh,
 				spawnBlock: corelib.exposed.raw.xd,
 				setCell: corelib.exposed.raw.Od,
-				getSelectedItem: corelib.exposed.raw.Ef,
 				notifyUIChange: corelib.exposed.raw.Al,
 				convertHSLtoRGBA: corelib.exposed.raw.pu,
 				getStructureAtPos: corelib.exposed.raw.Oc,
@@ -48,7 +47,7 @@ class CoreLib {
 				uiNames: corelib.exposed.raw.k,
 				workerMessages: corelib.exposed.raw.f,
 				tutorialStages: corelib.exposed.raw.b,
-				authorizationLimits: corelib.exposed.raw.P,
+				authorizationZoneLimits: corelib.exposed.raw.P,
 				scenes: corelib.exposed.raw.z,
 			};
 
@@ -148,9 +147,6 @@ class CoreLib {
 			isEmpty: (x, y) => {
 				return corelib.exposed.raw.tf(fluxloaderAPI.gameInstance.state, x, y);
 			},
-			getPlayerAction: () => {
-				return corelib.exposed.raw.Ef(fluxloaderAPI.gameInstance.state);
-			},
 		};
 
 		this.utils = {
@@ -179,7 +175,7 @@ class CoreLib {
 				return children;
 			},
 			getSelectedItem() {
-				return corelib.exposed.named.getSelectedItem(fluxloaderAPI.gameInstance.state);
+				return corelib.exposed.raw.Ef(fluxloaderAPI.gameInstance.state);
 			},
 		};
 	}

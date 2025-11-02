@@ -361,33 +361,38 @@ class ElementsModule {
 				to: `-e.type`,
 			});
 		}
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:burningFuctionEdit", {
+   			type: "replace",
+   			from: `p=((a={})[i.RJ.Slag]=function(){return{output:{elementType:i.RJ.BurntSlag,chance:.25}}},a),f=!1,g=function(e,t,r,a){if(!(t<0||r<0||t>=e.store.world.size.width||r>=e.store.world.size.height)){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n))return(d=(0,s.n)(i.RJ.Fire,t,r)).duration.left=d.duration.max=d.duration.left*Math.max(.25,1-a/.64),void(0,c.Jx)(e,t,r,d);if((0,c.W)(n,i.vZ.Ice))(0,u.jE)(e,t,r);else{if((0,c.af)(n,[i.RJ.Water,i.RJ.FreezingIce])){var d=(0,s.n)(i.RJ.Steam,t,r);return(0,c.Jx)(e,t,r,d),f||(e.environment.postMessage([i.dD.ForceCompleteObjective,"vaporize_water"]),f=!0),void e.environment.postMessage([i.dD.PlaySound,[{id:"vaporize",opts:{volume:.1,fadeOut:l.A.getRandomFloatBetween(.1,.5),playbackRate:l.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:d.x*o.A.cellSize,y:d.y*o.A.cellSize}}]])}if((0,c.af)(n,i.RJ.Slag))return(d=(0,s.n)(i.RJ.Flame,t,r)).data=p[i.RJ.Slag](),d.duration.left=d.duration.max=d.duration.left-a,void(0,c.Jx)(e,t,r,d);x(e,t,r,n)||(0,c.af)(n,i.RJ.Basalt)&&(0,c.Jx)(e,t,r,(0,s.n)(i.RJ.Lava,t,r))}}},y=function(e,t){var r;if(![i.RJ.Flame,i.RJ.Lava].includes(t.type))return!1;if(t.type===i.RJ.Flame&&((0,v.$T)(e,t.x*o.A.cellSize,t.y*o.A.cellSize,v.c6.Fire),e.environment.postMessage([i.dD.AddLight,t.x*o.A.cellSize,t.y*o.A.cellSize,{brightness:1,duration:100,useLightZones:!0}])),[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].forEach((function(r){var a=r.x,n=r.y,o={cX:t.x+a,cY:t.y+n},s=o.cX,d=o.cY;if(!(s<0||d<0||s>=e.store.world.size.width||d>=e.store.world.size.height)){var u=e.environment,c=l.A.getThreadIndexFromCellX(s,u.threadMeta.threadCount);c===u.threadMeta.startingIndex?m(e,s,d,t):e.environment.threadMeta.ports[c].postMessage([i.dD.Burn,s,d])}})),t.type===i.RJ.Lava)return t.duration.left=t.duration.max*l.A.getRandomFloatBetween(.5,1.5),t.variantIndex=l.A.getRandomIntBetween(0,3),(0,c.Jx)(e,t.x,t.y,t),!0;var a=null===(r=t.data)||void 0===r?void 0:r.output;return a?!1===a.elementType||a.chance&&Math.random()>=a.chance?((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(a.elementType,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0)},m=function(e,t,r,a){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n)){var l=(null==a?void 0:a.type)===i.RJ.Lava?.01:.25;if(Math.random()<l){(null==a?void 0:a.type)===i.RJ.Lava&&e.environment.postMessage([i.dD.AddLight,a.x*o.A.cellSize,a.y*o.A.cellSize,{brightness:1,size:r*o.A.cellSize<e.store.world.horizon[Math.floor(t)]*o.A.cellSize+10*o.A.cellSize?100:1e3,duration:5e3,useLightZones:!0}]);var d=(0,s.n)(i.RJ.Fire,t,r);return(null==a?void 0:a.type)===i.RJ.Lava&&(d.data.temperature=1200),void(0,c.Jx)(e,t,r,d)}}if((0,c.af)(n,i.RJ.Slag)){var u=(0,s.n)(i.RJ.Flame,t,r);return u.data=p[i.RJ.Slag](),void(0,c.Jx)(e,t,r,u)}(0,h.x)(e,n,t,r),x(e,t,r,n)},S=((n={})[i.vZ.Moss]=!1,n[i.vZ.Divider]=!1,n[i.vZ.GoldSoil]=i.RJ.Gold,n[i.vZ.Petal]=i.RJ.Petalium,n),x=function(e,t,r,a){if(a=null!=a?a:(0,c.tT)(e.store,t,r),(0,c.ez)(a)){if((0,c.kw)(a,[i.vZ.Moss,i.vZ.Divider,i.vZ.GoldSoil,i.vZ.Petal])){var n=(0,s.n)(i.RJ.Flame,t,r);return n.skipPhysics=!0,n.data={output:{elementType:S[a]}},(0,c.Jx)(e,t,r,n),!0}(0,d.zT)(e,t,r,4)}return!1}`,
+			to: `${burningRewritten}`
+		})
 	}
 }
 
 globalThis.ElementsModule = ElementsModule;
-const burningRewritten = `
+const burningRewritten = ``
 burnableRecipes = {
 	soils: {
 		[i.vZ.Moss]: { output: false, spreadFlame: true },
 		[i.vZ.Divider]: { output: false, spreadFlame: true },
-		[i.vZ.GoldSoil]: { output: { elementType: i.RJ.Gold, chance: 1 }, spreadFlame: true },
-		[i.vZ.Petal]: { output: { elementType: i.RJ.Petalium, chance: 1 }, spreadFlame: true },
+		[i.vZ.GoldSoil]: { output: i.RJ.Gold, chance: 1 , spreadFlame: true },
+		[i.vZ.Petal]: { output: i.RJ.Petalium, chance: 1 , spreadFlame: true },
 	},
 	particles: {
 		[i.RJ.Slag]: {
-			output: { elementType: i.RJ.BurntSlag, chance: 0.25 },
+			output: i.RJ.BurntSlag, chance: 1,
 			spreadFlame: true,
 		},
 		[i.RJ.Basalt]: {
-			output: { elementType: i.RJ.Lava, chance: 1 },
+			output: i.RJ.Lava,	chance: 1,
 			spreadFlame: false,
 		},
 		[i.RJ.Water]: {
-			output: { elementType: i.RJ.Steam, chance: 1 },
+			output: i.RJ.Steam, chance: 1,
 			spreadFlame: false,
 		},
 		[i.RJ.FreezingIce]: {
-			output: { elementType: i.RJ.Steam, chance: 1 },
+			output: i.RJ.Steam, chance: 1,
 			spreadFlame: false,
 		},
 	},
@@ -396,7 +401,9 @@ burnableRecipes = {
 	g = function (e, xPos, yPos, a) {
 		if (!(xPos < 0 || yPos < 0 || xPos >= e.store.world.size.width || yPos >= e.store.world.size.height)) {
 			var cellAtPos = (0, c.tT)(e.store, xPos, yPos);
-			if ((0, c.Ol)(cellAtPos)){ return ((d = (0, s.n)(i.RJ.Fire, xPos, yPos)).duration.left = d.duration.max = d.duration.left * Math.max(0.25, 1 - a / 0.64)), void (0, c.Jx)(e, xPos, yPos, d);}
+			//if empty spawn normal fire
+			if ((0, c.Ol)(cellAtPos)){ return ((flameParticle = (0, s.n)(i.RJ.Fire, xPos, yPos)).duration.left = flameParticle.duration.max = flameParticle.duration.left * Math.max(0.25, 1 - a / 0.64)), void (0, c.Jx)(e, xPos, yPos, flameParticle);}
+			
 			if ((0, c.W)(cellAtPos, i.vZ.Ice)){ (0, u.jE)(e, xPos, yPos);}
 			else {
 				if ((0, c.af)(cellAtPos, [i.RJ.Water, i.RJ.FreezingIce])) {
@@ -476,17 +483,30 @@ burnableRecipes = {
 			if (burnableRecipes.soils.hasOwnProperty(cellId)) {
 				var flameParticle = (0, s.n)(i.RJ.Flame, xPos, yPos);
 
-				let output = burnableRecipes.soils[cellId].output
-				if (output && output.chance > Math.random()) {
-					output = output.elementType
+				const {output,chance} = burnableRecipes.soils[cellId]
+				let evaluatedOutput
+				if (output && chance > Math.random()) {
+					evaluatedOutput = output.elementType
 				} else {
-					output = false
+					evaluatedOutput = false
 				}
 
-				return (flameParticle.skipPhysics = true), (flameParticle.data = { output: { elementType: output } }), (0, c.Jx)(e, xPos, yPos, flameParticle), !0;
+				return (flameParticle.skipPhysics = true), (flameParticle.data = { output: { elementType: output } }), (0, c.Jx)(e, xPos, yPos, flameParticle), true;
 			}
 			(0, d.zT)(e, xPos, yPos, 4);
 		}
 		return false;
 	};
-`
+
+
+
+
+
+
+
+
+
+
+
+
+	

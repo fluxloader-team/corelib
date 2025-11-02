@@ -37,17 +37,17 @@ class CoreLib {
 				getCellAtPos: corelib.exposed.raw.u.tT,
 				moveCell: corelib.exposed.raw.u.L3,
 				queueSetCell: corelib.exposed.raw.u.MH,
-				swapCells: corelib.exposed.raw.u.Hc, //You figure it out
+				swapCells: corelib.exposed.raw.u.Hc,
 				shouldChunkUpdate: corelib.exposed.raw.u.Do,
 				isEmpty: corelib.exposed.raw.u.lV,
 				deleteBlocks: corelib.exposed.raw.z.Cj,
-				getElementType: corelib.exposed.raw.u.QC, //What type tho?
-				getElementTypeFromMapData: corelib.exposed.raw.u.BQ, //Similar to last?
-				setCellWithAutoWorkerRoute: corelib.exposed.raw.u.Q1, //Doesn't setCell do this too?
-				getChunkAtPos: corelib.exposed.raw.u.NK, //At least I think that's what this does
+				getElementType: corelib.exposed.raw.u.QC,
+				getElementTypeFromMapData: corelib.exposed.raw.u.BQ,
+				setCellWithAutoWorkerRoute: corelib.exposed.raw.u.Q1,
+				getChunkAtPos: corelib.exposed.raw.u.NK,
 			};
 
-			corelib.exposed.workerUtils = {
+			corelib.exposed.utils = {
 				...corelib.exposed.raw.o.A,
 			};
 		});
@@ -140,11 +140,11 @@ class CoreLib {
 			getCellAtPos: (x, y) => {
 				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
 			},
-			getThreadFromCellX(x) {
+			getThreadIndexFromCellX(x) {
 				return corelib.exposed.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
 			},
-			xCoordinateInsideWorker(x) {
-				return fluxloaderAPI.gameInstanceState.environment.threadMeta.startingIndex === getThreadFromCellX(x);
+			isCellXInThread(x) {
+				return corelib.exposed.utils.isCellXInThread(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.startingIndex, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
 			},
 			getBlockNameFromNumber: (type) => {
 				return corelib.exposed.named.blocks[type] != undefined ? corelib.exposed.named.blocks[type] : null;

@@ -30,17 +30,30 @@ class CoreLib {
 				soils: corelib.exposed.raw.t,
 				particles: corelib.exposed.raw.n,
 				blocks: corelib.exposed.raw.d,
+				tools: corelib.exposed.raw.H,
 				matterTypes: corelib.exposed.raw.h,
 				mapColors: corelib.exposed.raw.Fd,
 				createCellData: corelib.exposed.raw.Fh,
 				spawnBlock: corelib.exposed.raw.xd,
 				setCell: corelib.exposed.raw.Od,
-				getSelectedItem: corelib.exposed.raw.Ef,
 				notifyUIChange: corelib.exposed.raw.Al,
 				convertHSLtoRGBA: corelib.exposed.raw.pu,
 				getStructureAtPos: corelib.exposed.raw.Oc,
 				checkIfTechUnlocked: corelib.exposed.raw.Xf,
 				deleteBlocks: corelib.exposed.raw.ed,
+				buttonStates: corelib.exposed.raw.y,
+				actionTypes: corelib.exposed.raw.o,
+				actionStates: corelib.exposed.raw.u,
+				toolTypes: corelib.exposed.raw.a,
+				uiNames: corelib.exposed.raw.k,
+				workerMessages: corelib.exposed.raw.f,
+				tutorialStages: corelib.exposed.raw.b,
+				authorizationZoneLimits: corelib.exposed.raw.P,
+				scenes: corelib.exposed.raw.z,
+			};
+
+			corelib.exposed.utils = {
+				...corelib.exposed.raw.q,
 			};
 		});
 	}
@@ -163,7 +176,7 @@ class CoreLib {
 				return children;
 			},
 			getSelectedItem() {
-				return corelib.exposed.named.getSelectedItem(fluxloaderAPI.gameInstance.state);
+				return corelib.exposed.raw.Ef(fluxloaderAPI.gameInstance.state);
 			},
 		};
 	}

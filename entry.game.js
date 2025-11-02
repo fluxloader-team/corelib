@@ -148,6 +148,9 @@ class CoreLib {
 			isEmpty: (x, y) => {
 				return corelib.exposed.raw.tf(fluxloaderAPI.gameInstance.state, x, y);
 			},
+			setCell: (x, y, cellData) => {
+				corelib.exposed.named.setCell(fluxloaderAPI.gameInstance.state, x, y, cellData);
+			},
 		};
 
 		this.utils = {

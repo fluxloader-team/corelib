@@ -132,11 +132,18 @@ const pressRecipeRegisterSchema = {
 const pressRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
+
+const growerRecipeRegisterSchema = {
+	input: { type: "string" },
+	output: { type: "string" },
+	chance: { type: "number", default: 1 },
+};
+
 const saveHasNewStorageType = false;
 class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
-	recipes = { basic: {}, press: {} };
+	recipes = { basic: {}, press: {}, grower: {} };
 	otherFeatures = { conveyorBeltIgnores: [] };
 
 	constructor() {
@@ -156,6 +163,7 @@ class ElementsModule {
 		this.registerConveyorBeltIgnores("Steam");
 		this.registerConveyorBeltIgnores("Lava");
 		this.registerConveyorBeltIgnores("Fire");
+		this.registerGrowerRecipe({ input: "WetSpore", output: "Seed" });
 	}
 	registerElement(inputData) {
 		const data = validateInput(inputData, elementSchema, true).data;
@@ -197,6 +205,11 @@ class ElementsModule {
 		const data = validateInput(inputData, pressRecipeUnregisterSchema);
 		if (!this.recipes.press[data.input]) return log("error", "corelib", `Could not unregister press recipe with id "${data.input}", not found!`);
 		delete this.recipes.press[data.input];
+	}
+
+	registerGrowerRecipe(inputData) {
+		const data = validateInput(inputData, growerRecipeRegisterSchema);
+		this.recipes.grower[data.input] = [data.output, data.chance];
 	}
 
 	registerConveyorBeltIgnores(id) {
@@ -349,6 +362,24 @@ class ElementsModule {
 			to: `d=[${prependJoin("a.RJ.", this.otherFeatures.conveyorBeltIgnores)}`,
 		});
 
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:growerRecipes", {
+			type: "replace",
+			from: `if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
+			to: `const growerRecipes = {${Object.entries(this.recipes.grower)
+				.map(([input, [output, chance]]) => `[o.RJ.${input}]: {output: o.RJ.${output}, chance:${chance}}`)
+				.join(",")}}
+				if (!growerRecipes[t.type]) return false;
+				var buildingAtPos = (0, l.TR)(e, t.x, t.y + 1);
+				if (!buildingAtPos || buildingAtPos.type !== o.ev.Grower) return false;
+				const { output, chance } = growerRecipes[t.type];
+				if (Math.random() < chance) {
+					(0, u.Jx)(e, t.x, t.y, (0, s.n)(output, t.x, t.y));
+				} else {
+					(0, u.Nz)(e, t);
+				}
+				return true;`,
+		});
+
 		if (saveHasNewStorageType) {
 			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {
 				type: "replace",
@@ -361,16 +392,18 @@ class ElementsModule {
 				to: `-e.type`,
 			});
 		}
+		/* 
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:burningFuctionEdit", {
    			type: "replace",
    			from: `p=((a={})[i.RJ.Slag]=function(){return{output:{elementType:i.RJ.BurntSlag,chance:.25}}},a),f=!1,g=function(e,t,r,a){if(!(t<0||r<0||t>=e.store.world.size.width||r>=e.store.world.size.height)){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n))return(d=(0,s.n)(i.RJ.Fire,t,r)).duration.left=d.duration.max=d.duration.left*Math.max(.25,1-a/.64),void(0,c.Jx)(e,t,r,d);if((0,c.W)(n,i.vZ.Ice))(0,u.jE)(e,t,r);else{if((0,c.af)(n,[i.RJ.Water,i.RJ.FreezingIce])){var d=(0,s.n)(i.RJ.Steam,t,r);return(0,c.Jx)(e,t,r,d),f||(e.environment.postMessage([i.dD.ForceCompleteObjective,"vaporize_water"]),f=!0),void e.environment.postMessage([i.dD.PlaySound,[{id:"vaporize",opts:{volume:.1,fadeOut:l.A.getRandomFloatBetween(.1,.5),playbackRate:l.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:d.x*o.A.cellSize,y:d.y*o.A.cellSize}}]])}if((0,c.af)(n,i.RJ.Slag))return(d=(0,s.n)(i.RJ.Flame,t,r)).data=p[i.RJ.Slag](),d.duration.left=d.duration.max=d.duration.left-a,void(0,c.Jx)(e,t,r,d);x(e,t,r,n)||(0,c.af)(n,i.RJ.Basalt)&&(0,c.Jx)(e,t,r,(0,s.n)(i.RJ.Lava,t,r))}}},y=function(e,t){var r;if(![i.RJ.Flame,i.RJ.Lava].includes(t.type))return!1;if(t.type===i.RJ.Flame&&((0,v.$T)(e,t.x*o.A.cellSize,t.y*o.A.cellSize,v.c6.Fire),e.environment.postMessage([i.dD.AddLight,t.x*o.A.cellSize,t.y*o.A.cellSize,{brightness:1,duration:100,useLightZones:!0}])),[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].forEach((function(r){var a=r.x,n=r.y,o={cX:t.x+a,cY:t.y+n},s=o.cX,d=o.cY;if(!(s<0||d<0||s>=e.store.world.size.width||d>=e.store.world.size.height)){var u=e.environment,c=l.A.getThreadIndexFromCellX(s,u.threadMeta.threadCount);c===u.threadMeta.startingIndex?m(e,s,d,t):e.environment.threadMeta.ports[c].postMessage([i.dD.Burn,s,d])}})),t.type===i.RJ.Lava)return t.duration.left=t.duration.max*l.A.getRandomFloatBetween(.5,1.5),t.variantIndex=l.A.getRandomIntBetween(0,3),(0,c.Jx)(e,t.x,t.y,t),!0;var a=null===(r=t.data)||void 0===r?void 0:r.output;return a?!1===a.elementType||a.chance&&Math.random()>=a.chance?((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(a.elementType,t.x,t.y)),!0):((0,c.Jx)(e,t.x,t.y,(0,s.n)(i.RJ.Fire,t.x,t.y)),!0)},m=function(e,t,r,a){var n=(0,c.tT)(e.store,t,r);if((0,c.Ol)(n)){var l=(null==a?void 0:a.type)===i.RJ.Lava?.01:.25;if(Math.random()<l){(null==a?void 0:a.type)===i.RJ.Lava&&e.environment.postMessage([i.dD.AddLight,a.x*o.A.cellSize,a.y*o.A.cellSize,{brightness:1,size:r*o.A.cellSize<e.store.world.horizon[Math.floor(t)]*o.A.cellSize+10*o.A.cellSize?100:1e3,duration:5e3,useLightZones:!0}]);var d=(0,s.n)(i.RJ.Fire,t,r);return(null==a?void 0:a.type)===i.RJ.Lava&&(d.data.temperature=1200),void(0,c.Jx)(e,t,r,d)}}if((0,c.af)(n,i.RJ.Slag)){var u=(0,s.n)(i.RJ.Flame,t,r);return u.data=p[i.RJ.Slag](),void(0,c.Jx)(e,t,r,u)}(0,h.x)(e,n,t,r),x(e,t,r,n)},S=((n={})[i.vZ.Moss]=!1,n[i.vZ.Divider]=!1,n[i.vZ.GoldSoil]=i.RJ.Gold,n[i.vZ.Petal]=i.RJ.Petalium,n),x=function(e,t,r,a){if(a=null!=a?a:(0,c.tT)(e.store,t,r),(0,c.ez)(a)){if((0,c.kw)(a,[i.vZ.Moss,i.vZ.Divider,i.vZ.GoldSoil,i.vZ.Petal])){var n=(0,s.n)(i.RJ.Flame,t,r);return n.skipPhysics=!0,n.data={output:{elementType:S[a]}},(0,c.Jx)(e,t,r,n),!0}(0,d.zT)(e,t,r,4)}return!1}`,
 			to: `${burningRewritten}`
 		})
+			*/
 	}
 }
 
 globalThis.ElementsModule = ElementsModule;
-const burningRewritten = ``
+const burningRewritten = `
 burnableRecipes = {
 	soils: {
 		[i.vZ.Moss]: { output: false, spreadFlame: true },
@@ -496,17 +529,39 @@ burnableRecipes = {
 			(0, d.zT)(e, xPos, yPos, 4);
 		}
 		return false;
-	};
+	};``if(1===g&&[n.ev.ShakerLeft,n.ev.ShakerRight].includes(v)&&t.type===n.RJ.WetSand)(0,l.h)(e,t);`;
+const shakerRecipes = {
+	[n.RJ.WetSand]: {
+		outputs: [
+			[n.RJ.Slag, 1],
+			[n.RJ.Gold, 0.25],
+		],
+	},
+};
+if (1 === g && [n.ev.ShakerLeft, n.ev.ShakerRight].includes(v) && shakerRecipes.hasOwnProperty(t.type)) {
+	let idList = r(3734);
+	let m1872 = r(1872);
+	let m5676 = r(5676);
+	let m6185 = r(6185);
+	let m7028 = r(7028);
+	let m421 = r(421);
 
-
-
-
-
-
-
-
-
-
-
-
-	
+	if ((0, m1872.lV)(e, t.x, t.y + 2)) {
+		var constructedParticle = (0, m5676.n)(idList.RJ.Slag, t.x, t.y);
+		(constructedParticle.isFreeFalling = false), (0, m1872.Jx)(e, t.x, t.y, constructedParticle);
+		if (Math.random() < 0.25) {
+			e.store.tutorial.active && e.environment.postMessage([idList.dD.TutorialStep, idList.vJ.RefineGoldWithShaker]),
+				(0, m1872.Jx)(e, t.x, t.y + 2, (0, m5676.n)(idList.RJ.Gold, t.x, t.y + 2)),
+				e.environment.postMessage([
+					idList.dD.PlaySound,
+					[
+						{
+							id: "coin",
+							opts: { volume: 0.2, fadeOut: m6185.A.getRandomFloatBetween(0.1, 2), playbackRate: m6185.A.getRandomFloatBetween(0.5, 1.5) },
+							modulateDistance: { x: t.x * m7028.A.cellSize, y: t.y * m7028.A.cellSize },
+						},
+					],
+				]);
+		}
+	}
+}

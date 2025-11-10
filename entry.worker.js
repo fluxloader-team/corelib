@@ -109,7 +109,7 @@ class CoreLib {
 			isEmpty: (x, y) => {
 				corelib.exposed.named.isEmpty(fluxloaderAPI.gameInstanceState, x, y);
 			},
-			spawnParticle: ({ x, y, id, data = {}, delayUntilEmpty = true }) => {
+			spawnParticle: ({ x, y, id, data = {}, delayUntilEmpty = false }) => {
 				const particleId = Number.isInteger(id) ? id : corelib.exposed.named.particles[id];
 				if (particleId === undefined || !corelib.exposed.named.particles.hasOwnProperty(particleId)) return log("error", "corelib", `Particle type ${id} does not exist!`);
 				const particle = corelib.exposed.named.createParticle(particleId, x, y, data);

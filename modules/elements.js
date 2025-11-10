@@ -31,10 +31,20 @@ const pressRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
 
+const growerRecipeRegisterSchema = {
+	input: { type: "string" },
+	output: { type: "string" },
+	chance: { type: "number", default: 1 },
+};
+
+const growerRecipeUnregisterSchema = {
+	input: { type: "string" },
+};
+
 class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
-	recipes = { basic: {}, press: {} };
+	recipes = { basic: {}, press: {}, grower: {} };
 	otherFeatures = { conveyorBeltIgnores: [] };
 
 	constructor() {
@@ -50,6 +60,7 @@ class ElementsModule {
 				["Gold", 1],
 			],
 		});
+		this.registerGrowerRecipe({ input: "WetSpore", output: "Seed" });
 		this.registerConveyorBeltIgnores("Water");
 		this.registerConveyorBeltIgnores("Steam");
 		this.registerConveyorBeltIgnores("Lava");
@@ -87,7 +98,14 @@ class ElementsModule {
 		if (!this.recipes.press[data.input]) return log("error", "corelib", `Could not unregister press recipe with id "${data.input}", not found!`);
 		delete this.recipes.press[data.input];
 	}
-
+	registerGrowerRecipe(inputData) {
+		const data = validateInput(inputData, growerRecipeRegisterSchema);
+		this.recipes.grower[data.input] = [data.output, data.chance];
+	}
+	unregisterGrowerRecipe(inputData) {
+		const data = validateInput(inputData, growerRecipeUnregisterSchema);
+		delete this.recipes.grower[data.input];
+	}
 	registerConveyorBeltIgnores(id) {
 		this.otherFeatures.conveyorBeltIgnores.push(id);
 	}
@@ -153,7 +171,23 @@ class ElementsModule {
 					return true;
 				}`,
 		});
-
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:growerRecipes", {
+			type: "replace",
+			from: `if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
+			to: `const growerRecipes = {${Object.entries(this.recipes.grower)
+				.map(([input, [output, chance]]) => `[o.RJ.${input}]: {output: o.RJ.${output}, chance:${chance}}`)
+				.join(",")}}
+				if (!growerRecipes[t.type]) return false;
+				var buildingAtPos = (0, l.TR)(e, t.x, t.y + 1);
+				if (!buildingAtPos || buildingAtPos.type !== o.ev.Grower) return false;
+				const { output, chance } = growerRecipes[t.type];
+				if (Math.random() < chance) {
+					(0, u.Jx)(e, t.x, t.y, (0, s.n)(output, t.x, t.y));
+				} else {
+					(0, u.Nz)(e, t);
+				}
+				return true;`,
+		});
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:conveyorBeltIgnores", {
 			type: "replace",
 			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,

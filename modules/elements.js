@@ -1,29 +1,5 @@
 /** @typedef {import('../entry.electron.js')} */
 
-function cyrb53(str, seed = 0) {
-	let h1 = 0xdeadbeef ^ seed,
-		h2 = 0x41c6ce57 ^ seed;
-	for (let i = 0, ch; i < str.length; i++) {
-		ch = str.charCodeAt(i);
-		h1 = Math.imul(h1 ^ ch, 2654435761);
-		h2 = Math.imul(h2 ^ ch, 1597334677);
-	}
-	h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
-	h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-	h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
-	h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-
-	return 4294967296 * (2097151 & h2) + (h1 >>> 0);
-}
-
-function sortRegistryIds(registry, startingId) {
-	const items = Object.values(registry);
-	items.sort((a, b) => a.numericHash - b.numericHash);
-	items.forEach((item, index) => {
-		item.numericId = index + startingId;
-	});
-}
-
 /**
  * @typedef {object} BasicRecipeRegisterConfig
  * @property {string} inputTop The element on the top input
@@ -203,32 +179,6 @@ const shakerRecipeUnregisterSchema = {
  * @property {string} output The element to output
  * @property {number} [chance=1] The chance (0-1) to produce the output
  */
-const shakerRecipeRegisterSchema = {
-	input: { type: "string" },
-	outputAbove: {
-		type: "array",
-		verifier: (v) => {
-			return {
-				success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
-				message: `Parameter 'outputAboveShaker' must be an array of arrays with the output in the first and the chance in the second`,
-			};
-		},
-		default: [[]],
-	},
-	outputBelow: {
-		type: "array",
-		verifier: (v) => {
-			return {
-				success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
-				message: `Parameter 'outputBelowShaker' must be an array of arrays with the output in the first and the chance in the second`,
-			};
-		},
-		default: [[]],
-	},
-};
-const shakerRecipeUnegisterSchema = {
-	input: {type: "string"}
-}
 const growerRecipeRegisterSchema = {
 	input: { type: "string" },
 	output: { type: "string" },
@@ -244,6 +194,158 @@ const growerRecipeUnregisterSchema = {
 };
 
 const saveHasNewStorageType = false;
+
+const burningRewritten = `
+burnableRecipes = {
+	soils: {
+		[i.vZ.Moss]: { output: false, spreadFlame: true },
+		[i.vZ.Divider]: { output: false, spreadFlame: true },
+		[i.vZ.GoldSoil]: { output: i.RJ.Gold, chance: 1 , spreadFlame: true },
+		[i.vZ.Petal]: { output: i.RJ.Petalium, chance: 1 , spreadFlame: true },
+	},
+	particles: {
+		[i.RJ.Slag]: {
+			output: i.RJ.BurntSlag, chance: 1,
+			spreadFlame: true,
+		},
+		[i.RJ.Basalt]: {
+			output: i.RJ.Lava,	chance: 1,
+			spreadFlame: false,
+		},
+		[i.RJ.Water]: {
+			output: i.RJ.Steam, chance: 1,
+			spreadFlame: false,
+		},
+		[i.RJ.FreezingIce]: {
+			output: i.RJ.Steam, chance: 1,
+			spreadFlame: false,
+		},
+	},
+},
+	hasVaporizedWater = !1,
+	g = function (e, xPos, yPos, a) {
+		if (!(xPos < 0 || yPos < 0 || xPos >= e.store.world.size.width || yPos >= e.store.world.size.height)) {
+			var cellAtPos = (0, c.tT)(e.store, xPos, yPos);
+			//if empty spawn normal fire
+			if ((0, c.Ol)(cellAtPos)){ return ((flameParticle = (0, s.n)(i.RJ.Fire, xPos, yPos)).duration.left = flameParticle.duration.max = flameParticle.duration.left * Math.max(0.25, 1 - a / 0.64)), void (0, c.Jx)(e, xPos, yPos, flameParticle);}
+			
+			if ((0, c.W)(cellAtPos, i.vZ.Ice)){ (0, u.jE)(e, xPos, yPos);}
+			else {
+				if ((0, c.af)(cellAtPos, [i.RJ.Water, i.RJ.FreezingIce])) {
+					var d = (0, s.n)(i.RJ.Steam, xPos, yPos);
+					return (
+						(0, c.Jx)(e, xPos, yPos, d),
+						hasVaporizedWater || (e.environment.postMessage([i.dD.ForceCompleteObjective, "vaporize_water"]), (hasVaporizedWater = !0)),
+						void e.environment.postMessage([
+							i.dD.PlaySound,
+							[{ id: "vaporize", opts: { volume: 0.1, fadeOut: l.A.getRandomFloatBetween(0.1, 0.5), playbackRate: l.A.getRandomFloatBetween(0.5, 1.5) }, modulateDistance: { x: d.x * o.A.cellSize, y: d.y * o.A.cellSize } }],
+						])
+					);
+				}
+				if ((0, c.af)(cellAtPos, i.RJ.Slag)) return ((d = (0, s.n)(i.RJ.Flame, xPos, yPos)).data = p[i.RJ.Slag]()), (d.duration.left = d.duration.max = d.duration.left - a), void (0, c.Jx)(e, xPos, yPos, d);
+				x(e, xPos, yPos, cellAtPos) || ((0, c.af)(cellAtPos, i.RJ.Basalt) && (0, c.Jx)(e, xPos, yPos, (0, s.n)(i.RJ.Lava, xPos, yPos)));
+			}
+		}
+	},
+	y = function (e, t) {
+		var r;
+		if (![i.RJ.Flame, i.RJ.Lava].includes(t.type)) return !1;
+		if (
+			(t.type === i.RJ.Flame &&
+				((0, v.$T)(e, t.x * o.A.cellSize, t.y * o.A.cellSize, v.c6.Fire), e.environment.postMessage([i.dD.AddLight, t.x * o.A.cellSize, t.y * o.A.cellSize, { brightness: 1, duration: 100, useLightZones: !0 }])),
+			[
+				{ x: 1, y: 0 },
+				{ x: -1, y: 0 },
+				{ x: 0, y: 1 },
+				{ x: 0, y: -1 },
+			].forEach(function (r) {
+				var a = r.x,
+					n = r.y,
+					o = { cX: t.x + a, cY: t.y + n },
+					s = o.cX,
+					d = o.cY;
+				if (!(s < 0 || d < 0 || s >= e.store.world.size.width || d >= e.store.world.size.height)) {
+					var u = e.environment,
+						c = l.A.getThreadIndexFromCellX(s, u.threadMeta.threadCount);
+					c === u.threadMeta.startingIndex ? m(e, s, d, t) : e.environment.threadMeta.ports[c].postMessage([i.dD.Burn, s, d]);
+				}
+			}),
+			t.type === i.RJ.Lava)
+		)
+			return (t.duration.left = t.duration.max * l.A.getRandomFloatBetween(0.5, 1.5)), (t.variantIndex = l.A.getRandomIntBetween(0, 3)), (0, c.Jx)(e, t.x, t.y, t), !0;
+		var a = null === (r = t.data) || void 0 === r ? void 0 : r.output;
+		return a
+			? !1 === a.elementType || (a.chance && Math.random() >= a.chance)
+				? ((0, c.Jx)(e, t.x, t.y, (0, s.n)(i.RJ.Fire, t.x, t.y)), !0)
+				: ((0, c.Jx)(e, t.x, t.y, (0, s.n)(a.elementType, t.x, t.y)), !0)
+			: ((0, c.Jx)(e, t.x, t.y, (0, s.n)(i.RJ.Fire, t.x, t.y)), !0);
+	},
+	m = function (e, t, r, a) {
+		var n = (0, c.tT)(e.store, t, r);
+		if ((0, c.Ol)(n)) {
+			var l = (null == a ? void 0 : a.type) === i.RJ.Lava ? 0.01 : 0.25;
+			if (Math.random() < l) {
+				(null == a ? void 0 : a.type) === i.RJ.Lava &&
+					e.environment.postMessage([
+						i.dD.AddLight,
+						a.x * o.A.cellSize,
+						a.y * o.A.cellSize,
+						{ brightness: 1, size: r * o.A.cellSize < e.store.world.horizon[Math.floor(t)] * o.A.cellSize + 10 * o.A.cellSize ? 100 : 1e3, duration: 5e3, useLightZones: !0 },
+					]);
+				var d = (0, s.n)(i.RJ.Fire, t, r);
+				return (null == a ? void 0 : a.type) === i.RJ.Lava && (d.data.temperature = 1200), void (0, c.Jx)(e, t, r, d);
+			}
+		}
+		if ((0, c.af)(n, i.RJ.Slag)) {
+			var u = (0, s.n)(i.RJ.Flame, t, r);
+			return (u.data = p[i.RJ.Slag]()), void (0, c.Jx)(e, t, r, u);
+		}
+		(0, h.x)(e, n, t, r), x(e, t, r, n);
+	},
+	x = function (e, xPos, yPos, cellAtPos) {
+		if (((cellAtPos = null != cellAtPos ? cellAtPos : (0, c.tT)(e.store, xPos, yPos)), (0, c.ez)(cellAtPos))) {
+			const cellId = cellAtPos?.cellType ?? cellAtPos;
+			if (burnableRecipes.soils.hasOwnProperty(cellId)) {
+				var flameParticle = (0, s.n)(i.RJ.Flame, xPos, yPos);
+
+				const {output,chance} = burnableRecipes.soils[cellId]
+				let evaluatedOutput
+				if (output && chance > Math.random()) {
+					evaluatedOutput = output.elementType
+				} else {
+					evaluatedOutput = false
+				}
+
+				return (flameParticle.skipPhysics = true), (flameParticle.data = { output: { elementType: output } }), (0, c.Jx)(e, xPos, yPos, flameParticle), true;
+			}
+			(0, d.zT)(e, xPos, yPos, 4);
+		}
+		return false;
+	};`;
+
+function cyrb53(str, seed = 0) {
+	let h1 = 0xdeadbeef ^ seed,
+		h2 = 0x41c6ce57 ^ seed;
+	for (let i = 0, ch; i < str.length; i++) {
+		ch = str.charCodeAt(i);
+		h1 = Math.imul(h1 ^ ch, 2654435761);
+		h2 = Math.imul(h2 ^ ch, 1597334677);
+	}
+	h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+	h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+	h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+	h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+	return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+
+function sortRegistryIds(registry, startingId) {
+	const items = Object.values(registry);
+	items.sort((a, b) => a.numericHash - b.numericHash);
+	items.forEach((item, index) => {
+		item.numericId = index + startingId;
+	});
+}
 
 class ElementsModule {
 	#recipes = { basic: {}, press: {}, grower: {}, shaker: {} };
@@ -271,16 +373,19 @@ class ElementsModule {
 		this.registerGrowerRecipe({ input: "WetSpore", output: "Seed" });
 		this.registerShakerRecipe({ input: "WetSand", outputAbove: [["Slag", 1]], outputBelow: [["Gold", 0.25]] });
 	}
+
 	registerElement(inputData) {
 		const data = validateInput(inputData, elementSchema, true).data;
 		data.numericHash = cyrb53(data.id);
 		this.elementRegistry[data.id] = data;
 	}
+
 	registerSoil(inputData) {
 		const data = validateInput(inputData, soilSchema, true).data;
 		data.numericHash = cyrb53(data.id);
 		this.soilRegistry[data.id] = data;
 	}
+
 	registerBasicRecipe(/** @type {BasicRecipeRegisterConfig} */ config) {
 		const validConfig = validateInput(config, basicRecipeRegisterSchema);
 		const add = (from, to) => {
@@ -311,37 +416,6 @@ class ElementsModule {
 		const validConfig = validateInput(config, pressRecipeUnregisterSchema);
 		if (!this.#recipes.press[validConfig.input]) return log("error", "corelib", `Could not unregister press recipe with id "${validConfig.input}", not found!`);
 		delete this.#recipes.press[validConfig.input];
-	}
-	registerShakerRecipe(inputData) {
-		const data = validateInput(inputData, shakerRecipeRegisterSchema);
-		this.recipes.shaker[data.input] = [data.outputAbove, data.outputBelow];
-	}
-	unregisterShakerRecipe(inputData) {
-		const data = validateInput(inputData, shakerRecipeRegisterSchema);
-		if (!this.recipes.shaker[data.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${data.input}", not found!`);
-		delete this.recipes.shaker[data.input]
-	}
-
-	registerShakerRecipe(/** @type {ShakerRecipeRegisterConfig} */ config) {
-		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
-		this.#recipes.shaker[validConfig.input] = [validConfig.outputAbove, validConfig.outputBelow];
-	}
-
-	unregisterShakerRecipe(/** @type {ShakerRecipeUnregisterConfig} */ config) {
-		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
-		if (!this.#recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${validConfig.input}", not found!`);
-		delete this.#recipes.shaker[validConfig.input];
-	}
-
-	registerGrowerRecipe(/** @type {GrowerRecipeRegisterConfig} */ config) {
-		const validConfig = validateInput(config, growerRecipeRegisterSchema);
-		this.#recipes.grower[validConfig.input] = [validConfig.output, validConfig.chance];
-	}
-
-	unregisterGrowerRecipe(/** @type {GrowerRecipeUnregisterConfig} */ config) {
-		const validConfig = validateInput(config, growerRecipeUnregisterSchema);
-		if (!this.#recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${validConfig.input}", not found!`);
-		delete this.#recipes.grower[validConfig.input];
 	}
 
 	registerShakerRecipe(/** @type {ShakerRecipeRegisterConfig} */ config) {
@@ -646,130 +720,3 @@ class ElementsModule {
 }
 
 globalThis.ElementsModule = ElementsModule;
-const burningRewritten = `
-burnableRecipes = {
-	soils: {
-		[i.vZ.Moss]: { output: false, spreadFlame: true },
-		[i.vZ.Divider]: { output: false, spreadFlame: true },
-		[i.vZ.GoldSoil]: { output: i.RJ.Gold, chance: 1 , spreadFlame: true },
-		[i.vZ.Petal]: { output: i.RJ.Petalium, chance: 1 , spreadFlame: true },
-	},
-	particles: {
-		[i.RJ.Slag]: {
-			output: i.RJ.BurntSlag, chance: 1,
-			spreadFlame: true,
-		},
-		[i.RJ.Basalt]: {
-			output: i.RJ.Lava,	chance: 1,
-			spreadFlame: false,
-		},
-		[i.RJ.Water]: {
-			output: i.RJ.Steam, chance: 1,
-			spreadFlame: false,
-		},
-		[i.RJ.FreezingIce]: {
-			output: i.RJ.Steam, chance: 1,
-			spreadFlame: false,
-		},
-	},
-},
-	hasVaporizedWater = !1,
-	g = function (e, xPos, yPos, a) {
-		if (!(xPos < 0 || yPos < 0 || xPos >= e.store.world.size.width || yPos >= e.store.world.size.height)) {
-			var cellAtPos = (0, c.tT)(e.store, xPos, yPos);
-			//if empty spawn normal fire
-			if ((0, c.Ol)(cellAtPos)){ return ((flameParticle = (0, s.n)(i.RJ.Fire, xPos, yPos)).duration.left = flameParticle.duration.max = flameParticle.duration.left * Math.max(0.25, 1 - a / 0.64)), void (0, c.Jx)(e, xPos, yPos, flameParticle);}
-			
-			if ((0, c.W)(cellAtPos, i.vZ.Ice)){ (0, u.jE)(e, xPos, yPos);}
-			else {
-				if ((0, c.af)(cellAtPos, [i.RJ.Water, i.RJ.FreezingIce])) {
-					var d = (0, s.n)(i.RJ.Steam, xPos, yPos);
-					return (
-						(0, c.Jx)(e, xPos, yPos, d),
-						hasVaporizedWater || (e.environment.postMessage([i.dD.ForceCompleteObjective, "vaporize_water"]), (hasVaporizedWater = !0)),
-						void e.environment.postMessage([
-							i.dD.PlaySound,
-							[{ id: "vaporize", opts: { volume: 0.1, fadeOut: l.A.getRandomFloatBetween(0.1, 0.5), playbackRate: l.A.getRandomFloatBetween(0.5, 1.5) }, modulateDistance: { x: d.x * o.A.cellSize, y: d.y * o.A.cellSize } }],
-						])
-					);
-				}
-				if ((0, c.af)(cellAtPos, i.RJ.Slag)) return ((d = (0, s.n)(i.RJ.Flame, xPos, yPos)).data = p[i.RJ.Slag]()), (d.duration.left = d.duration.max = d.duration.left - a), void (0, c.Jx)(e, xPos, yPos, d);
-				x(e, xPos, yPos, cellAtPos) || ((0, c.af)(cellAtPos, i.RJ.Basalt) && (0, c.Jx)(e, xPos, yPos, (0, s.n)(i.RJ.Lava, xPos, yPos)));
-			}
-		}
-	},
-	y = function (e, t) {
-		var r;
-		if (![i.RJ.Flame, i.RJ.Lava].includes(t.type)) return !1;
-		if (
-			(t.type === i.RJ.Flame &&
-				((0, v.$T)(e, t.x * o.A.cellSize, t.y * o.A.cellSize, v.c6.Fire), e.environment.postMessage([i.dD.AddLight, t.x * o.A.cellSize, t.y * o.A.cellSize, { brightness: 1, duration: 100, useLightZones: !0 }])),
-			[
-				{ x: 1, y: 0 },
-				{ x: -1, y: 0 },
-				{ x: 0, y: 1 },
-				{ x: 0, y: -1 },
-			].forEach(function (r) {
-				var a = r.x,
-					n = r.y,
-					o = { cX: t.x + a, cY: t.y + n },
-					s = o.cX,
-					d = o.cY;
-				if (!(s < 0 || d < 0 || s >= e.store.world.size.width || d >= e.store.world.size.height)) {
-					var u = e.environment,
-						c = l.A.getThreadIndexFromCellX(s, u.threadMeta.threadCount);
-					c === u.threadMeta.startingIndex ? m(e, s, d, t) : e.environment.threadMeta.ports[c].postMessage([i.dD.Burn, s, d]);
-				}
-			}),
-			t.type === i.RJ.Lava)
-		)
-			return (t.duration.left = t.duration.max * l.A.getRandomFloatBetween(0.5, 1.5)), (t.variantIndex = l.A.getRandomIntBetween(0, 3)), (0, c.Jx)(e, t.x, t.y, t), !0;
-		var a = null === (r = t.data) || void 0 === r ? void 0 : r.output;
-		return a
-			? !1 === a.elementType || (a.chance && Math.random() >= a.chance)
-				? ((0, c.Jx)(e, t.x, t.y, (0, s.n)(i.RJ.Fire, t.x, t.y)), !0)
-				: ((0, c.Jx)(e, t.x, t.y, (0, s.n)(a.elementType, t.x, t.y)), !0)
-			: ((0, c.Jx)(e, t.x, t.y, (0, s.n)(i.RJ.Fire, t.x, t.y)), !0);
-	},
-	m = function (e, t, r, a) {
-		var n = (0, c.tT)(e.store, t, r);
-		if ((0, c.Ol)(n)) {
-			var l = (null == a ? void 0 : a.type) === i.RJ.Lava ? 0.01 : 0.25;
-			if (Math.random() < l) {
-				(null == a ? void 0 : a.type) === i.RJ.Lava &&
-					e.environment.postMessage([
-						i.dD.AddLight,
-						a.x * o.A.cellSize,
-						a.y * o.A.cellSize,
-						{ brightness: 1, size: r * o.A.cellSize < e.store.world.horizon[Math.floor(t)] * o.A.cellSize + 10 * o.A.cellSize ? 100 : 1e3, duration: 5e3, useLightZones: !0 },
-					]);
-				var d = (0, s.n)(i.RJ.Fire, t, r);
-				return (null == a ? void 0 : a.type) === i.RJ.Lava && (d.data.temperature = 1200), void (0, c.Jx)(e, t, r, d);
-			}
-		}
-		if ((0, c.af)(n, i.RJ.Slag)) {
-			var u = (0, s.n)(i.RJ.Flame, t, r);
-			return (u.data = p[i.RJ.Slag]()), void (0, c.Jx)(e, t, r, u);
-		}
-		(0, h.x)(e, n, t, r), x(e, t, r, n);
-	},
-	x = function (e, xPos, yPos, cellAtPos) {
-		if (((cellAtPos = null != cellAtPos ? cellAtPos : (0, c.tT)(e.store, xPos, yPos)), (0, c.ez)(cellAtPos))) {
-			const cellId = cellAtPos?.cellType ?? cellAtPos;
-			if (burnableRecipes.soils.hasOwnProperty(cellId)) {
-				var flameParticle = (0, s.n)(i.RJ.Flame, xPos, yPos);
-
-				const {output,chance} = burnableRecipes.soils[cellId]
-				let evaluatedOutput
-				if (output && chance > Math.random()) {
-					evaluatedOutput = output.elementType
-				} else {
-					evaluatedOutput = false
-				}
-
-				return (flameParticle.skipPhysics = true), (flameParticle.data = { output: { elementType: output } }), (0, c.Jx)(e, xPos, yPos, flameParticle), true;
-			}
-			(0, d.zT)(e, xPos, yPos, 4);
-		}
-		return false;
-	};`;

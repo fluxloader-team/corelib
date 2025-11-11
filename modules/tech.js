@@ -1,3 +1,21 @@
+/** @typedef {import('../entry.electron.js')} */
+
+/**
+ * @typedef {object} TechUnlocks
+ * @property {string[]} [structures] array of structure ids to give
+ * @property {string[]} [item] array of item ids to give
+ */
+
+/**
+ * @typedef {object} TechConfig
+ * @property {string} id id of the tech
+ * @property {string} name name of the tech
+ * @property {string} description description of the tech
+ * @property {TechUnlocks} [unlocks={}] what this tech unlocks
+ * @property {string} [parent="Refining1"] id of the parent tech
+ * @property {number} cost cost of the tech
+ */
+
 const techSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
@@ -16,13 +34,12 @@ const techSchema = {
 };
 
 class TechModule {
-	registry = corelib.enums.createRegistry({
+	#registry = corelib.enums.createRegistry({
 		name: "Tech",
 		intIdStart: 38,
 		bundleMap: { main: "w", sim: "b", manager: "R" },
 	});
-
-	baseTechs = {};
+	#baseTechs = {};
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -40,7 +57,7 @@ class TechModule {
 
 		// Recursively register tech from the base techs
 		const registerBaseTech = (tech, parent) => {
-			this.baseTechs[tech.id] = tech;
+			this.#baseTechs[tech.id] = tech;
 			for (const childTech of tech.children ?? []) {
 				registerBaseTech(childTech, tech.id);
 			}
@@ -52,22 +69,24 @@ class TechModule {
 		}
 	}
 
-	register(inputData /* techSchema */) {
-		const data = validateInput(inputData, techSchema);
+	register(/** @type {TechConfig} */ config) {
+		const validConfig = validateInput(config, techSchema);
 
-		if (Object.keys(data.unlocks).length === 0) delete data.unlocks;
+		if (Object.keys(validConfig.unlocks).length === 0) delete validConfig.unlocks;
 
-		this.registry.register(data.id, data);
+		const entry = { ...validConfig };
+
+		this.#registry.register(validConfig.id, entry);
 	}
 
-	unregister(id) {
-		this.registry.unregister(id);
+	unregister(/** @type {string} */ id) {
+		this.#registry.unregister(id);
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading technology module patches");
 
-		let techList = Object.values(this.baseTechs).concat(Object.values(this.registry.entries));
+		let techList = Object.values(this.#baseTechs).concat(Object.values(this.#registry.entries));
 
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];

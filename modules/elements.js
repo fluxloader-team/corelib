@@ -30,7 +30,32 @@ const pressRecipeRegisterSchema = {
 const pressRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
-
+const shakerRecipeRegisterSchema = {
+	input: { type: "string" },
+	outputAbove: {
+		type: "array",
+		verifier: (v) => {
+			return {
+				success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
+				message: `Parameter 'outputAboveShaker' must be an array of arrays with the output in the first and the chance in the second`,
+			};
+		},
+		default: [[]],
+	},
+	outputBelow: {
+		type: "array",
+		verifier: (v) => {
+			return {
+				success: v.every((item) => Array.isArray(item) && typeof item[0] === "string" && typeof item[1] === "number"),
+				message: `Parameter 'outputBelowShaker' must be an array of arrays with the output in the first and the chance in the second`,
+			};
+		},
+		default: [[]],
+	},
+};
+const shakerRecipeUnegisterSchema = {
+	input: { type: "string" },
+};
 const growerRecipeRegisterSchema = {
 	input: { type: "string" },
 	output: { type: "string" },
@@ -44,7 +69,7 @@ const growerRecipeUnregisterSchema = {
 class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
-	recipes = { basic: {}, press: {}, grower: {} };
+	recipes = { basic: {}, press: {}, grower: {}, shaker: {} };
 	otherFeatures = { conveyorBeltIgnores: [] };
 
 	constructor() {
@@ -61,6 +86,7 @@ class ElementsModule {
 			],
 		});
 		this.registerGrowerRecipe({ input: "WetSpore", output: "Seed" });
+		this.registerShakerRecipe({ input: "WetSand", outputAbove: [["Slag", 1]], outputBelow: [["Gold", 0.25]] });
 		this.registerConveyorBeltIgnores("Water");
 		this.registerConveyorBeltIgnores("Steam");
 		this.registerConveyorBeltIgnores("Lava");
@@ -98,12 +124,22 @@ class ElementsModule {
 		if (!this.recipes.press[data.input]) return log("error", "corelib", `Could not unregister press recipe with id "${data.input}", not found!`);
 		delete this.recipes.press[data.input];
 	}
+	registerShakerRecipe(inputData) {
+		const data = validateInput(inputData, shakerRecipeRegisterSchema);
+		this.recipes.shaker[data.input] = [data.outputAbove, data.outputBelow];
+	}
+	unregisterShakerRecipe(inputData) {
+		const data = validateInput(inputData, shakerRecipeRegisterSchema);
+		if (!this.recipes.shaker[data.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${data.input}", not found!`);
+		delete this.recipes.shaker[data.input];
+	}
 	registerGrowerRecipe(inputData) {
 		const data = validateInput(inputData, growerRecipeRegisterSchema);
 		this.recipes.grower[data.input] = [data.output, data.chance];
 	}
 	unregisterGrowerRecipe(inputData) {
 		const data = validateInput(inputData, growerRecipeUnregisterSchema);
+		if (!this.recipes.grower[data.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${data.input}", not found!`);
 		delete this.recipes.grower[data.input];
 	}
 	registerConveyorBeltIgnores(id) {
@@ -187,6 +223,49 @@ class ElementsModule {
 					(0, u.Nz)(e, t);
 				}
 				return true;`,
+		});
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:shakerRecipes", {
+			type: "replace",
+			from: `if(1===g&&[n.ev.ShakerLeft,n.ev.ShakerRight].includes(v)&&t.type===n.RJ.WetSand)(0,l.h)(e,t);`,
+			to: `const shakerRecipes = {${Object.entries(this.recipes.shaker)
+				.map(
+					([input, [outputAbove, outputBelow]]) =>
+						`[n.RJ.${input}]: {outputsAbove: [${outputAbove.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`).join(",")}], outputsBelow:[${outputBelow
+							.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`)
+							.join(",")}]}`,
+				)
+				.join(",")}
+				};
+				if (1 === g && [n.ev.ShakerLeft, n.ev.ShakerRight].includes(v) && shakerRecipes.hasOwnProperty(t.type)) {
+					let trySpawnAroundPos = corelib.exposed.raw.r(421).trySpawnAroundPos
+					let currentReaction = shakerRecipes[t.type];
+					if ((0, o.lV)(e, t.x, t.y + 2)) {
+						(0, o.Nz)(e, { x: t.x, y: t.y });
+						for (const result of currentReaction.outputsAbove) {
+							if (Math.random() < result.chance) {
+								(0, o.MH)(e, t.x, t.y, (0, i.n)(result.output, t.x, t.y));
+							}
+						}
+						for (const result of currentReaction.outputsBelow) {
+							if (Math.random() < result.chance) {
+								if (!(0,trySpawnAroundPos)(e, t.x, t.y, result.output)) (0, o.MH)(e, t.x, t.y, (0, i.n)(result.output, t.x, t.y + 2));
+							}
+							if (result.output === n.RJ.Gold) {
+								if (e.store.tutorial.active) e.environment.postMessage([n.dD.TutorialStep, n.vJ.RefineGoldWithShaker]);
+								e.environment.postMessage([
+									n.dD.PlaySound,
+									[
+										{
+											id: "coin",
+											opts: { volume: 0.2, fadeOut: s.A.getRandomFloatBetween(0.1, 2), playbackRate: s.A.getRandomFloatBetween(0.5, 1.5) },
+											modulateDistance: { x: t.x * a.A.cellSize, y: t.y * a.A.cellSize },
+										},
+									],
+								]);
+							}
+						}
+					}
+				}`,
 		});
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:conveyorBeltIgnores", {
 			type: "replace",

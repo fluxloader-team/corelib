@@ -8,7 +8,6 @@
  * @property {string} [outputBottom="Empty"] The element to output on the bottom
  * @property {boolean} [bothWays=true] Whether to register the recipe both ways
  */
-
 const basicRecipeRegisterSchema = {
 	inputTop: { type: "string" },
 	inputBottom: { type: "string" },
@@ -23,7 +22,6 @@ const basicRecipeRegisterSchema = {
  * @property {string} inputBottom The element on the bottom input
  * @property {boolean} [bothWays=true] Whether to unregister the recipe both ways
  */
-
 const basicRecipeUnregisterSchema = {
 	inputTop: { type: "string" },
 	inputBottom: { type: "string" },
@@ -36,7 +34,6 @@ const basicRecipeUnregisterSchema = {
  * @property {number} [requiredVelocity=200] The required velocity to trigger the recipe
  * @property {Array<[string, number]>} outputs An array of arrays, each containing the output element and the chance (0-1) to produce it
  */
-
 const pressRecipeRegisterSchema = {
 	input: { type: "string" },
 	requiredVelocity: { type: "number", default: 200 },
@@ -55,11 +52,16 @@ const pressRecipeRegisterSchema = {
  * @typedef {object} PressRecipeUnregisterConfig
  * @property {string} input The input element
  */
-
 const pressRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
 
+/**
+ * @typedef {object} ShakerRecipeRegisterConfig
+ * @property {string} input The element to input
+ * @property {Array<[string, number]>} [outputAbove=[[]]] An array of arrays, each containing the output element and the chance (0-1) to produce it above the shaker
+ * @property {Array<[string, number]>} [outputBelow=[[]]] An array of arrays, each containing the output element and the chance (0-1) to produce it below the shaker
+ */
 const shakerRecipeRegisterSchema = {
 	input: { type: "string" },
 	outputAbove: {
@@ -84,16 +86,30 @@ const shakerRecipeRegisterSchema = {
 	},
 };
 
-const shakerRecipeUnegisterSchema = {
+/**
+ * @typedef {object} ShakerRecipeUnregisterConfig
+ * @property {string} input The input element
+ */
+const shakerRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
 
+/**
+ * @typedef {object} GrowerRecipeRegisterConfig
+ * @property {string} input The element to input
+ * @property {string} output The element to output
+ * @property {number} [chance=1] The chance (0-1) to produce the output
+ */
 const growerRecipeRegisterSchema = {
 	input: { type: "string" },
 	output: { type: "string" },
 	chance: { type: "number", default: 1 },
 };
 
+/**
+ * @typedef {object} GrowerRecipeUnregisterConfig
+ * @property {string} input The input element
+ */
 const growerRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
@@ -155,48 +171,48 @@ class ElementsModule {
 		delete this.#recipes.press[validConfig.input];
 	}
 
-	registerShakerRecipe(inputData) {
-		const data = validateInput(inputData, shakerRecipeRegisterSchema);
-		this.recipes.shaker[data.input] = [data.outputAbove, data.outputBelow];
+	registerShakerRecipe(/** @type {ShakerRecipeRegisterConfig} */ config) {
+		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
+		this.#recipes.shaker[validConfig.input] = [validConfig.outputAbove, validConfig.outputBelow];
 	}
 
-	unregisterShakerRecipe(inputData) {
-		const data = validateInput(inputData, shakerRecipeRegisterSchema);
-		if (!this.recipes.shaker[data.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${data.input}", not found!`);
-		delete this.recipes.shaker[data.input];
+	unregisterShakerRecipe(/** @type {ShakerRecipeUnregisterConfig} */ config) {
+		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
+		if (!this.#recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${validConfig.input}", not found!`);
+		delete this.#recipes.shaker[validConfig.input];
 	}
 
-	registerGrowerRecipe(inputData) {
-		const data = validateInput(inputData, growerRecipeRegisterSchema);
-		this.recipes.grower[data.input] = [data.output, data.chance];
+	registerGrowerRecipe(/** @type {GrowerRecipeRegisterConfig} */ config) {
+		const validConfig = validateInput(config, growerRecipeRegisterSchema);
+		this.#recipes.grower[validConfig.input] = [validConfig.output, validConfig.chance];
 	}
 
-	unregisterGrowerRecipe(inputData) {
-		const data = validateInput(inputData, growerRecipeUnregisterSchema);
-		if (!this.recipes.grower[data.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${data.input}", not found!`);
-		delete this.recipes.grower[data.input];
+	unregisterGrowerRecipe(/** @type {GrowerRecipeUnregisterConfig} */ config) {
+		const validConfig = validateInput(config, growerRecipeUnregisterSchema);
+		if (!this.#recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${validConfig.input}", not found!`);
+		delete this.#recipes.grower[validConfig.input];
 	}
 
-	registerShakerRecipe(inputData) {
-		const data = validateInput(inputData, shakerRecipeRegisterSchema);
-		this.recipes.shaker[data.input] = [data.outputAbove, data.outputBelow];
+	registerShakerRecipe(/** @type {ShakerRecipeRegisterConfig} */ config) {
+		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
+		this.#recipes.shaker[validConfig.input] = [validConfig.outputAbove, validConfig.outputBelow];
 	}
 
-	unregisterShakerRecipe(inputData) {
-		const data = validateInput(inputData, shakerRecipeRegisterSchema);
-		if (!this.recipes.shaker[data.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${data.input}", not found!`);
-		delete this.recipes.shaker[data.input];
+	unregisterShakerRecipe(/** @type {ShakerRecipeUnregisterConfig} */ config) {
+		const validConfig = validateInput(config, shakerRecipeUnregisterSchema);
+		if (!this.#recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${validConfig.input}", not found!`);
+		delete this.#recipes.shaker[validConfig.input];
 	}
 
-	registerGrowerRecipe(inputData) {
-		const data = validateInput(inputData, growerRecipeRegisterSchema);
-		this.recipes.grower[data.input] = [data.output, data.chance];
+	registerGrowerRecipe(/** @type {GrowerRecipeRegisterConfig} */ config) {
+		const validConfig = validateInput(config, growerRecipeRegisterSchema);
+		this.#recipes.grower[validConfig.input] = [validConfig.output, validConfig.chance];
 	}
 
-	unregisterGrowerRecipe(inputData) {
-		const data = validateInput(inputData, growerRecipeUnregisterSchema);
-		if (!this.recipes.grower[data.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${data.input}", not found!`);
-		delete this.recipes.grower[data.input];
+	unregisterGrowerRecipe(/** @type {GrowerRecipeUnregisterConfig} */ config) {
+		const validConfig = validateInput(config, growerRecipeUnregisterSchema);
+		if (!this.#recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${validConfig.input}", not found!`);
+		delete this.#recipes.grower[validConfig.input];
 	}
 
 	registerConveyorBeltIgnores(/** @type {string} */ id) {
@@ -268,7 +284,7 @@ class ElementsModule {
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:growerRecipes", {
 			type: "replace",
 			from: `if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
-			to: `const growerRecipes = {${Object.entries(this.recipes.grower)
+			to: `const growerRecipes = {${Object.entries(this.#recipes.grower)
 				.map(([input, [output, chance]]) => `[o.RJ.${input}]: {output: o.RJ.${output}, chance:${chance}}`)
 				.join(",")}}
 				if (!growerRecipes[t.type]) return false;
@@ -286,7 +302,7 @@ class ElementsModule {
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:shakerRecipes", {
 			type: "replace",
 			from: `if(1===g&&[n.ev.ShakerLeft,n.ev.ShakerRight].includes(v)&&t.type===n.RJ.WetSand)(0,l.h)(e,t);`,
-			to: `const shakerRecipes = {${Object.entries(this.recipes.shaker)
+			to: `const shakerRecipes = {${Object.entries(this.#recipes.shaker)
 				.map(
 					([input, [outputAbove, outputBelow]]) =>
 						`[n.RJ.${input}]: {outputsAbove: [${outputAbove.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`).join(",")}], outputsBelow:[${outputBelow

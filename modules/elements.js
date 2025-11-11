@@ -404,6 +404,48 @@ class ElementsModule {
 				return true;`,
 		});
 
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:shakerRecipes", {
+			type: "replace",
+			from: `if(1===g&&[n.ev.ShakerLeft,n.ev.ShakerRight].includes(v)&&t.type===n.RJ.WetSand)(0,l.h)(e,t);`,
+			to: `const shakerRecipes = {
+	[n.RJ.WetSand]: {
+		outputsAbove: [{ output: n.RJ.Slag, chance: 1 }],
+		outputsBelow: [{ output: n.RJ.Gold, chance: 0.25 }],
+	},
+};
+if (1 === g && [n.ev.ShakerLeft, n.ev.ShakerRight].includes(v) && shakerRecipes.hasOwnProperty(t.type)) {
+
+
+	let currentReaction = shakerRecipes[t.type];
+	if ((0, o.lV)(e, t.x, t.y + 2)) {
+		(0, o.Nz)(e, { x: t.x, y: t.y });
+		for (const result of currentReaction.outputsAbove) {
+			if (Math.random() < result.chance) {
+				if (!corelib.exposed.raw.trySpawnAroundPos(e, t.x, t.y - 2, result.output)) (0, o.MH)(e, t.x, t.y, (0, i.n)(result.output, t.x, t.y));
+			}
+		}
+		for (const result of currentReaction.outputsBelow) {
+			if (Math.random() < result.chance) {
+				if (!corelib.exposed.raw.trySpawnAroundPos(e, t.x, t.y, result.output)) (0, o.MH)(e, t.x, t.y, (0, i.n)(result.output, t.x, t.y + 2));
+			}
+			if (result.output === n.RJ.Gold) {
+				if (e.store.tutorial.active) e.environment.postMessage([n.dD.TutorialStep, n.vJ.RefineGoldWithShaker]);
+				e.environment.postMessage([
+					n.dD.PlaySound,
+					[
+						{
+							id: "coin",
+							opts: { volume: 0.2, fadeOut: s.A.getRandomFloatBetween(0.1, 2), playbackRate: s.A.getRandomFloatBetween(0.5, 1.5) },
+							modulateDistance: { x: t.x * a.A.cellSize, y: t.y * a.A.cellSize },
+						},
+					],
+				]);
+			}
+		}
+	}
+}`,
+		});
+
 		if (saveHasNewStorageType) {
 			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {
 				type: "replace",
@@ -553,39 +595,5 @@ burnableRecipes = {
 			(0, d.zT)(e, xPos, yPos, 4);
 		}
 		return false;
-	};``if(1===g&&[n.ev.ShakerLeft,n.ev.ShakerRight].includes(v)&&t.type===n.RJ.WetSand)(0,l.h)(e,t);`;
-const shakerRecipes = {
-	[n.RJ.WetSand]: {
-		outputs: [
-			[n.RJ.Slag, 1],
-			[n.RJ.Gold, 0.25],
-		],
-	},
-};
-if (1 === g && [n.ev.ShakerLeft, n.ev.ShakerRight].includes(v) && shakerRecipes.hasOwnProperty(t.type)) {
-	let idList = r(3734);
-	let m1872 = r(1872);
-	let m5676 = r(5676);
-	let m6185 = r(6185);
-	let m7028 = r(7028);
-	let m421 = r(421);
+	};`;
 
-	if ((0, m1872.lV)(e, t.x, t.y + 2)) {
-		var constructedParticle = (0, m5676.n)(idList.RJ.Slag, t.x, t.y);
-		(constructedParticle.isFreeFalling = false), (0, m1872.Jx)(e, t.x, t.y, constructedParticle);
-		if (Math.random() < 0.25) {
-			e.store.tutorial.active && e.environment.postMessage([idList.dD.TutorialStep, idList.vJ.RefineGoldWithShaker]),
-				(0, m1872.Jx)(e, t.x, t.y + 2, (0, m5676.n)(idList.RJ.Gold, t.x, t.y + 2)),
-				e.environment.postMessage([
-					idList.dD.PlaySound,
-					[
-						{
-							id: "coin",
-							opts: { volume: 0.2, fadeOut: m6185.A.getRandomFloatBetween(0.1, 2), playbackRate: m6185.A.getRandomFloatBetween(0.5, 1.5) },
-							modulateDistance: { x: t.x * m7028.A.cellSize, y: t.y * m7028.A.cellSize },
-						},
-					],
-				]);
-		}
-	}
-}

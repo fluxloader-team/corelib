@@ -1,5 +1,14 @@
 const config = fluxloaderAPI.modConfig.get("corelib");
 
+/** @typedef {import('./modules/blocks.js')} */
+/** @typedef {import('./modules/items.js')} */
+/** @typedef {import('./modules/tech.js')} */
+/** @typedef {import('./modules/upgrades.js')} */
+/** @typedef {import('./modules/schedules.js')} */
+/** @typedef {import('./modules/events.js')} */
+/** @typedef {import('./modules/elements.js')} */
+/** @typedef {import('./modules/enums.js')} */
+
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
@@ -10,15 +19,13 @@ includeVMScript("modules/elements.js");
 includeVMScript("modules/enums.js");
 
 class CoreLib {
-	constructor() {
-		this.enums = null;
-		this.blocks = null;
-		this.tech = null;
-		this.upgrades = null;
-		this.items = null;
-		this.events = null;
-		this.schedules = null;
-	}
+	/** @type {EnumsModule} */ enums;
+	/** @type {BlocksModule} */ blocks;
+	/** @type {TechModule} */ tech;
+	/** @type {UpgradesModule} */ upgrades;
+	/** @type {ItemsModule} */ items;
+	/** @type {EventsModule} */ events;
+	/** @type {SchedulesModule} */ schedules;
 
 	init() {
 		this.initModules();
@@ -43,9 +50,9 @@ class CoreLib {
 
 		fluxloaderAPI.handleGameIPC("corelib:getModuleRegistrations", () => {
 			let data = {};
-			data.schedules = corelib.schedules.registry.entries;
-			data.blocks = corelib.blocks.registry.entries;
-			data.enumMapping = corelib.enums.enumMapping;
+			data.schedules = corelib.schedules.getEntries();
+			data.blocks = corelib.blocks.getEntries();
+			data.enumMapping = corelib.enums.getMapping();
 			return data;
 		});
 
@@ -69,6 +76,7 @@ class CoreLib {
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}
 
+	/**@private*/
 	applyCorePatches() {
 		log("debug", "corelib", "Loading expose patches");
 
@@ -240,5 +248,10 @@ function validateInput(parameters, schema, throwOnFail = true) {
 globalThis.DataRegistry = DataRegistry;
 globalThis.validateInput = validateInput;
 
+/**
+ * Electron Env of corelib
+ * @version 2.0.0
+ */
 globalThis.corelib = new CoreLib();
+
 corelib.init();

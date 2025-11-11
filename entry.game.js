@@ -7,12 +7,33 @@ function disableScreen() {
 }
 
 class CoreLib {
-	exposed = { raw: {}, named: {} };
+	/**
+	 * Exposed bundle variables
+	 */
+	exposed = {
+		/**
+		 * Raw variables from the bundle files, see source of entry.electron.js for a complete list
+		 */
+		raw: {},
+		/**
+		 * General miscellanous functions
+		 */
+		named: {},
+	};
+	/**
+	 * Functions for interacting with the game world
+	 */
 	simulation = {};
+	/**@private*/
 	events = {};
+	/**
+	 * Functions for checking miscellanous data
+	 */
 	utils = {};
+	/**@private*/
 	hooks = {};
 
+	/**@private*/
 	async init() {
 		this.setupEvents();
 		this.setupHooks();
@@ -20,6 +41,7 @@ class CoreLib {
 		await this.setupSchedules();
 	}
 
+	/**@private*/
 	setupEvents() {
 		fluxloaderAPI.events.registerEvent("cl:raw-api-setup");
 
@@ -58,6 +80,7 @@ class CoreLib {
 		});
 	}
 
+	/**@private*/
 	setupHooks() {
 		this.hooks = {
 			setupSave(store) {
@@ -104,6 +127,7 @@ class CoreLib {
 		};
 	}
 
+	/**@private*/
 	setupInternals() {
 		this.simulation = {
 			spawnElement: ({ id, x, y, data = {} }) => {
@@ -184,6 +208,7 @@ class CoreLib {
 		};
 	}
 
+	/**@private*/
 	async setupSchedules() {
 		let registrations = await fluxloaderAPI.invokeElectronIPC("corelib:getModuleRegistrations");
 
@@ -239,5 +264,9 @@ class CoreLib {
 	}
 }
 
+/**
+ * Game Env of corelib
+ * @version 2.0.0
+ */
 globalThis.corelib = new CoreLib();
 await corelib.init();

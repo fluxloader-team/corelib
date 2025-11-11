@@ -30,6 +30,7 @@ const pressRecipeRegisterSchema = {
 const pressRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
+
 const shakerRecipeRegisterSchema = {
 	input: { type: "string" },
 	outputAbove: {
@@ -53,9 +54,11 @@ const shakerRecipeRegisterSchema = {
 		default: [[]],
 	},
 };
+
 const shakerRecipeUnegisterSchema = {
 	input: { type: "string" },
 };
+
 const growerRecipeRegisterSchema = {
 	input: { type: "string" },
 	output: { type: "string" },
@@ -124,24 +127,29 @@ class ElementsModule {
 		if (!this.recipes.press[data.input]) return log("error", "corelib", `Could not unregister press recipe with id "${data.input}", not found!`);
 		delete this.recipes.press[data.input];
 	}
+
 	registerShakerRecipe(inputData) {
 		const data = validateInput(inputData, shakerRecipeRegisterSchema);
 		this.recipes.shaker[data.input] = [data.outputAbove, data.outputBelow];
 	}
+
 	unregisterShakerRecipe(inputData) {
 		const data = validateInput(inputData, shakerRecipeRegisterSchema);
 		if (!this.recipes.shaker[data.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${data.input}", not found!`);
 		delete this.recipes.shaker[data.input];
 	}
+
 	registerGrowerRecipe(inputData) {
 		const data = validateInput(inputData, growerRecipeRegisterSchema);
 		this.recipes.grower[data.input] = [data.output, data.chance];
 	}
+
 	unregisterGrowerRecipe(inputData) {
 		const data = validateInput(inputData, growerRecipeUnregisterSchema);
 		if (!this.recipes.grower[data.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${data.input}", not found!`);
 		delete this.recipes.grower[data.input];
 	}
+
 	registerConveyorBeltIgnores(id) {
 		this.otherFeatures.conveyorBeltIgnores.push(id);
 	}
@@ -207,6 +215,7 @@ class ElementsModule {
 					return true;
 				}`,
 		});
+
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:growerRecipes", {
 			type: "replace",
 			from: `if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
@@ -224,6 +233,7 @@ class ElementsModule {
 				}
 				return true;`,
 		});
+
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:shakerRecipes", {
 			type: "replace",
 			from: `if(1===g&&[n.ev.ShakerLeft,n.ev.ShakerRight].includes(v)&&t.type===n.RJ.WetSand)(0,l.h)(e,t);`,
@@ -267,6 +277,7 @@ class ElementsModule {
 					}
 				}`,
 		});
+		
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:conveyorBeltIgnores", {
 			type: "replace",
 			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,

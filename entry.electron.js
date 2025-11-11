@@ -106,8 +106,7 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:exposeTryPlace", {
 			type: "replace",
 			from: `421:(e,t,r)=>{r.d(t,{v:()=>s})`,
-			to: `421:(e,t,r)=>{globalThis.corelib.exposed.raw.trySpawnAroundPos=h,r.d(t,{v:()=>s})`,
-			token: `~`,
+			to: `421:(e,t,r)=>{r.d(t,{v:()=>s,trySpawnAroundPos:()=>h})`,
 		});
 	}
 }

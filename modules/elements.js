@@ -277,7 +277,7 @@ class ElementsModule {
 					}
 				}`,
 		});
-		
+
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:conveyorBeltIgnores", {
 			type: "replace",
 			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,

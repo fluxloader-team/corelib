@@ -108,7 +108,6 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			from: `421:(e,t,r)=>{r.d(t,{v:()=>s})`,
 			to: `421:(e,t,r)=>{r.d(t,{v:()=>s,trySpawnAroundPos:()=>h})`,
 		});
-
 	}
 }
 

@@ -1,24 +1,9 @@
 /** @typedef {import('../entry.electron.js')} */
 
-/**
- * @typedef {object} BasicRecipeRegisterConfig
- * @property {string} inputTop The element on the top input
- * @property {string} inputBottom The element on the bottom input
- * @property {string} outputTop The element to output on the top
- * @property {string} [outputBottom="Empty"] The element to output on the bottom
- * @property {boolean} [bothWays=true] Whether to register the recipe both ways
- */
 elementSchema = {
-	id: {
-		type: "string",
-	},
-	name: {
-		type: "string",
-	},
-	interactsWithHoverText: {
-		type: "array",
-		default: [""],
-	},
+	id: { type: "string" },
+	name: { type: "string" },
+	interactsWithHoverText: { type: "array", default: [""] },
 	colors: {
 		type: "array",
 		verifier: (v) => {
@@ -47,20 +32,12 @@ elementSchema = {
 			};
 		},
 	},
-
-	addToFilterList: {
-		type: "boolean",
-		default: true,
-	},
+	addToFilterList: { type: "boolean", default: true, },
 };
 
 soilSchema = {
-	id: {
-		type: "string",
-	},
-	name: {
-		type: "string",
-	},
+	id: { type: "string" },
+	name: { type: "string" },
 	interactsWithHoverText: {
 		type: "array",
 		default: [""],
@@ -74,19 +51,19 @@ soilSchema = {
 			};
 		},
 	},
-	hp: {
-		type: "number",
-		default: 1,
-	},
-	outputElement: {
-		type: "string",
-	},
-	chanceForOutput: {
-		type: "number",
-		default: 1,
-	},
+	hp: { type: "number", default: 1 },
+	outputElement: { type: "string" },
+	chanceForOutput: { type: "number", default: 1 },
 };
 
+/**
+ * @typedef {object} BasicRecipeRegisterConfig
+ * @property {string} inputTop The element on the top input
+ * @property {string} inputBottom The element on the bottom input
+ * @property {string} outputTop The element to output on the top
+ * @property {string} [outputBottom="Empty"] The element to output on the bottom
+ * @property {boolean} [bothWays=true] Whether to register the recipe both ways
+ */
 const basicRecipeRegisterSchema = {
 	inputTop: { type: "string" },
 	inputBottom: { type: "string" },

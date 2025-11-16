@@ -140,6 +140,9 @@ class CoreLib {
 			getCellAtPos: (x, y) => {
 				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
 			},
+			getStructureAtPos: (x,y) => {
+				corelib.exposed.raw.r(9241).TR(fluxloaderAPI.gameInstanceState, x, y)
+			},
 			getThreadIndexFromCellX(x) {
 				return corelib.exposed.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);
 			},

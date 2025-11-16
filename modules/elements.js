@@ -218,8 +218,9 @@ class ElementsModule {
 
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:growerRecipes", {
 			type: "replace",
-			from: `if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
-			to: `const growerRecipes = {${Object.entries(this.recipes.grower)
+			from: `c=function(e,t){if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
+			to: `c=function(e,t){
+				const growerRecipes = {${Object.entries(this.recipes.grower)
 				.map(([input, [output, chance]]) => `[o.RJ.${input}]: {output: o.RJ.${output}, chance:${chance}}`)
 				.join(",")}}
 				if (!growerRecipes[t.type]) return false;

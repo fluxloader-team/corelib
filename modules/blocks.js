@@ -1,3 +1,30 @@
+/** @typedef {import('../entry.electron.js')} */
+
+/**
+ * @typedef {[
+ *   [number, number, number, number],
+ * 	 [number, number, number, number],
+ * 	 [number, number, number, number],
+ * 	 [number, number, number, number]]} ShapeConfig
+ */
+
+/**
+ * @typedef {object} BlockConfig
+ * @property {string} sourceMod Your mod, use the name of your mods folder
+ * @property {string} id Id of block
+ * @property {string} name Name of block
+ * @property {string} description Description of block
+ * @property {string} [imagePath=""] Path to the blocks image relative to your mod folder
+ * @property {boolean} [singleBuild=false] Whether the block is placed one at a time or is draggable
+ * @property {boolean} [hasConfigMenu=false] Whether a config menu should open when the block is selected
+ * @property {boolean} [hasHoverUI=false] If the block has a UI when hovered on
+ * @property {boolean} [unlockedByDefault=false] If the block is avaliable by default
+ * @property {number} [tickInterval=null] Interval in ms that the block ticks
+ * @property {ShapeConfig} shape Shape of the block
+ * @property {number[]} [angles=[]] Angles that the block can be dragged and placed at
+ * @property {number} [animationInterval=500] How fast your block's animation cycles frames
+ */
+
 const blockSchema = {
 	sourceMod: { type: "string" },
 	id: { type: "string" },
@@ -35,7 +62,18 @@ const blockSchema = {
 	},
 };
 
-const variantSchema = {
+/**
+ * @typedef {object} BlockVariantConfig
+ * @property {string} parentId The parent block
+ * @property {string} suffix Suffix to parent id for this variant
+ * @property {string} [imagePath=""] Path to the blocks image relative to your mod folder
+ * @property {boolean} [hasHoverUI=false] Whether this block has a UI when hovered on
+ * @property {shapeSchema} shape shape of block
+ * @property {number[]} [angles=[]] Angles the block can be dragged at and placed at
+ * @property {number} [animationInterval=500] How fast your block's animation cycles frames
+ */
+
+const blockVariantSchema = {
 	parentId: { type: "string" },
 	suffix: { type: "string" },
 	imagePath: { type: "string", default: "" },
@@ -66,7 +104,7 @@ const variantSchema = {
 };
 
 class BlocksModule {
-	registry = corelib.enums.createRegistry({
+	#registry = corelib.enums.createRegistry({
 		name: "Block",
 		intIdStart: 99,
 		bundleMap: {
@@ -79,60 +117,60 @@ class BlocksModule {
 	recipes = {};
 
 	constructor() {
-		this.recipes["Grower"] = corelib.exposed.raw.r(2127).$
+		this.recipes["Grower"] = corelib.exposed.raw.r(2127).$;
 	}
+	register(/** @type {BlockConfig} */ config) {
+		const validConfig = validateInput(config, blockSchema);
 
-	register(inputData /* blockSchema */) {
-		const data = validateInput(inputData, blockSchema);
+		let fullImagePath = this.getFullImagePath(validConfig.sourceMod, validConfig.imagePath);
+		const entry = { isVariant: false, variants: [], fullImagePath, ...validConfig };
 
-		let fullImagePath = this.getFullImagePath(data.sourceMod, data.imagePath);
-		const blockData = { isVariant: false, variants: [], fullImagePath, ...data };
-
-		if (data.tickInterval != null) {
-			corelib.schedules.register(`block-tick-${data.id}`, data.tickInterval);
+		if (validConfig.tickInterval != null) {
+			corelib.schedules.register(`block-tick-${validConfig.id}`, validConfig.tickInterval);
 		}
 
-		this.registry.register(data.id, blockData);
-		if (data.recipe) this.recipes[data.id] = data.recipe;
+		this.#registry.register(validConfig.id, entry);
+		if (validConfig.recipe) this.recipes[validConfig.id] = validConfig.recipe;
 	}
 
-	registerVariant(inputData /* variantSchema */) {
-		const data = validateInput(inputData, variantSchema);
+	registerVariant(/** @type {BlockVariantConfig} */ config) {
+		const validConfig = validateInput(config, blockVariantSchema);
 
-		if (!this.registry.entries.hasOwnProperty(data.parentId)) {
-			return log("error", "corelib", `Parent block name: "${data.parentId}" for variant "${data.parentId}${data.suffix}" not found!`);
+		if (!this.#registry.entries.hasOwnProperty(validConfig.parentId)) {
+			return log("error", "corelib", `Parent block name: "${validConfig.parentId}" for variant "${validConfig.parentId}${validConfig.suffix}" not found!`);
 		}
 
-		let id = data.parentId + data.suffix;
-		let parentBlock = this.registry.entries[data.parentId];
-		let fullImagePath = this.getFullImagePath(parentBlock.sourceMod, data.imagePath);
-		let variantData = { isVariant: true, fullImagePath, ...data };
-		variantData.id = id;
+		let id = validConfig.parentId + validConfig.suffix;
+		let parentEntry = this.#registry.entries[validConfig.parentId];
+		let fullImagePath = this.getFullImagePath(parentEntry.sourceMod, validConfig.imagePath);
+		let entry = { isVariant: true, fullImagePath, ...validConfig };
+		entry.id = id;
 
-		if (this.registry.register(id, variantData)) {
-			parentBlock.variants.push(variantData);
+		if (this.#registry.register(id, entry)) {
+			parentEntry.variants.push(entry);
 		}
 	}
 
-	unregister(id) {
+	unregister(/** @type {string} */ id) {
 		// manually check here since we don't unregister until we unregister variants
-		if (!this.registry.entries[id]) {
+		if (!this.#registry.entries[id]) {
 			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
-		if (this.registry.entries[id].isVariant) {
+		if (this.#registry.entries[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
+
+		const data = this.#registry.entries[id];
 
 		if (data.tickInterval != null) {
 			corelib.schedules.unregister(`block-tick-${data.id}`);
 		}
 
-		// Unregister each variant entry (they are registered under their own id)
-		for (let variant of this.registry.entries[id].variants) {
-			this.registry.unregister(variant.id);
+		for (let variant of data.variants) {
+			this.#registry.unregister(variant.id);
 		}
 
-		this.registry.unregister(id);
+		this.#registry.unregister(id);
 	}
 
 	getFullImagePath(sourceMod, imagePath) {
@@ -149,12 +187,15 @@ class BlocksModule {
 	doBlockRecipes(x, y, element, collidingBlock) {
 		return this.recipes?.[corelib.exposed.blocks[collidingBlock.type]]?.(x, y, element, collidingBlock, fluxloaderAPI.gameInstanceState);
 	}
+	getEntries() {
+		return this.#registry.entries;
+	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
 		const reduceBlocks = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 
@@ -163,17 +204,17 @@ class BlocksModule {
 		const reduceBlocksAndVariants = (f) => reduceBlocks((b) => f(b) + reduceBlockVariants(b, (v) => f(v)));
 
 		const reduceBlocksWithConfig = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => !b.isVariant && b.hasConfigMenu)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		const reduceBlocksWithHover = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => b.hasHoverUI)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		let reduceBlocksWithTicking = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((t) => t.tickInterval != null)
 				.reduce((acc, t) => acc + f(t.id), "");
 
@@ -413,7 +454,7 @@ class BlocksModule {
 			from: "n.store.gloom.emitterPositions.filter((function(e){return!(e.x===r.x&&e.y===r.y)})))",
 			to: `~${reduceBlocksWithTicking((id) => `,(r.type===d["${id}"])&&(n.store.corelib.tickingBlockPositions["${id}"]=n.store.corelib.tickingBlockPositions["${id}"].filter(function(e){return !(e.x===r.x&&e.y===r.y)}))`)}`,
 			token: "~",
-		});/*
+		}); /*
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:slushyImprovement", {
 			type: "replace",
 			from: `var g=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)&&!(0,s.v)(e,t)){var y=!1,v=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);v&&(y=v.filter||v.queued),y&&v.filter&&(t.velocity.y=t.minVelocity.y);var g=(0,o.tT)(c,t.x,t.y+1),S=(0,o.OA)(g),A=(0,u.uQ)(e,t,t.x,t.y+1,y),M=!A.authorized,R=i.Both,F=(0,o.Ol)(g);if(S||M||(0,o.W)(g,a.vZ.Block))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x*=.7,(0,l.Fy)(c,t),S&&!n.A.useMultithreading&&((0,h.c)(e,t,g,v.type),(0,o.Y$)(e,t.x,t.y)),void(0,x.$)(e,t);if(A.authorized&&A.isFilter&&(R=i.None),F||((0,o.W)(g,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(F||R===i.None||(R!==i.Left&&R!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),R!==i.Right&&R!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var C=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,F){var J=!1,k=t.y+1;if(C>1)for(var z=t.y+C,b=t.y+2;b<=z;b+=1){var L=(0,o.tT)(c,t.x,b),T=(0,o.Ol)(L),B=(0,u.uQ)(e,t,t.x,b,y),w=B.authorized;if(!T||!w){T||(M=!w,g=L),J=!0,!w||B.isFilter||!T&&((0,o.OA)(L)||(0,o.W)(L,a.vZ.Block))?R=i.None:T||((0,o.W)(L,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right));break}k++}if((0,o.L3)(e,t,t.x,k),!J)return void(t.isFreeFalling=!0)}if((!g||M||!m(e,t,g))&&!((0,f.v)(e,t,g)||M&&(0,x.$)(e,t))){if(t.isFreeFalling){var G=Math.abs(t.velocity.y)/5;G*=.8+.4*Math.random(),0===t.velocity.x&&(t.velocity.x=2*(Math.random()-.5)),t.velocity.x=t.velocity.x<0?-G:G}if(t.isFreeFalling=!1,t.velocity.y*=.95,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.95,R!==i.None&&p(e,t,R))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var E=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var I,N,W=t.x+E,Z=t.x,O=t.y;Z!==W&&(Z+=E<0?-1:1,(0,o.lV)(e,Z,O)&&(0,u.xR)(e,t,Z,O,y));)(0,o.lV)(e,Z,O+1)&&(0,u.xR)(e,t,Z,O+1,y)&&(O+=1),I=Z,N=O;I&&(0,o.L3)(e,t,I,N)}}}}}`,

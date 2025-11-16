@@ -1,3 +1,5 @@
+/** @typedef {import('../entry.electron.js')} */
+
 const moduleEnumSchema = {
 	name: { type: "string" },
 	intIdStart: { type: "number" },
@@ -73,20 +75,20 @@ class EnumDataRegistry {
 }
 
 class EnumsModule {
-	registry = new DataRegistry("enums");
-	enumMapping = {};
+	#registry = new DataRegistry("enums");
+	#enumMapping = {};
 
 	createRegistry(inputData /* moduleEnumSchema */) {
 		const data = validateInput(inputData, moduleEnumSchema);
 		const registry = new EnumDataRegistry(data.name, data.intIdStart, data.bundleMap);
-		this.registry.register(data.name, registry);
+		this.#registry.register(data.name, registry);
 		return registry;
 	}
 
 	updateEnumMapping(newEnumMapping) {
 		// For each module enum registry we have locally
-		for (let moduleName in this.registry.entries) {
-			let enumRegistry = this.registry.entries[moduleName];
+		for (let moduleName in this.#registry.entries) {
+			let enumRegistry = this.#registry.entries[moduleName];
 			newEnumMapping[moduleName] ??= {};
 			let moduleEnumMapping = newEnumMapping[moduleName];
 
@@ -100,7 +102,7 @@ class EnumsModule {
 		}
 
 		// Now use the new game enum mapping with any local additions we made
-		this.enumMapping = newEnumMapping;
+		this.#enumMapping = newEnumMapping;
 	}
 
 	applyPatches() {
@@ -109,14 +111,14 @@ class EnumsModule {
 		// Run this once so that we generate the mappings
 		// This is mainly for during the menu before we have any values
 		// Once the game has started we will get the real enum mapping from the game
-		this.updateEnumMapping(this.enumMapping);
+		this.updateEnumMapping(this.#enumMapping);
 
 		let reducedEnumStrings = { main: "", sim: "", manager: "" };
 
 		// loop through bundles here
-		for (let moduleName in this.enumMapping) {
-			let moduleRegistry = this.registry.entries[moduleName];
-			let moduleMapping = this.enumMapping[moduleName];
+		for (let moduleName in this.#enumMapping) {
+			let moduleRegistry = this.#registry.entries[moduleName];
+			let moduleMapping = this.#enumMapping[moduleName];
 
 			// example output: _[_["Schedule"]=19]="Schedule";
 			for (let bundle in moduleRegistry.bundleMap) {
@@ -175,6 +177,10 @@ class EnumsModule {
 			from: ".reload()}var w_",
 			to: ".reload()};var w_",
 		});
+	}
+
+	getMapping() {
+		return this.#enumMapping;
 	}
 }
 

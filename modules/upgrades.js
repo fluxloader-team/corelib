@@ -1,10 +1,22 @@
+/** @typedef {import('../entry.electron.js')} */
+
+/**
+ * @typedef {object} UpgradeRequirement
+ * @property {string[]} [tech] Tech required to unlock the tab
+ * @property {string[]} [building] Block required to unlock the tab
+ * @property {string[]} [item] Item required to unlock the tab
+ */
+
+/**
+ * @typedef {object} TabConfig
+ * @property {string} id The id of the tab
+ * @property {string} name The name of the tab
+ * @property {UpgradeRequirement} [requirement={}] What the player must have to see this tab
+ */
+
 const tabSchema = {
-	id: {
-		type: "string",
-	},
-	name: {
-		type: "string",
-	},
+	id: { type: "string" },
+	name: { type: "string" },
 	requirement: {
 		type: "object",
 		default: {},
@@ -17,16 +29,18 @@ const tabSchema = {
 	},
 };
 
+/**
+ * @typedef {object} CategoryConfig
+ * @property {string} tabID Tab holding this category
+ * @property {string} id Id of this category
+ * @property {string} name Name of the category
+ * @property {UpgradeRequirement} [requirement={}] What the player must have to see this category
+ */
+
 const categorySchema = {
-	tabID: {
-		type: "string",
-	},
-	id: {
-		type: "string",
-	},
-	name: {
-		type: "string",
-	},
+	tabID: { type: "string" },
+	id: { type: "string" },
+	name: { type: "string" },
 	requirement: {
 		type: "object",
 		default: {},
@@ -43,22 +57,26 @@ const categorySchema = {
 // - costs is an array of integers representing the cost, in fluxite, for each level of the upgrade
 // - maxLevel is an integer that must be one more than the length of costs (highest level of the upgrade)
 // - oneOff is a boolean representing if the upgrade can only be bought once (creates a checkbox in game)
+/**
+ * @typedef {object} UpgradeConfig
+ * @property {string} tabID Tab this upgrade is inside of
+ * @property {string} categoryID Category holding this upgrade
+ * @property {string} id Id of this upgrade
+ * @property {string} name Name of this upgrade
+ * @property {string} description Description of this upgrade
+ * @property {UpgradeRequirement} [requirement={}] What the player must have to see this upgrade
+ * @property {number} maxLevel Highest level your upgrade has, must be the length of costs + 1
+ * @property {number[]} costs Costs for each upgrade, each must be an integer > 0
+ * @property {boolean} [oneoff=false] Makes the upgrade buyable as a checkmark, requires 1 cost
+ */
+
 const upgradeSchema = {
-	tabID: {
-		type: "string",
-	},
-	categoryID: {
-		type: "string",
-	},
-	id: {
-		type: "string",
-	},
-	name: {
-		type: "string",
-	},
-	description: {
-		type: "string",
-	},
+	tabID: { type: "string" },
+	categoryID: { type: "string" },
+	id: { type: "string" },
+	name: { type: "string" },
+	description: { type: "string" },
+	oneOff: { type: "boolean", default: false },
 	requirement: {
 		type: "object",
 		default: {},
@@ -87,14 +105,10 @@ const upgradeSchema = {
 			};
 		},
 	},
-	oneOff: {
-		type: "boolean",
-		default: false,
-	},
 };
 
 class UpgradesModule {
-	upgrades = {};
+	#upgrades = {};
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -118,79 +132,85 @@ class UpgradesModule {
 		}
 	}
 
-	registerTab(inputData /* tabSchema */) {
-		const data = validateInput(inputData, tabSchema);
+	registerTab(/** @type {TabConfig} */ config) {
+		const validConfig = validateInput(config, tabSchema);
 
-		if (Object.keys(data.requirement).length === 0) delete data.requirement;
+		if (Object.keys(validConfig.requirement).length === 0) delete validConfig.requirement;
 
-		this.upgrades[data.id] = { ...data, items: {} };
+		const entry = { ...validConfig, items: {} };
+
+		this.#upgrades[validConfig.id] = entry;
 	}
 
-	registerCategory(inputData /* categorySchema */) {
-		const data = validateInput(inputData, categorySchema);
+	registerCategory(/** @type {CategoryConfig} */ config) {
+		const validConfig = validateInput(config, categorySchema);
 
-		if (!this.upgrades.hasOwnProperty(data.tabID)) {
-			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
+		if (!this.#upgrades.hasOwnProperty(validConfig.tabID)) {
+			log("warn", "corelib", `Tried to register upgrade "${validConfig.id}" under non-existent tab "${validConfig.tabID}"`);
 			return;
 		}
 
-		if (Object.keys(data.requirement).length === 0) delete data.requirement;
+		if (Object.keys(validConfig.requirement).length === 0) delete validConfig.requirement;
 
-		this.upgrades[data.tabID].items[data.id] = { ...data, upgrades: {} };
+		const entry = { ...validConfig, upgrades: {} };
+
+		this.#upgrades[validConfig.tabID].items[validConfig.id] = entry;
 	}
 
-	registerUpgrade(inputData /* upgradeSchema */) {
-		const data = validateInput(inputData, upgradeSchema);
+	registerUpgrade(/** @type {UpgradeConfig} */ config) {
+		const validConfig = validateInput(config, upgradeSchema);
 
-		if (!this.upgrades.hasOwnProperty(data.tabID)) {
-			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent tab "${data.tabID}"`);
+		if (!this.#upgrades.hasOwnProperty(validConfig.tabID)) {
+			log("warn", "corelib", `Tried to register upgrade "${validConfig.id}" under non-existent tab "${validConfig.tabID}"`);
 			return;
 		}
-		if (!this.upgrades[data.tabID].items.hasOwnProperty(data.categoryID)) {
-			log("warn", "corelib", `Tried to register upgrade "${data.id}" under non-existent category "${data.categoryID}"`);
+		if (!this.#upgrades[validConfig.tabID].items.hasOwnProperty(validConfig.categoryID)) {
+			log("warn", "corelib", `Tried to register upgrade "${validConfig.id}" under non-existent category "${validConfig.categoryID}"`);
 			return;
 		}
 
-		if (data.maxLevel !== data.costs.length + 1) {
+		if (validConfig.maxLevel !== validConfig.costs.length + 1) {
 			log("warn", "corelib", `Max level of an upgrade should be one more than the number of costs`);
 			// Won't return.. just a slight warning for now ig
 		}
 
-		if (Object.keys(data.requirement).length === 0) delete data.requirement;
+		const entry = { ...validConfig };
 
-		this.upgrades[data.tabID].items[data.categoryID].upgrades[data.id] = data;
+		if (Object.keys(entry.requirement).length === 0) delete entry.requirement;
+
+		this.#upgrades[entry.tabID].items[entry.categoryID].upgrades[entry.id] = entry;
 	}
 
-	unregisterTab(id) {
-		if (!this.upgrades.hasOwnProperty(id)) {
+	unregisterTab(/** @type {string} */ id) {
+		if (!this.#upgrades.hasOwnProperty(id)) {
 			log("warn", "corelib", `Tried to unregister non-existent upgrade category "${id}"`);
 			return;
 		}
-		delete this.upgrades[id];
+		delete this.#upgrades[id];
 	}
 
-	unregisterCategory(tabID, id) {
-		if (!this.upgrades.hasOwnProperty(tabID)) {
+	unregisterCategory(/** @type {string} */ tabID, /** @type {string} */ id) {
+		if (!this.#upgrades.hasOwnProperty(tabID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
 			return;
 		}
-		if (!this.upgrades[tabID].items.hasOwnProperty(id)) {
+		if (!this.#upgrades[tabID].items.hasOwnProperty(id)) {
 			log("warn", "corelib", `Tried to unregister non-existent upgrade category "${id}"`);
 			return;
 		}
-		delete this.upgrades[tabID].items[id];
+		delete this.#upgrades[tabID].items[id];
 	}
 
-	unregisterUpgrade(tabID, categoryID, id) {
-		if (!this.upgrades.hasOwnProperty(tabID)) {
+	unregisterUpgrade(/** @type {string} */ tabID, /** @type {string} */ categoryID, /** @type {string} */ id) {
+		if (!this.#upgrades.hasOwnProperty(tabID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
 			return;
 		}
-		if (!this.upgrades[tabID].items.hasOwnProperty(categoryID)) {
+		if (!this.#upgrades[tabID].items.hasOwnProperty(categoryID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent category "${categoryID}"`);
 			return;
 		}
-		delete this.upgrades[tabID].items[categoryID].upgrades[id];
+		delete this.#upgrades[tabID].items[categoryID].upgrades[id];
 	}
 
 	applyPatches() {
@@ -200,7 +220,7 @@ class UpgradesModule {
 
 		// Merged into game's upgrades data to add new upgrades even in old saves
 		let updates = {};
-		for (let tab of Object.values(this.upgrades)) {
+		for (let tab of Object.values(this.#upgrades)) {
 			let newTab = { ...tab };
 			newTab.items = [];
 			for (let category of Object.values(tab.items)) {

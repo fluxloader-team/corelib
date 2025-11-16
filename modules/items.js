@@ -1,3 +1,13 @@
+/** @typedef {import('../entry.electron.js')} */
+
+/**
+ * @typedef {object} ItemConfig
+ * @property {string} id id of the item
+ * @property {"Tool"|"Weapon"|"Consumable"} type type of the item
+ * @property {string} name display name of the item
+ * @property {string} description description of the item
+ */
+
 const itemSchema = {
 	id: {
 		type: "string",
@@ -20,7 +30,7 @@ const itemSchema = {
 };
 
 class ItemsModule {
-	registry = corelib.enums.createRegistry({
+	#registry = corelib.enums.createRegistry({
 		name: "Item",
 		intIdStart: 25,
 		bundleMap: {
@@ -30,26 +40,28 @@ class ItemsModule {
 		},
 	});
 
-	register(inputData /* itemSchema */) {
-		const data = validateInput(inputData, itemSchema);
+	register(/** @type {ItemConfig} */ config) {
+		const validConfig = validateInput(config, itemSchema);
 
-		if (data.type === "Consumable") {
+		if (validConfig.type === "Consumable") {
 			// For now just silently continue but with a warning
 			log("warn", "corelib", `Item type "Consumable" is not fully supported yet; you should use "Tool" or "Weapon" instead.`);
 		}
 
-		this.registry.register(data.id, data);
+		const entry = { ...validConfig };
+
+		this.#registry.register(validConfig.id, entry);
 	}
 
-	unregister(id) {
-		this.registry.unregister(id);
+	unregister(/** @type {string} */ id) {
+		this.#registry.unregister(id);
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading item module patches");
 
 		let itemDefinitionString = "";
-		for (const item of Object.values(this.registry.entries)) {
+		for (const item of Object.values(this.#registry.entries)) {
 			itemDefinitionString += `DF[l.${item.id}]= function() {
 				return {
 					id: l.${item.id},

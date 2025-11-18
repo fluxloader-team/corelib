@@ -74,6 +74,7 @@ class CoreLib {
 		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
+				corelib.blocks.recipes["Grower"] = corelib.exposed.raw.r(2127).$;
 	}
 
 	/**@private*/

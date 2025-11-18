@@ -129,6 +129,7 @@ class CoreLib {
 
 	/**@private*/
 	setupInternals() {
+
 		this.simulation = {
 			spawnElement: ({ id, x, y, data = {} }) => {
 				// Typically prefer to use spawnParticle for moving elements in the world

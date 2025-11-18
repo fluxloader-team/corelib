@@ -37,7 +37,7 @@ const blockSchema = {
 	hasHoverUI: { type: "boolean", default: false },
 	unlockedByDefault: { type: "boolean", default: false },
 	tickInterval: { type: "number", default: null, nullable: true },
-	recipe: { type: "function", default: null },
+	//collisionRecipe: { type: "function", default: null },
 	shape: {
 		type: "array",
 		verifier: (v) => {
@@ -117,9 +117,6 @@ class BlocksModule {
 
 	recipes = {};
 
-	constructor() {
-		this.recipes["Grower"] = corelib.exposed.raw.r(2127).$;
-	}
 	register(/** @type {BlockConfig} */ config) {
 		const validConfig = validateInput(config, blockSchema);
 
@@ -131,7 +128,6 @@ class BlocksModule {
 		}
 
 		this.#registry.register(validConfig.id, entry);
-		if (validConfig.recipe) this.recipes[validConfig.id] = validConfig.recipe;
 	}
 
 	registerVariant(/** @type {BlockVariantConfig} */ config) {
@@ -466,12 +462,80 @@ class BlocksModule {
 			type: "replace",
 			from: `var g=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)){if((0,o.Ol)((0,o.tT)(c,t.x,t.y+1))&&!d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor((t.y+1)/n.A.snapGridCellSize)*n.A.snapGridCellSize)){var y=.5+Math.random();if(t.velocity.y=Math.min(t.velocity.y+1*n.A.gravity*y*r,6),0===t.velocity.x&&(t.velocity.x=Math.random()>.5?8:-8),Math.random()<.1&&(t.velocity.x*=-1,Math.random()<.3&&(t.velocity.y*=.5)),t.threshold.x+=t.velocity.x*r,t.threshold.y+=t.velocity.y*r,Math.abs(t.threshold.x)>=1){var v=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;var g=t.x+v,S=d.A.get(e.session,"structures",Math.floor(g/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);if((0,o.lV)(e,g,t.y)&&!S)return void(0,o.L3)(e,t,g,t.y)}}else t.velocity.x=0,t.velocity.y=t.minVelocity.y;if(!(0,s.v)(e,t)){var A=!1,M=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);M&&(A=M.filter||M.queued),A&&M.filter&&(t.velocity.y=t.minVelocity.y);var R=(0,o.tT)(c,t.x,t.y+1),F=(0,o.OA)(R),C=(0,u.uQ)(e,t,t.x,t.y+1,A),J=!C.authorized,k=i.Both,z=(0,o.Ol)(R);if(F||J||(0,o.W)(R,a.vZ.Block))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x=0,(0,l.Fy)(c,t),F&&!n.A.useMultithreading&&((0,h.c)(e,t,R,M.type),(0,o.Y$)(e,t.x,t.y)),void(0,x.$)(e,t);if(C.authorized&&C.isFilter&&(k=i.None),z||((0,o.W)(R,a.vZ.SlidingBlockLeft)?k=i.Left:(0,o.W)(R,a.vZ.SlidingBlockRight)&&(k=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(z||k===i.None||(k!==i.Left&&k!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),k!==i.Right&&k!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var b=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,z){var L=!1,T=t.y+1;if(b>1)for(var B=t.y+b,w=t.y+2;w<=B;w+=1){var G=(0,o.tT)(c,t.x,w),E=(0,o.Ol)(G),I=(0,u.uQ)(e,t,t.x,w,A),N=I.authorized;if(!E||!N){E||(J=!N,R=G),L=!0,!N||I.isFilter||!E&&((0,o.OA)(G)||(0,o.W)(G,a.vZ.Block))?k=i.None:E||((0,o.W)(G,a.vZ.SlidingBlockLeft)?k=i.Left:(0,o.W)(R,a.vZ.SlidingBlockRight)&&(k=i.Right));break}T++}if((0,o.L3)(e,t,t.x,T),!L)return void(t.isFreeFalling=!0)}if((!R||J||!m(e,t,R))&&!(0,f.v)(e,t,R))if(J&&(0,x.$)(e,t))console.log("gro second case... necessary to keep this?");else{if(t.isFreeFalling){var W=Math.abs(t.velocity.y)/10;0===t.velocity.x&&(t.velocity.x=Math.random()>=.5?1:-1),t.velocity.x=t.velocity.x<0?-W:W}if(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.9,k!==i.None&&p(e,t,k))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var Z=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var O,D,V=t.x+Z,P=t.x,H=t.y;P!==V&&(P+=Z<0?-1:1,(0,o.lV)(e,P,H)&&(0,u.xR)(e,t,P,H,A));)(0,o.lV)(e,P,H+1)&&(0,u.xR)(e,t,P,H+1,A)&&(H+=1),O=P,D=H;O&&(0,o.L3)(e,t,O,D)}}}}}}`,
 			to: ``,
-		});
+		});*/
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:solidImprovement", {
 			type: "replace",
 			from: `var p=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)&&!(0,s.v)(e,t)){var y=!1,v=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);v&&(y=v.filter||v.queued),y&&v.filter&&(t.velocity.y=t.minVelocity.y);var g=(0,o.tT)(c,t.x,t.y+1),p=(0,o.OA)(g),A=(0,u.uQ)(e,t,t.x,t.y+1,y),M=!A.authorized,R=i.Both,F=(0,o.Ol)(g);if(p||M||(0,o.W)(g,a.vZ.Block))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x=0,(0,l.Fy)(c,t),p&&!n.A.useMultithreading&&((0,h.c)(e,t,g,v.type),(0,o.Y$)(e,t.x,t.y)),void(0,x.$)(e,t);if(A.authorized&&A.isFilter&&(R=i.None),F||((0,o.W)(g,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(F||R===i.None||(R!==i.Left&&R!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),R!==i.Right&&R!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var C=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,F){var J=!1,k=t.y+1;if(C>1)for(var z=t.y+C,b=t.y+2;b<=z;b+=1){var L=(0,o.tT)(c,t.x,b),T=(0,o.Ol)(L),B=(0,u.uQ)(e,t,t.x,b,y),w=B.authorized;if(!T||!w){T||(M=!w,g=L),J=!0,!w||B.isFilter||!T&&((0,o.OA)(L)||(0,o.W)(L,a.vZ.Block))?R=i.None:T||((0,o.W)(L,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right));break}k++}if((0,o.L3)(e,t,t.x,k),!J)return void(t.isFreeFalling=!0)}if((!g||M||!S(e,t,g))&&!(0,f.v)(e,t,g))if(M&&(0,x.$)(e,t))console.log("gro second case... necessary to keep this?");else{if(t.isFreeFalling){var G=Math.abs(t.velocity.y)/10;0===t.velocity.x&&(t.velocity.x=Math.random()>=.5?1:-1),t.velocity.x=t.velocity.x<0?-G:G}if(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.9,R!==i.None&&m(e,t,R))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var E=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var I,N,W=t.x+E,Z=t.x,O=t.y;Z!==W&&(Z+=E<0?-1:1,(0,o.lV)(e,Z,O)&&(0,u.xR)(e,t,Z,O,y));)(0,o.lV)(e,Z,O+1)&&(0,u.xR)(e,t,Z,O+1,y)&&(O+=1),I=Z,N=O;I&&(0,o.L3)(e,t,I,N)}}}}}`,
-			to: ``,
-		});
+			to: `var p = function (e, t, r) {
+	var c = e.store;
+	if (!t.hasBeenUpdated && (0, o.Do)(c, t.x, t.y) && !(0, s.v)(e, t)) {
+		var y = !1,
+			v = d.A.get(e.session, "structures", Math.floor(t.x / n.A.snapGridCellSize) * n.A.snapGridCellSize, Math.floor(t.y / n.A.snapGridCellSize) * n.A.snapGridCellSize);
+		v && (y = v.filter || v.queued), y && v.filter && (t.velocity.y = t.minVelocity.y);
+		var g = (0, o.tT)(c, t.x, t.y + 1),
+			p = (0, o.OA)(g),
+			A = (0, u.uQ)(e, t, t.x, t.y + 1, y),
+			M = !A.authorized,
+			R = i.Both,
+			F = (0, o.Ol)(g),
+			blockBelow = corelib.simulation.getStructureAtPos(t.x, t.y+1);
+		if (corelib.blocks.doBlockRecipes(t.x, t.y, T, blockBelow)) return true;
+		if (p || M || (0, o.W)(g, a.vZ.Block)) return (t.isFreeFalling = !1), (t.velocity.y = t.minVelocity.y), (t.velocity.x = 0), (0, l.Fy)(c, t), p && !n.A.useMultithreading && ((0, h.c)(e, t, g, v.type), (0, o.Y$)(e, t.x, t.y)), false;
+		if (
+			(A.authorized && A.isFilter && (R = i.None),
+			F || ((0, o.W)(g, a.vZ.SlidingBlockLeft) ? (R = i.Left) : (0, o.W)(g, a.vZ.SlidingBlockRight) && (R = i.Right)),
+			(t.threshold.y += t.velocity.y * r),
+			(t.velocity.y += n.A.gravity * r),
+			t.threshold.y < 1)
+		)
+			return (
+				t.isFreeFalling && (0, o.Y$)(e, t.x, t.y),
+				void (F || R === i.None || ((R !== i.Left && R !== i.Both) || ((0, o.lV)(e, t.x - 1, t.y + 1) && (0, o.Y$)(e, t.x, t.y)), (R !== i.Right && R !== i.Both) || ((0, o.lV)(e, t.x + 1, t.y + 1) && (0, o.Y$)(e, t.x, t.y))))
+			);
+		var C = Math.floor(t.threshold.y);
+		if (((t.threshold.y = t.threshold.y % 1), F)) {
+			var J = !1,
+				k = t.y + 1;
+			if (C > 1)
+				for (var z = t.y + C, b = t.y + 2; b <= z; b += 1) {
+					var L = (0, o.tT)(c, t.x, b),
+						T = (0, o.Ol)(L),
+						B = (0, u.uQ)(e, t, t.x, b, y),
+						w = B.authorized;
+					if (!T || !w) {
+						T || ((M = !w), (g = L)),
+							(J = !0),
+							!w || B.isFilter || (!T && ((0, o.OA)(L) || (0, o.W)(L, a.vZ.Block))) ? (R = i.None) : T || ((0, o.W)(L, a.vZ.SlidingBlockLeft) ? (R = i.Left) : (0, o.W)(g, a.vZ.SlidingBlockRight) && (R = i.Right));
+						break;
+					}
+					k++;
+				}
+			if (((0, o.L3)(e, t, t.x, k), !J)) return void (t.isFreeFalling = !0);
+		}
+		if ((!g || M || !S(e, t, g)) && !(0, f.v)(e, t, g))
+			if (M) console.log("gro second case... necessary to keep this?");
+			else {
+				if (t.isFreeFalling) {
+					var G = Math.abs(t.velocity.y) / 10;
+					0 === t.velocity.x && (t.velocity.x = Math.random() >= 0.5 ? 1 : -1), (t.velocity.x = t.velocity.x < 0 ? -G : G);
+				}
+				if (((t.isFreeFalling = !1), (t.velocity.y *= 0.9), t.velocity.y < t.minVelocity.y && (t.velocity.y = t.minVelocity.y), (t.threshold.x += t.velocity.x * r), (t.velocity.x *= 0.9), R !== i.None && m(e, t, R)))
+					t.isFreeFalling = !0;
+				else {
+					if (t.velocity.x < 6 && t.velocity.x > -6) return (t.velocity.x = 0), void (t.threshold.x = 0);
+					if (t.threshold.x < 1 && t.threshold.x > -1) (0, o.Y$)(e, t.x, t.y);
+					else {
+						var E = t.threshold.x < 0 ? Math.ceil(t.threshold.x) : Math.floor(t.threshold.x);
+						t.threshold.x = t.threshold.x % 1;
+						for (var I, N, W = t.x + E, Z = t.x, O = t.y; Z !== W && ((Z += E < 0 ? -1 : 1), (0, o.lV)(e, Z, O) && (0, u.xR)(e, t, Z, O, y)); )
+							(0, o.lV)(e, Z, O + 1) && (0, u.xR)(e, t, Z, O + 1, y) && (O += 1), (I = Z), (N = O);
+						I && (0, o.L3)(e, t, I, N);
+					}
+				}
+			}
+	}
+}`,
+		});/*
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:liquidImprovement", {
 			type: "replace",
 			from: `v=function(e,t,r){var a=e.store;if(!t.hasBeenUpdated&&(0,l.Do)(a,t.x,t.y)){var o=!1,s=d.A.get(e.session,"structures",Math.floor(t.x/i.A.snapGridCellSize)*i.A.snapGridCellSize,Math.floor(t.y/i.A.snapGridCellSize)*i.A.snapGridCellSize);if(s&&(o=s.queued),t.movesOnSameYAxis.count>1e3)return i.A.useMultithreading&&e.shared.reservoir[0]++,void(0,l.Nz)(e,t);if(t.threshold.y+=t.velocity.y*r,t.velocity.y+=i.A.gravity*r,t.threshold.y<1)if(t.isFreeFalling)try{(0,l.Y$)(e,t.x,t.y)}catch(e){console.log("Error in reportToChunkAtCellPos",e,JSON.stringify(t))}else p(e,t);else{var h=Math.floor(t.threshold.y);t.threshold.y=t.threshold.y%1;var c=(0,l.tT)(a,t.x,t.y+1);if(!f(e,t.x,t.y+1,o))if((0,l.Ol)(c)){var y=t.y+1;if(h>1)for(var v=t.y+h,m=t.y+2;m<=v;m+=1){var S=(0,l.tT)(a,t.x,m);if(!(0,l.Ol)(S))break;y++}t.isFreeFalling=!0;try{(0,l.L3)(e,t,t.x,y)}catch(e){}}else t.isFreeFalling&&t.type===n.RJ.Water&&(0,u.$T)(e,t.x*i.A.cellSize,t.y*i.A.cellSize,u.c6.Water),x(e,t,c,t.x,t.y+1)||(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),g(e,t)||p(e,t,!0))}}}`,
@@ -493,13 +557,82 @@ var g=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)&&!
 
 //wisp
 var g=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)){if((0,o.Ol)((0,o.tT)(c,t.x,t.y+1))&&!d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor((t.y+1)/n.A.snapGridCellSize)*n.A.snapGridCellSize)){var y=.5+Math.random();if(t.velocity.y=Math.min(t.velocity.y+1*n.A.gravity*y*r,6),0===t.velocity.x&&(t.velocity.x=Math.random()>.5?8:-8),Math.random()<.1&&(t.velocity.x*=-1,Math.random()<.3&&(t.velocity.y*=.5)),t.threshold.x+=t.velocity.x*r,t.threshold.y+=t.velocity.y*r,Math.abs(t.threshold.x)>=1){var v=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;var g=t.x+v,S=d.A.get(e.session,"structures",Math.floor(g/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);if((0,o.lV)(e,g,t.y)&&!S)return void(0,o.L3)(e,t,g,t.y)}}else t.velocity.x=0,t.velocity.y=t.minVelocity.y;if(!(0,s.v)(e,t)){var A=!1,M=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);M&&(A=M.filter||M.queued),A&&M.filter&&(t.velocity.y=t.minVelocity.y);var R=(0,o.tT)(c,t.x,t.y+1),F=(0,o.OA)(R),C=(0,u.uQ)(e,t,t.x,t.y+1,A),J=!C.authorized,k=i.Both,z=(0,o.Ol)(R);if(F||J||(0,o.W)(R,a.vZ.Block))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x=0,(0,l.Fy)(c,t),F&&!n.A.useMultithreading&&((0,h.c)(e,t,R,M.type),(0,o.Y$)(e,t.x,t.y)),void(0,x.$)(e,t);if(C.authorized&&C.isFilter&&(k=i.None),z||((0,o.W)(R,a.vZ.SlidingBlockLeft)?k=i.Left:(0,o.W)(R,a.vZ.SlidingBlockRight)&&(k=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(z||k===i.None||(k!==i.Left&&k!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),k!==i.Right&&k!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var b=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,z){var L=!1,T=t.y+1;if(b>1)for(var B=t.y+b,w=t.y+2;w<=B;w+=1){var G=(0,o.tT)(c,t.x,w),E=(0,o.Ol)(G),I=(0,u.uQ)(e,t,t.x,w,A),N=I.authorized;if(!E||!N){E||(J=!N,R=G),L=!0,!N||I.isFilter||!E&&((0,o.OA)(G)||(0,o.W)(G,a.vZ.Block))?k=i.None:E||((0,o.W)(G,a.vZ.SlidingBlockLeft)?k=i.Left:(0,o.W)(R,a.vZ.SlidingBlockRight)&&(k=i.Right));break}T++}if((0,o.L3)(e,t,t.x,T),!L)return void(t.isFreeFalling=!0)}if((!R||J||!m(e,t,R))&&!(0,f.v)(e,t,R))if(J&&(0,x.$)(e,t))console.log("gro second case... necessary to keep this?");else{if(t.isFreeFalling){var W=Math.abs(t.velocity.y)/10;0===t.velocity.x&&(t.velocity.x=Math.random()>=.5?1:-1),t.velocity.x=t.velocity.x<0?-W:W}if(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.9,k!==i.None&&p(e,t,k))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var Z=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var O,D,V=t.x+Z,P=t.x,H=t.y;P!==V&&(P+=Z<0?-1:1,(0,o.lV)(e,P,H)&&(0,u.xR)(e,t,P,H,A));)(0,o.lV)(e,P,H+1)&&(0,u.xR)(e,t,P,H+1,A)&&(H+=1),O=P,D=H;O&&(0,o.L3)(e,t,O,D)}}}}}}
-//solid
-
-var p=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)&&!(0,s.v)(e,t)){var y=!1,v=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);v&&(y=v.filter||v.queued),y&&v.filter&&(t.velocity.y=t.minVelocity.y);var g=(0,o.tT)(c,t.x,t.y+1),p=(0,o.OA)(g),A=(0,u.uQ)(e,t,t.x,t.y+1,y),M=!A.authorized,R=i.Both,F=(0,o.Ol)(g);if(p||M||(0,o.W)(g,a.vZ.Block))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x=0,(0,l.Fy)(c,t),p&&!n.A.useMultithreading&&((0,h.c)(e,t,g,v.type),(0,o.Y$)(e,t.x,t.y)),void(0,x.$)(e,t);if(A.authorized&&A.isFilter&&(R=i.None),F||((0,o.W)(g,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(F||R===i.None||(R!==i.Left&&R!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),R!==i.Right&&R!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var C=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,F){var J=!1,k=t.y+1;if(C>1)for(var z=t.y+C,b=t.y+2;b<=z;b+=1){var L=(0,o.tT)(c,t.x,b),T=(0,o.Ol)(L),B=(0,u.uQ)(e,t,t.x,b,y),w=B.authorized;if(!T||!w){T||(M=!w,g=L),J=!0,!w||B.isFilter||!T&&((0,o.OA)(L)||(0,o.W)(L,a.vZ.Block))?R=i.None:T||((0,o.W)(L,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right));break}k++}if((0,o.L3)(e,t,t.x,k),!J)return void(t.isFreeFalling=!0)}if((!g||M||!S(e,t,g))&&!(0,f.v)(e,t,g))if(M&&(0,x.$)(e,t))console.log("gro second case... necessary to keep this?");else{if(t.isFreeFalling){var G=Math.abs(t.velocity.y)/10;0===t.velocity.x&&(t.velocity.x=Math.random()>=.5?1:-1),t.velocity.x=t.velocity.x<0?-G:G}if(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.9,R!==i.None&&m(e,t,R))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var E=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var I,N,W=t.x+E,Z=t.x,O=t.y;Z!==W&&(Z+=E<0?-1:1,(0,o.lV)(e,Z,O)&&(0,u.xR)(e,t,Z,O,y));)(0,o.lV)(e,Z,O+1)&&(0,u.xR)(e,t,Z,O+1,y)&&(O+=1),I=Z,N=O;I&&(0,o.L3)(e,t,I,N)}}}}}
+//solid*/
+/*
+var p = function (e, t, r) {
+	var c = e.store;
+	if (!t.hasBeenUpdated && (0, o.Do)(c, t.x, t.y) && !(0, s.v)(e, t)) {
+		var y = !1,
+			v = d.A.get(e.session, "structures", Math.floor(t.x / n.A.snapGridCellSize) * n.A.snapGridCellSize, Math.floor(t.y / n.A.snapGridCellSize) * n.A.snapGridCellSize);
+		v && (y = v.filter || v.queued), y && v.filter && (t.velocity.y = t.minVelocity.y);
+		var g = (0, o.tT)(c, t.x, t.y + 1),
+			p = (0, o.OA)(g),
+			A = (0, u.uQ)(e, t, t.x, t.y + 1, y),
+			M = !A.authorized,
+			R = i.Both,
+			F = (0, o.Ol)(g),
+			blockBelow = corelib.simulation.getStructureAtPos(t.x, t.y);
+		if (corelib.blocks.doBlockRecipes(t.x, t.y, T, blockBelow)) return true;
+		if (p || M || (0, o.W)(g, a.vZ.Block)) return (t.isFreeFalling = !1), (t.velocity.y = t.minVelocity.y), (t.velocity.x = 0), (0, l.Fy)(c, t), p && !n.A.useMultithreading && ((0, h.c)(e, t, g, v.type), (0, o.Y$)(e, t.x, t.y)), false;
+		if (
+			(A.authorized && A.isFilter && (R = i.None),
+			F || ((0, o.W)(g, a.vZ.SlidingBlockLeft) ? (R = i.Left) : (0, o.W)(g, a.vZ.SlidingBlockRight) && (R = i.Right)),
+			(t.threshold.y += t.velocity.y * r),
+			(t.velocity.y += n.A.gravity * r),
+			t.threshold.y < 1)
+		)
+			return (
+				t.isFreeFalling && (0, o.Y$)(e, t.x, t.y),
+				void (F || R === i.None || ((R !== i.Left && R !== i.Both) || ((0, o.lV)(e, t.x - 1, t.y + 1) && (0, o.Y$)(e, t.x, t.y)), (R !== i.Right && R !== i.Both) || ((0, o.lV)(e, t.x + 1, t.y + 1) && (0, o.Y$)(e, t.x, t.y))))
+			);
+		var C = Math.floor(t.threshold.y);
+		if (((t.threshold.y = t.threshold.y % 1), F)) {
+			var J = !1,
+				k = t.y + 1;
+			if (C > 1)
+				for (var z = t.y + C, b = t.y + 2; b <= z; b += 1) {
+					var L = (0, o.tT)(c, t.x, b),
+						T = (0, o.Ol)(L),
+						B = (0, u.uQ)(e, t, t.x, b, y),
+						w = B.authorized;
+					if (!T || !w) {
+						T || ((M = !w), (g = L)),
+							(J = !0),
+							!w || B.isFilter || (!T && ((0, o.OA)(L) || (0, o.W)(L, a.vZ.Block))) ? (R = i.None) : T || ((0, o.W)(L, a.vZ.SlidingBlockLeft) ? (R = i.Left) : (0, o.W)(g, a.vZ.SlidingBlockRight) && (R = i.Right));
+						break;
+					}
+					k++;
+				}
+			if (((0, o.L3)(e, t, t.x, k), !J)) return void (t.isFreeFalling = !0);
+		}
+		if ((!g || M || !S(e, t, g)) && !(0, f.v)(e, t, g))
+			if (M) console.log("gro second case... necessary to keep this?");
+			else {
+				if (t.isFreeFalling) {
+					var G = Math.abs(t.velocity.y) / 10;
+					0 === t.velocity.x && (t.velocity.x = Math.random() >= 0.5 ? 1 : -1), (t.velocity.x = t.velocity.x < 0 ? -G : G);
+				}
+				if (((t.isFreeFalling = !1), (t.velocity.y *= 0.9), t.velocity.y < t.minVelocity.y && (t.velocity.y = t.minVelocity.y), (t.threshold.x += t.velocity.x * r), (t.velocity.x *= 0.9), R !== i.None && m(e, t, R)))
+					t.isFreeFalling = !0;
+				else {
+					if (t.velocity.x < 6 && t.velocity.x > -6) return (t.velocity.x = 0), void (t.threshold.x = 0);
+					if (t.threshold.x < 1 && t.threshold.x > -1) (0, o.Y$)(e, t.x, t.y);
+					else {
+						var E = t.threshold.x < 0 ? Math.ceil(t.threshold.x) : Math.floor(t.threshold.x);
+						t.threshold.x = t.threshold.x % 1;
+						for (var I, N, W = t.x + E, Z = t.x, O = t.y; Z !== W && ((Z += E < 0 ? -1 : 1), (0, o.lV)(e, Z, O) && (0, u.xR)(e, t, Z, O, y)); )
+							(0, o.lV)(e, Z, O + 1) && (0, u.xR)(e, t, Z, O + 1, y) && (O += 1), (I = Z), (N = O);
+						I && (0, o.L3)(e, t, I, N);
+					}
+				}
+			}
+	}
+};*/
 //liquid
-
+/*
 v=function(e,t,r){var a=e.store;if(!t.hasBeenUpdated&&(0,l.Do)(a,t.x,t.y)){var o=!1,s=d.A.get(e.session,"structures",Math.floor(t.x/i.A.snapGridCellSize)*i.A.snapGridCellSize,Math.floor(t.y/i.A.snapGridCellSize)*i.A.snapGridCellSize);if(s&&(o=s.queued),t.movesOnSameYAxis.count>1e3)return i.A.useMultithreading&&e.shared.reservoir[0]++,void(0,l.Nz)(e,t);if(t.threshold.y+=t.velocity.y*r,t.velocity.y+=i.A.gravity*r,t.threshold.y<1)if(t.isFreeFalling)try{(0,l.Y$)(e,t.x,t.y)}catch(e){console.log("Error in reportToChunkAtCellPos",e,JSON.stringify(t))}else p(e,t);else{var h=Math.floor(t.threshold.y);t.threshold.y=t.threshold.y%1;var c=(0,l.tT)(a,t.x,t.y+1);if(!f(e,t.x,t.y+1,o))if((0,l.Ol)(c)){var y=t.y+1;if(h>1)for(var v=t.y+h,m=t.y+2;m<=v;m+=1){var S=(0,l.tT)(a,t.x,m);if(!(0,l.Ol)(S))break;y++}t.isFreeFalling=!0;try{(0,l.L3)(e,t,t.x,y)}catch(e){}}else t.isFreeFalling&&t.type===n.RJ.Water&&(0,u.$T)(e,t.x*i.A.cellSize,t.y*i.A.cellSize,u.c6.Water),x(e,t,c,t.x,t.y+1)||(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),g(e,t)||p(e,t,!0))}}}
 //gas
 
 y=function(e,t,r){var o=e.store;if(!t.hasBeenUpdated&&(0,l.Do)(o,t.x,t.y))if(t.movesOnSameYAxis.count>1e3)(0,a.qL)(t,n.RJ.Steam)?(0,l.Jx)(e,t.x,t.y,(0,a.n)(n.RJ.Water,t.x,t.y)):(0,l.Nz)(e,t);else if(t.threshold.y+=t.velocity.y*r,t.velocity.y+=i.A.upflow*r,t.threshold.y>-1)t.isFreeFalling?(0,l.Y$)(e,t.x,t.y):v(e,t);else{var s=Math.ceil(t.threshold.y);t.threshold.y=t.threshold.y%1;var h={x:t.x,y:t.y-1};if(!(h.y<0)){var c=(0,l.tT)(o,h.x,h.y);if((0,l.Ol)(c)){var y=t.y-1;if(s>1)for(var x=t.y-s,g=t.y-2;g<=x;g-=1){var p=(0,l.tT)(o,t.x,g);if(!(0,l.Ol)(p))break;y--}if(t.isFreeFalling=!0,t.y<100&&t.type===n.RJ.Steam){if(e.shared.reservoir[0]>0){e.shared.reservoir[0]--;try{(0,l.Jx)(e,t.x,y,(0,a.n)(n.RJ.Water,t.x,y)),(0,l.Jx)(e,t.x,t.y,(0,a.n)(n.RJ.Water,t.x,t.y)),u||(e.environment.postMessage([n.dD.ForceCompleteObjective,"let_it_rain"]),u=!0)}catch(e){console.log("Gas reservoir out of bounds issue happened",t,s,y)}return}return(0,l.L3)(e,t,t.x,y),void(0,l.Jx)(e,t.x,t.y,(0,a.n)(n.RJ.Water,t.x,t.y))}(0,l.L3)(e,t,t.x,y)}else d(e,t,c,h.x,h.y)||(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y>t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),f(e,t)||v(e,t,!0))}}}
-//*/
+//
+*/

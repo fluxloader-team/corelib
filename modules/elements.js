@@ -260,7 +260,7 @@ class ElementsModule {
 						.join(",")};
 					return press;
 				})(),
-				s=function(e,t,r){
+				s=function(x,y,t,buildingAtPos,r,e){
 					const recipe=pressRecipes[t.type];
 					if(r!==n.vZ.VelocitySoaker||!recipe||t.velocity.y<recipe[0]){return false;}
 					const outputs=recipe[1];
@@ -284,7 +284,7 @@ class ElementsModule {
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:growerRecipes", {
 			type: "replace",
 			from: `c=function(e,t){if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
-			to: `c=function(x,y,t,buildingAtPos,e){
+			to: `c=function(x,y,t,buildingAtPos,cellBelow,e){
 				const growerRecipes = {${Object.entries(this.#recipes.grower)
 					.map(([input, [output, chance]]) => `[o.RJ.${input}]: {output: o.RJ.${output}, chance:${chance}}`)
 					.join(",")}}

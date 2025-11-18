@@ -79,6 +79,7 @@ class CoreLib {
 				...corelib.exposed.raw.o.A,
 			};
 			this.blockRecipes.Grower = corelib.exposed.raw.r(2127).$;
+			this.blockRecipes.VelocitySoaker = corelib.exposed.raw.r(421).v;
 		});
 	}
 
@@ -167,11 +168,8 @@ class CoreLib {
 				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstanceState, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
 
-			doBlockRecipes: (x, y, element, collidingBlock) => {
-				console.log(corelib.exposed.blocks);
-				console.log(collidingBlock.type);
-				console.log(corelib.exposed.blocks[collidingBlock.type]);
-				return this.blockRecipes?.[corelib.exposed.blocks[collidingBlock.type]]?.(x, y, element, collidingBlock, fluxloaderAPI.gameInstanceState);
+			doBlockRecipes: (x, y, element, collidingBlock,cellBelow) => {
+				return this.blockRecipes?.[corelib.exposed.named.blocks[collidingBlock.type]]?.(x, y, element, collidingBlock,cellBelow, fluxloaderAPI.gameInstanceState);
 			},
 		};
 		corelib.utils = {

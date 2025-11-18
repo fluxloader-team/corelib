@@ -181,9 +181,7 @@ class BlocksModule {
 		return _return;
 	}
 
-	doBlockRecipes(x, y, element, collidingBlock) {
-		return this.recipes?.[corelib.exposed.blocks[collidingBlock.type]]?.(x, y, element, collidingBlock, fluxloaderAPI.gameInstanceState);
-	}
+	
 	getEntries() {
 		return this.#registry.entries;
 	}
@@ -478,8 +476,8 @@ class BlocksModule {
 			M = !A.authorized,
 			R = i.Both,
 			F = (0, o.Ol)(g),
-			blockBelow = corelib.simulation.getStructureAtPos(t.x, t.y+1);
-		if (corelib.blocks.doBlockRecipes(t.x, t.y, T, blockBelow)) return true;
+			blockBelow = corelib.utils.getStructureAtPos(t.x, t.y+1);
+		if (blockBelow&&corelib.simulation.doBlockRecipes(t.x, t.y, t, blockBelow)) return true;
 		if (p || M || (0, o.W)(g, a.vZ.Block)) return (t.isFreeFalling = !1), (t.velocity.y = t.minVelocity.y), (t.velocity.x = 0), (0, l.Fy)(c, t), p && !n.A.useMultithreading && ((0, h.c)(e, t, g, v.type), (0, o.Y$)(e, t.x, t.y)), false;
 		if (
 			(A.authorized && A.isFilter && (R = i.None),

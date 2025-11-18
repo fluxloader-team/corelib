@@ -31,6 +31,7 @@ class CoreLib {
 	batchData = {};
 	/**@private*/
 	eventNames = ["cell-change", "fog-reveal", "soil-dig"];
+	blockRecipes = {}
 
 	/**@private*/
 	init() {
@@ -77,6 +78,7 @@ class CoreLib {
 			corelib.exposed.utils = {
 				...corelib.exposed.raw.o.A,
 			};
+			this.blockRecipes["Grower"] = corelib.exposed.raw.r(2127).$;
 		});
 	}
 
@@ -164,13 +166,21 @@ class CoreLib {
 			deleteBlocks: (x1, y1, x2, y2) => {
 				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstanceState, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
+
+			doBlockRecipes: (x, y, element, collidingBlock) => {
+				console.log(corelib.exposed.blocks)
+				console.log(collidingBlock.type)
+console.log(corelib.exposed.blocks[collidingBlock.type])
+				return this.blockRecipes?.[corelib.exposed.blocks[collidingBlock.type]]?.(x, y, element, collidingBlock, fluxloaderAPI.gameInstanceState);
+				
+			},
 		};
 		corelib.utils = {
 			getCellAtPos: (x, y) => {
 				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
 			},
-			getStructureAtPos: (x,y) => {
-				corelib.exposed.raw.r(9241).TR(fluxloaderAPI.gameInstanceState, x, y)
+			getStructureAtPos: (x, y) => {
+				return corelib.exposed.raw.r(9241).TR(fluxloaderAPI.gameInstanceState, x,y);
 			},
 			getThreadIndexFromCellX(x) {
 				return corelib.exposed.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);

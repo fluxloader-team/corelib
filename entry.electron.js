@@ -74,7 +74,6 @@ class CoreLib {
 		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
-
 	}
 
 	/**@private*/

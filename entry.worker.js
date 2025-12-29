@@ -168,8 +168,8 @@ class CoreLib {
 				corelib.exposed.named.deleteBlocks(fluxloaderAPI.gameInstanceState, { x: x1, y: y1 }, { x: x2, y: y2 }, { removeCells: true });
 			},
 
-			doBlockRecipes: (x, y, element, collidingBlock,cellBelow) => {
-				return this.blockRecipes?.[corelib.exposed.named.blocks[collidingBlock?.type]]?.(x, y, element, collidingBlock,cellBelow, fluxloaderAPI.gameInstanceState);
+			doBlockRecipes: (x, y, element, collidingBlock, cellBelow) => {
+				return this.blockRecipes?.[corelib.exposed.named.blocks[collidingBlock?.type]]?.(x, y, element, collidingBlock, cellBelow, fluxloaderAPI.gameInstanceState);
 			},
 		};
 		corelib.utils = {

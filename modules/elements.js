@@ -204,17 +204,6 @@ class ElementsModule {
 		delete this.recipes.shaker[validConfig.input];
 	}
 
-	registerGrowerRecipe(/** @type {GrowerRecipeRegisterConfig} */ config) {
-		const validConfig = validateInput(config, growerRecipeRegisterSchema);
-		this.recipes.grower[validConfig.input] = [validConfig.output, validConfig.chance];
-	}
-
-	unregisterGrowerRecipe(/** @type {GrowerRecipeUnregisterConfig} */ config) {
-		const validConfig = validateInput(config, growerRecipeUnregisterSchema);
-		if (!this.recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${validConfig.input}", not found!`);
-		delete this.recipes.grower[validConfig.input];
-	}
-
 	registerConveyorBeltIgnores(/** @type {string} */ id) {
 		this.otherFeatures.conveyorBeltIgnores.push(id);
 	}
@@ -307,7 +296,7 @@ class ElementsModule {
 					([input, [outputAbove, outputBelow]]) =>
 						`[n.RJ.${input}]: {outputsAbove: [${outputAbove.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`).join(",")}], outputsBelow:[${outputBelow
 							.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`)
-							.join(",")}]}`
+							.join(",")}]}`,
 				)
 				.join(",")}
 				};
@@ -353,7 +342,7 @@ class ElementsModule {
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:solidMovementTweaks", {
 			type: "regex",
 			pattern: "R=i\\.Both,F=\\(0,o\\.Ol\\)\\(g\\);if\\(p\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!S\\(e,t,g\\)\\)&&!\\(0,f\\.v\\)\\(e,t,g\\)\\)",
-			replace:`R=i.Both,F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||p||M||(0,o.W)(g,a.vZ.Block))$1if((!g||M||!S(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`
+			replace: `R=i.Both,F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||p||M||(0,o.W)(g,a.vZ.Block))$1if((!g||M||!S(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
 		});
 	}
 }

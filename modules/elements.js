@@ -348,6 +348,13 @@ class ElementsModule {
 			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,
 			to: `d=[${prependJoin("a.RJ.", this.otherFeatures.conveyorBeltIgnores)}`,
 		});
+		//all the following patches improve the movement of particles too colide with all recipe blocks
+		//used chatgpt for this cuz i don't wanna learn regex, STUPID CHATBOTS CHANGING CODE
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:solidMovementTweaks", {
+			type: "regex",
+			pattern: "R=i\\.Both,\\s*F=\\(0,o\\.Ol\\)\\(g\\);\\s*if\\(p\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!S\\(e,t,g\\)\\)\\s*&&\\s*!\\(0,f\\.v\\)\\(e,t,g\\)\\)",
+			replace:`R=i.Both,F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||p||M||(0,o.W)(g,a.vZ.Block))$1if((!g||M||!S(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`
+		});
 	}
 }
 

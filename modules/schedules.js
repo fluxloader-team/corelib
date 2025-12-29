@@ -21,7 +21,7 @@ const scheduleSchema = {
 };
 
 class SchedulesModule {
-	#registry = corelib.enums.createRegistry({
+	registry = corelib.enums.createRegistry({
 		name: "Schedule",
 		intIdStart: 19,
 		bundleMap: {
@@ -33,15 +33,15 @@ class SchedulesModule {
 
 	register(/** @type {string } */ id, /** @type {number} */ interval) {
 		const data = validateInput({ id, interval }, scheduleSchema);
-		this.#registry.register(data.id, data.interval);
+		this.registry.register(data.id, data.interval);
 	}
 
 	unregister(/** @type {string} */ id) {
-		this.#registry.unregister(id);
+		this.registry.unregister(id);
 	}
 
 	getEntries() {
-		return this.#registry.entries;
+		return this.registry.entries;
 	}
 
 	applyPatches() {
@@ -51,7 +51,7 @@ class SchedulesModule {
 			type: "replace",
 			from: `up[_.Autosave]=`,
 			to:
-				Object.entries(this.#registry.entries).reduce(
+				Object.entries(this.registry.entries).reduce(
 					(acc, [id, interval]) => acc + `up[_["${id}"]]={interval:${interval}, multithreading:!1, callback:()=>{fluxloaderAPI.events.tryTrigger("corelib:schedule-${id}",undefined,false)}},`,
 					``,
 				) + `~`,

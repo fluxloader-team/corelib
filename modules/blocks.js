@@ -105,7 +105,7 @@ const blockVariantSchema = {
 };
 
 class BlocksModule {
-	#registry = corelib.enums.createRegistry({
+	registry = corelib.enums.createRegistry({
 		name: "Block",
 		intIdStart: 99,
 		bundleMap: {
@@ -125,47 +125,47 @@ class BlocksModule {
 			corelib.schedules.register(`block-tick-${validConfig.id}`, validConfig.tickInterval);
 		}
 
-		this.#registry.register(validConfig.id, entry);
+		this.registry.register(validConfig.id, entry);
 	}
 
 	registerVariant(/** @type {BlockVariantConfig} */ config) {
 		const validConfig = validateInput(config, blockVariantSchema);
 
-		if (!this.#registry.entries.hasOwnProperty(validConfig.parentId)) {
+		if (!this.registry.entries.hasOwnProperty(validConfig.parentId)) {
 			return log("error", "corelib", `Parent block name: "${validConfig.parentId}" for variant "${validConfig.parentId}${validConfig.suffix}" not found!`);
 		}
 
 		let id = validConfig.parentId + validConfig.suffix;
-		let parentEntry = this.#registry.entries[validConfig.parentId];
+		let parentEntry = this.registry.entries[validConfig.parentId];
 		let fullImagePath = this.getFullImagePath(parentEntry.sourceMod, validConfig.imagePath);
 		let entry = { isVariant: true, fullImagePath, ...validConfig };
 		entry.id = id;
 
-		if (this.#registry.register(id, entry)) {
+		if (this.registry.register(id, entry)) {
 			parentEntry.variants.push(entry);
 		}
 	}
 
 	unregister(/** @type {string} */ id) {
 		// manually check here since we don't unregister until we unregister variants
-		if (!this.#registry.entries[id]) {
+		if (!this.registry.entries[id]) {
 			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
-		if (this.#registry.entries[id].isVariant) {
+		if (this.registry.entries[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
-		const data = this.#registry.entries[id];
+		const data = this.registry.entries[id];
 
 		if (data.tickInterval != null) {
 			corelib.schedules.unregister(`block-tick-${data.id}`);
 		}
 
 		for (let variant of data.variants) {
-			this.#registry.unregister(variant.id);
+			this.registry.unregister(variant.id);
 		}
 
-		this.#registry.unregister(id);
+		this.registry.unregister(id);
 	}
 
 	getFullImagePath(sourceMod, imagePath) {
@@ -180,14 +180,14 @@ class BlocksModule {
 	}
 
 	getEntries() {
-		return this.#registry.entries;
+		return this.registry.entries;
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
 		const reduceBlocks = (f) =>
-			Object.values(this.#registry.entries)
+			Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 
@@ -196,17 +196,17 @@ class BlocksModule {
 		const reduceBlocksAndVariants = (f) => reduceBlocks((b) => f(b) + reduceBlockVariants(b, (v) => f(v)));
 
 		const reduceBlocksWithConfig = (f) =>
-			Object.values(this.#registry.entries)
+			Object.values(this.registry.entries)
 				.filter((b) => !b.isVariant && b.hasConfigMenu)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		const reduceBlocksWithHover = (f) =>
-			Object.values(this.#registry.entries)
+			Object.values(this.registry.entries)
 				.filter((b) => b.hasHoverUI)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		let reduceBlocksWithTicking = (f) =>
-			Object.values(this.#registry.entries)
+			Object.values(this.registry.entries)
 				.filter((t) => t.tickInterval != null)
 				.reduce((acc, t) => acc + f(t.id), "");
 
@@ -461,76 +461,8 @@ class BlocksModule {
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:solidFix", {
 			type: "replace",
 			from: `var p=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)&&!(0,s.v)(e,t)){var y=!1,v=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);v&&(y=v.filter||v.queued),y&&v.filter&&(t.velocity.y=t.minVelocity.y);var g=(0,o.tT)(c,t.x,t.y+1),p=(0,o.OA)(g),A=(0,u.uQ)(e,t,t.x,t.y+1,y),M=!A.authorized,R=i.Both,F=(0,o.Ol)(g);if(p||M||(0,o.W)(g,a.vZ.Block))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x=0,(0,l.Fy)(c,t),p&&!n.A.useMultithreading&&((0,h.c)(e,t,g,v.type),(0,o.Y$)(e,t.x,t.y)),void(0,x.$)(e,t);if(A.authorized&&A.isFilter&&(R=i.None),F||((0,o.W)(g,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(F||R===i.None||(R!==i.Left&&R!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),R!==i.Right&&R!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var C=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,F){var J=!1,k=t.y+1;if(C>1)for(var z=t.y+C,b=t.y+2;b<=z;b+=1){var L=(0,o.tT)(c,t.x,b),T=(0,o.Ol)(L),B=(0,u.uQ)(e,t,t.x,b,y),w=B.authorized;if(!T||!w){T||(M=!w,g=L),J=!0,!w||B.isFilter||!T&&((0,o.OA)(L)||(0,o.W)(L,a.vZ.Block))?R=i.None:T||((0,o.W)(L,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right));break}k++}if((0,o.L3)(e,t,t.x,k),!J)return void(t.isFreeFalling=!0)}if((!g||M||!S(e,t,g))&&!(0,f.v)(e,t,g))if(M&&(0,x.$)(e,t))console.log("gro second case... necessary to keep this?");else{if(t.isFreeFalling){var G=Math.abs(t.velocity.y)/10;0===t.velocity.x&&(t.velocity.x=Math.random()>=.5?1:-1),t.velocity.x=t.velocity.x<0?-G:G}if(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.9,R!==i.None&&m(e,t,R))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var E=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var I,N,W=t.x+E,Z=t.x,O=t.y;Z!==W&&(Z+=E<0?-1:1,(0,o.lV)(e,Z,O)&&(0,u.xR)(e,t,Z,O,y));)(0,o.lV)(e,Z,O+1)&&(0,u.xR)(e,t,Z,O+1,y)&&(O+=1),I=Z,N=O;I&&(0,o.L3)(e,t,I,N)}}}}}`,
-			to: `var p = function (e, t, r) {
-	var c = e.store;
-	if (!t.hasBeenUpdated && (0, o.Do)(c, t.x, t.y) && !(0, s.v)(e, t)) {
-		var y = !1,
-			v = d.A.get(e.session, "structures", Math.floor(t.x / n.A.snapGridCellSize) * n.A.snapGridCellSize, Math.floor(t.y / n.A.snapGridCellSize) * n.A.snapGridCellSize);
-		v && (y = v.filter || v.queued), y && v.filter && (t.velocity.y = t.minVelocity.y);
-		var g = (0, o.tT)(c, t.x, t.y + 1),
-			p = (0, o.OA)(g),
-			A = (0, u.uQ)(e, t, t.x, t.y + 1, y),
-			M = !A.authorized,
-			R = i.Both,
-			F = (0, o.Ol)(g),
-			blockBelow = corelib.utils.getStructureAtPos(t.x, t.y+1);
-		if (blockBelow&&corelib.simulation.doBlockRecipes(t.x, t.y, t, blockBelow, g)) return true;
-		if (p || M || (0, o.W)(g, a.vZ.Block)) return (t.isFreeFalling = !1), (t.velocity.y = t.minVelocity.y), (t.velocity.x = 0), (0, l.Fy)(c, t), p && !n.A.useMultithreading && ((0, h.c)(e, t, g, v.type), (0, o.Y$)(e, t.x, t.y)), false;
-		if (
-			(A.authorized && A.isFilter && (R = i.None),
-			F || ((0, o.W)(g, a.vZ.SlidingBlockLeft) ? (R = i.Left) : (0, o.W)(g, a.vZ.SlidingBlockRight) && (R = i.Right)),
-			(t.threshold.y += t.velocity.y * r),
-			(t.velocity.y += n.A.gravity * r),
-			t.threshold.y < 1)
-		)
-			return (
-				t.isFreeFalling && (0, o.Y$)(e, t.x, t.y),
-				void (F || R === i.None || ((R !== i.Left && R !== i.Both) || ((0, o.lV)(e, t.x - 1, t.y + 1) && (0, o.Y$)(e, t.x, t.y)), (R !== i.Right && R !== i.Both) || ((0, o.lV)(e, t.x + 1, t.y + 1) && (0, o.Y$)(e, t.x, t.y))))
-			);
-		var C = Math.floor(t.threshold.y);
-		if (((t.threshold.y = t.threshold.y % 1), F)) {
-			var J = !1,
-				k = t.y + 1;
-			if (C > 1)
-				for (var z = t.y + C, b = t.y + 2; b <= z; b += 1) {
-					var L = (0, o.tT)(c, t.x, b),
-						T = (0, o.Ol)(L),
-						B = (0, u.uQ)(e, t, t.x, b, y),
-						w = B.authorized;
-					if (!T || !w) {
-						T || ((M = !w), (g = L)),
-							(J = !0),
-							!w || B.isFilter || (!T && ((0, o.OA)(L) || (0, o.W)(L, a.vZ.Block))) ? (R = i.None) : T || ((0, o.W)(L, a.vZ.SlidingBlockLeft) ? (R = i.Left) : (0, o.W)(g, a.vZ.SlidingBlockRight) && (R = i.Right));
-						break;
-					}
-					k++;
-				}
-			if (((0, o.L3)(e, t, t.x, k), !J)) return void (t.isFreeFalling = !0);
-		}
-		let blockBelowEndPos = corelib.utils.getStructureAtPos(g.x, g.y)
-		if ((!g || M ||!S(e, t, g)|| (blockBelowEndPos && !corelib.simulation.doBlockRecipes(t.x, t.y, t,blockBelowEndPos , g))))
-			if (M) console.log("gro second case... necessary to keep this?");
-			else {
-				if (t.isFreeFalling) {
-					var G = Math.abs(t.velocity.y) / 10;
-					0 === t.velocity.x && (t.velocity.x = Math.random() >= 0.5 ? 1 : -1), (t.velocity.x = t.velocity.x < 0 ? -G : G);
-				}
-				if (((t.isFreeFalling = !1), (t.velocity.y *= 0.9), t.velocity.y < t.minVelocity.y && (t.velocity.y = t.minVelocity.y), (t.threshold.x += t.velocity.x * r), (t.velocity.x *= 0.9), R !== i.None && m(e, t, R)))
-					t.isFreeFalling = !0;
-				else {
-					if (t.velocity.x < 6 && t.velocity.x > -6) return (t.velocity.x = 0), void (t.threshold.x = 0);
-					if (t.threshold.x < 1 && t.threshold.x > -1) (0, o.Y$)(e, t.x, t.y);
-					else {
-						var E = t.threshold.x < 0 ? Math.ceil(t.threshold.x) : Math.floor(t.threshold.x);
-						t.threshold.x = t.threshold.x % 1;
-						for (var I, N, W = t.x + E, Z = t.x, O = t.y; Z !== W && ((Z += E < 0 ? -1 : 1), (0, o.lV)(e, Z, O) && (0, u.xR)(e, t, Z, O, y)); )
-							(0, o.lV)(e, Z, O + 1) && (0, u.xR)(e, t, Z, O + 1, y) && (O += 1), (I = Z), (N = O);
-						I && (0, o.L3)(e, t, I, N);
-					}
-				}
-			}
-	}
-}`,
+			to: `var p=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)&&!(0,s.v)(e,t)){var y=!1,v=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);v&&(y=v.filter||v.queued),y&&v.filter&&(t.velocity.y=t.minVelocity.y);var g=(0,o.tT)(c,t.x,t.y+1),p=(0,o.OA)(g),A=(0,u.uQ)(e,t,t.x,t.y+1,y),M=!A.authorized,R=i.Both,F=(0,o.Ol)(g),blockBelow = corelib.utils.getStructureAtPos(t.x, t.y + 1);
+		if ((blockBelow && (0,corelib.simulation.doBlockRecipes((t.x, t.y, t, blockBelow, g))||(p || M || (0, o.W)(g, a.vZ.Block)))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x=0,(0,l.Fy)(c,t),p&&!n.A.useMultithreading&&((0,h.c)(e,t,g,v.type),(0,o.Y$)(e,t.x,t.y));if(A.authorized&&A.isFilter&&(R=i.None),F||((0,o.W)(g,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(F||R===i.None||(R!==i.Left&&R!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),R!==i.Right&&R!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var C=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,F){var J=!1,k=t.y+1;if(C>1)for(var z=t.y+C,b=t.y+2;b<=z;b+=1){var L=(0,o.tT)(c,t.x,b),T=(0,o.Ol)(L),B=(0,u.uQ)(e,t,t.x,b,y),w=B.authorized;if(!T||!w){T||(M=!w,g=L),J=!0,!w||B.isFilter||!T&&((0,o.OA)(L)||(0,o.W)(L,a.vZ.Block))?R=i.None:T||((0,o.W)(L,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right));break}k++}if((0,o.L3)(e,t,t.x,k),!J)return void(t.isFreeFalling=!0)}if((!g||M||!S(e,t,g))&&!(0, corelib.simulation.doBlockRecipes)(t.x, t.y, t, blockBelow, g))if(M&&(0,x.$)(e,t))console.log("gro second case... necessary to keep this?");else{if(t.isFreeFalling){var G=Math.abs(t.velocity.y)/10;0===t.velocity.x&&(t.velocity.x=Math.random()>=.5?1:-1),t.velocity.x=t.velocity.x<0?-G:G}if(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.9,R!==i.None&&m(e,t,R))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var E=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var I,N,W=t.x+E,Z=t.x,O=t.y;Z!==W&&(Z+=E<0?-1:1,(0,o.lV)(e,Z,O)&&(0,u.xR)(e,t,Z,O,y));)(0,o.lV)(e,Z,O+1)&&(0,u.xR)(e,t,Z,O+1,y)&&(O+=1),I=Z,N=O;I&&(0,o.L3)(e,t,I,N)}}}}}`,
 		}); /*
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:liquidFix", {
 			type: "replace",
@@ -546,6 +478,8 @@ class BlocksModule {
 }
 
 globalThis.BlocksModule = BlocksModule;
+
+
 
 /*
 //slushy
@@ -567,9 +501,9 @@ var p = function (e, t, r) {
 			M = !A.authorized,
 			R = i.Both,
 			F = (0, o.Ol)(g),
-			blockBelow = corelib.simulation.getStructureAtPos(t.x, t.y);
-		if (corelib.blocks.doBlockRecipes(t.x, t.y, T, blockBelow)) return true;
-		if (p || M || (0, o.W)(g, a.vZ.Block)) return (t.isFreeFalling = !1), (t.velocity.y = t.minVelocity.y), (t.velocity.x = 0), (0, l.Fy)(c, t), p && !n.A.useMultithreading && ((0, h.c)(e, t, g, v.type), (0, o.Y$)(e, t.x, t.y)), false;
+			blockBelow = corelib.utils.getStructureAtPos(t.x, t.y + 1);
+		if ((blockBelow && corelib.simulation.doBlockRecipes(t.x, t.y, t, blockBelow, g))||(p || M || (0, o.W)(g, a.vZ.Block)))
+			return (t.isFreeFalling = !1), (t.velocity.y = t.minVelocity.y), (t.velocity.x = 0), (0, l.Fy)(c, t), p && !n.A.useMultithreading && ((0, h.c)(e, t, g, v.type), (0, o.Y$)(e, t.x, t.y))
 		if (
 			(A.authorized && A.isFilter && (R = i.None),
 			F || ((0, o.W)(g, a.vZ.SlidingBlockLeft) ? (R = i.Left) : (0, o.W)(g, a.vZ.SlidingBlockRight) && (R = i.Right)),
@@ -601,16 +535,13 @@ var p = function (e, t, r) {
 				}
 			if (((0, o.L3)(e, t, t.x, k), !J)) return void (t.isFreeFalling = !0);
 		}
-		if ((!g || M || !S(e, t, g)) && !(0, f.v)(e, t, g))
-			if (M) console.log("gro second case... necessary to keep this?");
-			else {
+		if ((!g || M || !S(e, t, g)) && !(0, corelib.simulation.doBlockRecipes(t.x, t.y, t, blockBelow, g))
 				if (t.isFreeFalling) {
 					var G = Math.abs(t.velocity.y) / 10;
 					0 === t.velocity.x && (t.velocity.x = Math.random() >= 0.5 ? 1 : -1), (t.velocity.x = t.velocity.x < 0 ? -G : G);
 				}
 				if (((t.isFreeFalling = !1), (t.velocity.y *= 0.9), t.velocity.y < t.minVelocity.y && (t.velocity.y = t.minVelocity.y), (t.threshold.x += t.velocity.x * r), (t.velocity.x *= 0.9), R !== i.None && m(e, t, R)))
 					t.isFreeFalling = !0;
-				else {
 					if (t.velocity.x < 6 && t.velocity.x > -6) return (t.velocity.x = 0), void (t.threshold.x = 0);
 					if (t.threshold.x < 1 && t.threshold.x > -1) (0, o.Y$)(e, t.x, t.y);
 					else {
@@ -620,10 +551,10 @@ var p = function (e, t, r) {
 							(0, o.lV)(e, Z, O + 1) && (0, u.xR)(e, t, Z, O + 1, y) && (O += 1), (I = Z), (N = O);
 						I && (0, o.L3)(e, t, I, N);
 					}
-				}
-			}
+				
 	}
-};*/
+}
+var p=function(e,t,r){var c=e.store;if(!t.hasBeenUpdated&&(0,o.Do)(c,t.x,t.y)&&!(0,s.v)(e,t)){var y=!1,v=d.A.get(e.session,"structures",Math.floor(t.x/n.A.snapGridCellSize)*n.A.snapGridCellSize,Math.floor(t.y/n.A.snapGridCellSize)*n.A.snapGridCellSize);v&&(y=v.filter||v.queued),y&&v.filter&&(t.velocity.y=t.minVelocity.y);var g=(0,o.tT)(c,t.x,t.y+1),p=(0,o.OA)(g),A=(0,u.uQ)(e,t,t.x,t.y+1,y),M=!A.authorized,R=i.Both,F=(0,o.Ol)(g);if(p||M||(0,o.W)(g,a.vZ.Block))return t.isFreeFalling=!1,t.velocity.y=t.minVelocity.y,t.velocity.x=0,(0,l.Fy)(c,t),p&&!n.A.useMultithreading&&((0,h.c)(e,t,g,v.type),(0,o.Y$)(e,t.x,t.y)),void(0,x.$)(e,t);if(A.authorized&&A.isFilter&&(R=i.None),F||((0,o.W)(g,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right)),t.threshold.y+=t.velocity.y*r,t.velocity.y+=n.A.gravity*r,t.threshold.y<1)return t.isFreeFalling&&(0,o.Y$)(e,t.x,t.y),void(F||R===i.None||(R!==i.Left&&R!==i.Both||(0,o.lV)(e,t.x-1,t.y+1)&&(0,o.Y$)(e,t.x,t.y),R!==i.Right&&R!==i.Both||(0,o.lV)(e,t.x+1,t.y+1)&&(0,o.Y$)(e,t.x,t.y)));var C=Math.floor(t.threshold.y);if(t.threshold.y=t.threshold.y%1,F){var J=!1,k=t.y+1;if(C>1)for(var z=t.y+C,b=t.y+2;b<=z;b+=1){var L=(0,o.tT)(c,t.x,b),T=(0,o.Ol)(L),B=(0,u.uQ)(e,t,t.x,b,y),w=B.authorized;if(!T||!w){T||(M=!w,g=L),J=!0,!w||B.isFilter||!T&&((0,o.OA)(L)||(0,o.W)(L,a.vZ.Block))?R=i.None:T||((0,o.W)(L,a.vZ.SlidingBlockLeft)?R=i.Left:(0,o.W)(g,a.vZ.SlidingBlockRight)&&(R=i.Right));break}k++}if((0,o.L3)(e,t,t.x,k),!J)return void(t.isFreeFalling=!0)}if((!g||M||!S(e,t,g))&&!(0,f.v)(e,t,g))if(M&&(0,x.$)(e,t))console.log("gro second case... necessary to keep this?");else{if(t.isFreeFalling){var G=Math.abs(t.velocity.y)/10;0===t.velocity.x&&(t.velocity.x=Math.random()>=.5?1:-1),t.velocity.x=t.velocity.x<0?-G:G}if(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),t.threshold.x+=t.velocity.x*r,t.velocity.x*=.9,R!==i.None&&m(e,t,R))t.isFreeFalling=!0;else{if(t.velocity.x<6&&t.velocity.x>-6)return t.velocity.x=0,void(t.threshold.x=0);if(t.threshold.x<1&&t.threshold.x>-1)(0,o.Y$)(e,t.x,t.y);else{var E=t.threshold.x<0?Math.ceil(t.threshold.x):Math.floor(t.threshold.x);t.threshold.x=t.threshold.x%1;for(var I,N,W=t.x+E,Z=t.x,O=t.y;Z!==W&&(Z+=E<0?-1:1,(0,o.lV)(e,Z,O)&&(0,u.xR)(e,t,Z,O,y));)(0,o.lV)(e,Z,O+1)&&(0,u.xR)(e,t,Z,O+1,y)&&(O+=1),I=Z,N=O;I&&(0,o.L3)(e,t,I,N)}}}}}*/
 //liquid
 /*
 v=function(e,t,r){var a=e.store;if(!t.hasBeenUpdated&&(0,l.Do)(a,t.x,t.y)){var o=!1,s=d.A.get(e.session,"structures",Math.floor(t.x/i.A.snapGridCellSize)*i.A.snapGridCellSize,Math.floor(t.y/i.A.snapGridCellSize)*i.A.snapGridCellSize);if(s&&(o=s.queued),t.movesOnSameYAxis.count>1e3)return i.A.useMultithreading&&e.shared.reservoir[0]++,void(0,l.Nz)(e,t);if(t.threshold.y+=t.velocity.y*r,t.velocity.y+=i.A.gravity*r,t.threshold.y<1)if(t.isFreeFalling)try{(0,l.Y$)(e,t.x,t.y)}catch(e){console.log("Error in reportToChunkAtCellPos",e,JSON.stringify(t))}else p(e,t);else{var h=Math.floor(t.threshold.y);t.threshold.y=t.threshold.y%1;var c=(0,l.tT)(a,t.x,t.y+1);if(!f(e,t.x,t.y+1,o))if((0,l.Ol)(c)){var y=t.y+1;if(h>1)for(var v=t.y+h,m=t.y+2;m<=v;m+=1){var S=(0,l.tT)(a,t.x,m);if(!(0,l.Ol)(S))break;y++}t.isFreeFalling=!0;try{(0,l.L3)(e,t,t.x,y)}catch(e){}}else t.isFreeFalling&&t.type===n.RJ.Water&&(0,u.$T)(e,t.x*i.A.cellSize,t.y*i.A.cellSize,u.c6.Water),x(e,t,c,t.x,t.y+1)||(t.isFreeFalling=!1,t.velocity.y*=.9,t.velocity.y<t.minVelocity.y&&(t.velocity.y=t.minVelocity.y),g(e,t)||p(e,t,!0))}}}

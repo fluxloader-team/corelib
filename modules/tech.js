@@ -34,7 +34,7 @@ const techSchema = {
 };
 
 class TechModule {
-	#registry = corelib.enums.createRegistry({
+	registry = corelib.enums.createRegistry({
 		name: "Tech",
 		intIdStart: 38,
 		bundleMap: { main: "w", sim: "b", manager: "R" },
@@ -76,17 +76,17 @@ class TechModule {
 
 		const entry = { ...validConfig };
 
-		this.#registry.register(validConfig.id, entry);
+		this.registry.register(validConfig.id, entry);
 	}
 
 	unregister(/** @type {string} */ id) {
-		this.#registry.unregister(id);
+		this.registry.unregister(id);
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading technology module patches");
 
-		let techList = Object.values(this.#baseTechs).concat(Object.values(this.#registry.entries));
+		let techList = Object.values(this.#baseTechs).concat(Object.values(this.registry.entries));
 
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];

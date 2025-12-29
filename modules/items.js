@@ -30,7 +30,7 @@ const itemSchema = {
 };
 
 class ItemsModule {
-	#registry = corelib.enums.createRegistry({
+	registry = corelib.enums.createRegistry({
 		name: "Item",
 		intIdStart: 25,
 		bundleMap: {
@@ -50,18 +50,18 @@ class ItemsModule {
 
 		const entry = { ...validConfig };
 
-		this.#registry.register(validConfig.id, entry);
+		this.registry.register(validConfig.id, entry);
 	}
 
 	unregister(/** @type {string} */ id) {
-		this.#registry.unregister(id);
+		this.registry.unregister(id);
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading item module patches");
 
 		let itemDefinitionString = "";
-		for (const item of Object.values(this.#registry.entries)) {
+		for (const item of Object.values(this.registry.entries)) {
 			itemDefinitionString += `DF[l.${item.id}]= function() {
 				return {
 					id: l.${item.id},

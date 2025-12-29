@@ -108,7 +108,7 @@ const upgradeSchema = {
 };
 
 class UpgradesModule {
-	#upgrades = {};
+	upgrades = {};
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -139,13 +139,13 @@ class UpgradesModule {
 
 		const entry = { ...validConfig, items: {} };
 
-		this.#upgrades[validConfig.id] = entry;
+		this.upgrades[validConfig.id] = entry;
 	}
 
 	registerCategory(/** @type {CategoryConfig} */ config) {
 		const validConfig = validateInput(config, categorySchema);
 
-		if (!this.#upgrades.hasOwnProperty(validConfig.tabID)) {
+		if (!this.upgrades.hasOwnProperty(validConfig.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${validConfig.id}" under non-existent tab "${validConfig.tabID}"`);
 			return;
 		}
@@ -154,17 +154,17 @@ class UpgradesModule {
 
 		const entry = { ...validConfig, upgrades: {} };
 
-		this.#upgrades[validConfig.tabID].items[validConfig.id] = entry;
+		this.upgrades[validConfig.tabID].items[validConfig.id] = entry;
 	}
 
 	registerUpgrade(/** @type {UpgradeConfig} */ config) {
 		const validConfig = validateInput(config, upgradeSchema);
 
-		if (!this.#upgrades.hasOwnProperty(validConfig.tabID)) {
+		if (!this.upgrades.hasOwnProperty(validConfig.tabID)) {
 			log("warn", "corelib", `Tried to register upgrade "${validConfig.id}" under non-existent tab "${validConfig.tabID}"`);
 			return;
 		}
-		if (!this.#upgrades[validConfig.tabID].items.hasOwnProperty(validConfig.categoryID)) {
+		if (!this.upgrades[validConfig.tabID].items.hasOwnProperty(validConfig.categoryID)) {
 			log("warn", "corelib", `Tried to register upgrade "${validConfig.id}" under non-existent category "${validConfig.categoryID}"`);
 			return;
 		}
@@ -178,39 +178,39 @@ class UpgradesModule {
 
 		if (Object.keys(entry.requirement).length === 0) delete entry.requirement;
 
-		this.#upgrades[entry.tabID].items[entry.categoryID].upgrades[entry.id] = entry;
+		this.upgrades[entry.tabID].items[entry.categoryID].upgrades[entry.id] = entry;
 	}
 
 	unregisterTab(/** @type {string} */ id) {
-		if (!this.#upgrades.hasOwnProperty(id)) {
+		if (!this.upgrades.hasOwnProperty(id)) {
 			log("warn", "corelib", `Tried to unregister non-existent upgrade category "${id}"`);
 			return;
 		}
-		delete this.#upgrades[id];
+		delete this.upgrades[id];
 	}
 
 	unregisterCategory(/** @type {string} */ tabID, /** @type {string} */ id) {
-		if (!this.#upgrades.hasOwnProperty(tabID)) {
+		if (!this.upgrades.hasOwnProperty(tabID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
 			return;
 		}
-		if (!this.#upgrades[tabID].items.hasOwnProperty(id)) {
+		if (!this.upgrades[tabID].items.hasOwnProperty(id)) {
 			log("warn", "corelib", `Tried to unregister non-existent upgrade category "${id}"`);
 			return;
 		}
-		delete this.#upgrades[tabID].items[id];
+		delete this.upgrades[tabID].items[id];
 	}
 
 	unregisterUpgrade(/** @type {string} */ tabID, /** @type {string} */ categoryID, /** @type {string} */ id) {
-		if (!this.#upgrades.hasOwnProperty(tabID)) {
+		if (!this.upgrades.hasOwnProperty(tabID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent tab "${tabID}"`);
 			return;
 		}
-		if (!this.#upgrades[tabID].items.hasOwnProperty(categoryID)) {
+		if (!this.upgrades[tabID].items.hasOwnProperty(categoryID)) {
 			log("warn", "corelib", `Tried to unregister upgrade "${id}" from non-existent category "${categoryID}"`);
 			return;
 		}
-		delete this.#upgrades[tabID].items[categoryID].upgrades[id];
+		delete this.upgrades[tabID].items[categoryID].upgrades[id];
 	}
 
 	applyPatches() {
@@ -220,7 +220,7 @@ class UpgradesModule {
 
 		// Merged into game's upgrades data to add new upgrades even in old saves
 		let updates = {};
-		for (let tab of Object.values(this.#upgrades)) {
+		for (let tab of Object.values(this.upgrades)) {
 			let newTab = { ...tab };
 			newTab.items = [];
 			for (let category of Object.values(tab.items)) {

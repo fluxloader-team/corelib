@@ -167,7 +167,7 @@ class ElementsModule {
 
 	unregisterPressRecipe(/** @type {PressRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, pressRecipeUnregisterSchema);
-		if (!this.recipes.press[validConfig.input]) return log("error", "corelib", `Could not unregister press recipe with id "${validConfig.input}", not found!`);
+		if (!this.recipes.press[validConfig.input]) return log("error", "corelib", `Could not unregister unknown press recipe with id "${validConfig.input}"!`);
 		delete this.recipes.press[validConfig.input];
 	}
 
@@ -178,7 +178,7 @@ class ElementsModule {
 
 	unregisterShakerRecipe(/** @type {ShakerRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
-		if (!this.recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${validConfig.input}", not found!`);
+		if (!this.recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister unknown shaker recipe with id "${validConfig.input}"!`);
 		delete this.recipes.shaker[validConfig.input];
 	}
 
@@ -189,7 +189,7 @@ class ElementsModule {
 
 	unregisterGrowerRecipe(/** @type {GrowerRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, growerRecipeUnregisterSchema);
-		if (!this.recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister grower recipe with id "${validConfig.input}", not found!`);
+		if (!this.recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister unknown grower recipe with id "${validConfig.input}"!`);
 		delete this.recipes.grower[validConfig.input];
 	}
 
@@ -200,7 +200,7 @@ class ElementsModule {
 
 	unregisterShakerRecipe(/** @type {ShakerRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, shakerRecipeUnregisterSchema);
-		if (!this.recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister shaker recipe with id "${validConfig.input}", not found!`);
+		if (!this.recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister unknown shaker recipe with id "${validConfig.input}"!`);
 		delete this.recipes.shaker[validConfig.input];
 	}
 
@@ -221,7 +221,7 @@ class ElementsModule {
 
 	unregisterConveyorBeltIgnores(/** @type {string} */ id) {
 		const index = this.otherFeatures.conveyorBeltIgnores.indexOf(id);
-		if (index == -1) return log("error", "corelib", `Could not unregister conveyorBeltIgnore with id "${id}", not found!`);
+		if (index == -1) return log("error", "corelib", `Could not unregister unknown conveyorBeltIgnore with id "${id}"!`);
 		this.otherFeatures.conveyorBeltIgnores.splice(index, 1);
 	}
 
@@ -352,7 +352,7 @@ class ElementsModule {
 		//used chatgpt for this cuz i don't wanna learn regex, STUPID CHATBOTS CHANGING CODE
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:solidMovementTweaks", {
 			type: "regex",
-			pattern: "R=i\\.Both,\\s*F=\\(0,o\\.Ol\\)\\(g\\);\\s*if\\(p\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!S\\(e,t,g\\)\\)\\s*&&\\s*!\\(0,f\\.v\\)\\(e,t,g\\)\\)",
+			pattern: "R=i\\.Both,F=\\(0,o\\.Ol\\)\\(g\\);if\\(p\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!S\\(e,t,g\\)\\)&&!\\(0,f\\.v\\)\\(e,t,g\\)\\)",
 			replace:`R=i.Both,F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||p||M||(0,o.W)(g,a.vZ.Block))$1if((!g||M||!S(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`
 		});
 	}

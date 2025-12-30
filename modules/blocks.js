@@ -23,7 +23,6 @@
  * @property {ShapeConfig} shape Shape of the block
  * @property {number[]} [angles=[]] Angles that the block can be dragged and placed at
  * @property {number} [animationInterval=500] How fast your block's animation cycles frames
- * @property {function} Collision recipes
  */
 
 const blockSchema = {
@@ -37,7 +36,6 @@ const blockSchema = {
 	hasHoverUI: { type: "boolean", default: false },
 	unlockedByDefault: { type: "boolean", default: false },
 	tickInterval: { type: "number", default: null, nullable: true },
-	//collisionRecipe: { type: "function", default: null },
 	shape: {
 		type: "array",
 		verifier: (v) => {
@@ -103,7 +101,6 @@ const blockVariantSchema = {
 		},
 	},
 };
-
 
 class BlocksModule {
 	#registry = corelib.enums.createRegistry({

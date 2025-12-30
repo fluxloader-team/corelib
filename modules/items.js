@@ -29,7 +29,6 @@ const itemSchema = {
 	},
 };
 
-
 class ItemsModule {
 	#registry = corelib.enums.createRegistry({
 		name: "Item",

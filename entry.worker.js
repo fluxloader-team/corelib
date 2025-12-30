@@ -73,6 +73,7 @@ class CoreLib {
 				getElementTypeFromMapData: corelib.exposed.raw.u.BQ,
 				setCellWithAutoWorkerRoute: corelib.exposed.raw.u.Q1,
 				getChunkAtPos: corelib.exposed.raw.u.NK,
+				getStructureAtPos: corelib.exposed.raw.r(9241).TR,
 			};
 
 			corelib.exposed.utils = {
@@ -177,7 +178,7 @@ class CoreLib {
 				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
 			},
 			getStructureAtPos: (x, y) => {
-				return corelib.exposed.raw.r(9241).TR(fluxloaderAPI.gameInstanceState, x, y);
+				return corelib.exposed.named.getStructureAtPos(fluxloaderAPI.gameInstanceState, x, y);
 			},
 			getThreadIndexFromCellX(x) {
 				return corelib.exposed.utils.getThreadIndexFromCellX(x, fluxloaderAPI.gameInstanceState.environment.threadMeta.threadCount);

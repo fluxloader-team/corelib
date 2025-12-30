@@ -344,6 +344,11 @@ class ElementsModule {
 			pattern: "R=i\\.Both,F=\\(0,o\\.Ol\\)\\(g\\);if\\(p\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!S\\(e,t,g\\)\\)&&!\\(0,f\\.v\\)\\(e,t,g\\)\\)",
 			replace: `R=i.Both,F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||p||M||(0,o.W)(g,a.vZ.Block))$1if((!g||M||!S(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
 		});
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:slushyMovementTweaks", {
+			type: "regex",
+			pattern: "S=\\(0,o\\.OA\\)\\(g\\)([\\s\\S]*?)F=\\(0,o\\.Ol\\)\\(g\\);if\\(S\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!m\\(e,t,g\\)\\)&&!\\(\\(0,f\\.v\\)\\(e,t,g\\)\\|\\|M&&\\(0,x\\.\\$\\)\\(e,t\\)\\)\\)",
+			replace: `S=(0,o.OA)(g)$1F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||S||M||(0,o.W)(g,a.vZ.Block))$2if((!g||M||!m(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
+		});
 	}
 }
 

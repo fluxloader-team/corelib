@@ -106,18 +106,7 @@ const upgradeSchema = {
 		},
 	},
 };
-/**
- * @typedef {object} GetUpgradeDataConfig
- * @property {string} tabId The tab id of the tab you want
- * @property {string} categoryId The category id of the category you want
- * @property {string} upgradeId The upgrade id of the upgrade you want
- */
 
-const getUpgradeDataSchema = {
-	tabId: { type: "string" },
-	categoryId: { type: "string" },
-	upgradeId: { type: "string" },
-};
 class UpgradesModule {
 	#upgrades = {};
 
@@ -143,10 +132,9 @@ class UpgradesModule {
 		}
 	}
 
-	getUpgradeData(/** @type {GetUpgradeDataConfig} */ config) {
-		const validConfig = validateInput(config, getUpgradeDataSchema);
-		let upgradeData = this.#upgrades?.[validConfig.tabId]?.[validConfig.categoryId]?.[validConfig.upgradeId];
-		if (!upgradeData) return log("error", "corelib", `Could not find upgrade with tabId: ${validConfig.tabId} categoryId: ${validConfig.categoryId} upgradeId: ${validConfig.upgradeId}`);
+	getUpgrade(tabId, categoryId, upgradeId) {
+		let upgradeData = this.#upgrades?.[tabId]?.[categoryId]?.[upgradeId];
+		if (!upgradeData) return log("error", "corelib", `Could not find upgrade with tabId: ${tabId} categoryId: ${categoryId} upgradeId: ${upgradeId}`);
 		return upgradeData;
 	}
 	registerTab(/** @type {TabConfig} */ config) {

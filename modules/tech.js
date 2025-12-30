@@ -32,13 +32,7 @@ const techSchema = {
 		},
 	},
 };
-/**
- * @typedef {object} GetTechDataConfig
- * @property {string} techId The tech id of the tech you want
- */
-const getTechDataSchema = {
-	techId: { type: "string" },
-};
+
 class TechModule {
 	#registry = corelib.enums.createRegistry({
 		name: "Tech",
@@ -75,10 +69,9 @@ class TechModule {
 		}
 	}
 
-	getTechData(/** @type {GetTechDataConfig} */ config) {
-		const validConfig = validateInput(config, getTechDataSchema);
-		let techData = this.#registry.entries[validConfig.tech];
-		if (!techData) return log("error", "corelib", `Could not find tech with id: ${validConfig.techId}`);
+	getTech(techId) {
+		let techData = this.#registry.entries[tech];
+		if (!techData) return log("error", "corelib", `Could not find tech with id: ${techId}`);
 		return techData;
 	}
 	register(/** @type {TechConfig} */ config) {

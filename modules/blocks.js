@@ -104,13 +104,6 @@ const blockVariantSchema = {
 	},
 };
 
-/**
- * @typedef {object} GetBlockDataConfig
- * @property {string} blockId The block id of the block you want
- */
-const getBlockDataSchema = {
-	blockId: { type: "string" },
-};
 
 class BlocksModule {
 	#registry = corelib.enums.createRegistry({
@@ -123,10 +116,9 @@ class BlocksModule {
 		},
 	});
 
-	getBlockData(/** @type {GetBlockDataConfig} */ config) {
-		const validConfig = validateInput(config, getBlockDataSchema);
-		let blockData = this.#registry.entries?.[validConfig.blockId];
-		if (!blockData) return log("error", "corelib", `Could not find block with id: ${validConfig.blockId}`);
+	getBlock(blockId) {
+		let blockData = this.#registry.entries?.[blockId];
+		if (!blockData) return log("error", "corelib", `Could not find block with id: ${blockId}`);
 		return blockData;
 	}
 	register(/** @type {BlockConfig} */ config) {

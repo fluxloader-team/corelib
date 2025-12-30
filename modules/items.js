@@ -28,13 +28,7 @@ const itemSchema = {
 		type: "string",
 	},
 };
-/**
- * @typedef {object} GetItemDataConfig
- * @property {string} itemId The item id of the item you want
- */
-const getItemDataSchema = {
-	itemId: { type: "string" },
-};
+
 
 class ItemsModule {
 	#registry = corelib.enums.createRegistry({
@@ -47,10 +41,9 @@ class ItemsModule {
 		},
 	});
 
-	getItemData(/** @type {GetItemDataConfig} */ config) {
-		const validConfig = validateInput(config, getItemDataSchema);
-		let itemData = this.#registry.entries?.[validConfig.itemId];
-		if (!itemData) return log("error", "corelib", `Could not find item with id: ${validConfig.itemId}`);
+	getItem(itemId) {
+		let itemData = this.#registry.entries?.[itemId];
+		if (!itemData) return log("error", "corelib", `Could not find item with id: ${itemId}`);
 		return itemData;
 	}
 	register(/** @type {ItemConfig} */ config) {

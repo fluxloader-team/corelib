@@ -113,15 +113,7 @@ const growerRecipeRegisterSchema = {
 const growerRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
-/**
- * @typedef {object} GetRecipeConfig
- * @property {string} type The type of the recipe you want
- * @property {string} inputId The input element of the recipe you want to get
- */
-const getRecipeSchema = {
-	type: { type: "string" },
-	inputId: { type: "string" },
-};
+
 class ElementsModule {
 	#recipes = { basic: {}, press: {}, grower: {}, shaker: {} };
 	#otherFeatures = { conveyorBeltIgnores: [] };
@@ -147,10 +139,9 @@ class ElementsModule {
 		this.registerConveyorBeltIgnores("Fire");
 	}
 
-	getRecipe(/** @type {GetRecipeConfig} */ config) {
-		const validConfig = validateInput(config, getRecipeSchema);
-		let recipe = this.#recipes?.[validConfig.type]?.[validConfig.inputId];
-		if (!recipe) return log("error", "corelib", `Could not find recipe with type: ${validConfig.type} and input: ${validConfig.inputId}`);
+	getRecipe(type, inputId) {
+		let recipe = this.#recipes?.[type]?.[inputId];
+		if (!recipe) return log("error", "corelib", `Could not find recipe with type: ${type} and input: ${inputId}`);
 		return recipe;
 	}
 

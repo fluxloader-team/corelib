@@ -113,10 +113,18 @@ const growerRecipeRegisterSchema = {
 const growerRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
-
+/**
+ * @typedef {object} GetRecipeConfig
+ * @property {string} type The type of the recipe you want
+ * @property {string} inputId The input element of the recipe you want to get
+ */
+const getRecipeSchema = {
+	type: { type: "string" },
+	inputId: { type: "string" },
+};
 class ElementsModule {
-	recipes = { basic: {}, press: {}, grower: {}, shaker: {} };
-	otherFeatures = { conveyorBeltIgnores: [] };
+	#recipes = { basic: {}, press: {}, grower: {}, shaker: {} };
+	#otherFeatures = { conveyorBeltIgnores: [] };
 
 	constructor() {
 		this.registerBasicRecipe({ inputTop: "Sand", inputBottom: "Water", outputTop: "WetSand", outputBottom: "WetSand" });
@@ -139,11 +147,18 @@ class ElementsModule {
 		this.registerConveyorBeltIgnores("Fire");
 	}
 
+	getRecipe(/** @type {GetRecipeConfig} */ config) {
+		const validConfig = validateInput(config, getRecipeSchema);
+		let recipe = this.#recipes?.[validConfig.type]?.[validConfig.inputId];
+		if (!recipe) return log("error", "corelib", `Could not find recipe with type: ${validConfig.type} and input: ${validConfig.inputId}`);
+		return recipe;
+	}
+
 	registerBasicRecipe(/** @type {BasicRecipeRegisterConfig} */ config) {
 		const validConfig = validateInput(config, basicRecipeRegisterSchema);
 		const add = (from, to) => {
-			this.recipes.basic[from] ??= [];
-			this.recipes.basic[from].push([to, validConfig.outputTop, validConfig.outputBottom]);
+			this.#recipes.basic[from] ??= [];
+			this.#recipes.basic[from].push([to, validConfig.outputTop, validConfig.outputBottom]);
 		};
 		if (validConfig.bothWays) add(validConfig.inputTop, validConfig.inputBottom);
 		add(validConfig.inputBottom, validConfig.inputTop);
@@ -152,9 +167,9 @@ class ElementsModule {
 	unregisterBasicRecipe(/** @type {BasicRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, basicRecipeUnregisterSchema);
 		const removeBasicRecipe = (inputTop, inputBottom) => {
-			if (!this.recipes.basic[inputTop]) return log("error", "corelib", `Could not unregister basic recipe with elements "${element1}" and "${element2}"!`);
-			this.recipes.basic[inputTop] = this.recipes.basic[inputTop].filter(([target]) => target !== inputBottom);
-			if (this.recipes.basic[inputTop].length === 0) delete this.recipes.basic[inputTop];
+			if (!this.#recipes.basic[inputTop]) return log("error", "corelib", `Could not unregister basic recipe with elements "${element1}" and "${element2}"!`);
+			this.#recipes.basic[inputTop] = this.#recipes.basic[inputTop].filter(([target]) => target !== inputBottom);
+			if (this.#recipes.basic[inputTop].length === 0) delete this.#recipes.basic[inputTop];
 		};
 		if (validConfig.bothWays) removeBasicRecipe(validConfig.element1, validConfig.element2);
 		removeBasicRecipe(validConfig.element2, validConfig.element1);
@@ -162,56 +177,56 @@ class ElementsModule {
 
 	registerPressRecipe(/** @type {PressRecipeRegisterConfig} */ config) {
 		const validConfig = validateInput(config, pressRecipeRegisterSchema);
-		this.recipes.press[validConfig.input] = [validConfig.requiredVelocity, validConfig.outputs];
+		this.#recipes.press[validConfig.input] = [validConfig.requiredVelocity, validConfig.outputs];
 	}
 
 	unregisterPressRecipe(/** @type {PressRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, pressRecipeUnregisterSchema);
-		if (!this.recipes.press[validConfig.input]) return log("error", "corelib", `Could not unregister unknown press recipe with id "${validConfig.input}"!`);
-		delete this.recipes.press[validConfig.input];
+		if (!this.#recipes.press[validConfig.input]) return log("error", "corelib", `Could not unregister unknown press recipe with id "${validConfig.input}"!`);
+		delete this.#recipes.press[validConfig.input];
 	}
 
 	registerShakerRecipe(/** @type {ShakerRecipeRegisterConfig} */ config) {
 		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
-		this.recipes.shaker[validConfig.input] = [validConfig.outputAbove, validConfig.outputBelow];
+		this.#recipes.shaker[validConfig.input] = [validConfig.outputAbove, validConfig.outputBelow];
 	}
 
 	unregisterShakerRecipe(/** @type {ShakerRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
-		if (!this.recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister unknown shaker recipe with id "${validConfig.input}"!`);
-		delete this.recipes.shaker[validConfig.input];
+		if (!this.#recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister unknown shaker recipe with id "${validConfig.input}"!`);
+		delete this.#recipes.shaker[validConfig.input];
 	}
 
 	registerGrowerRecipe(/** @type {GrowerRecipeRegisterConfig} */ config) {
 		const validConfig = validateInput(config, growerRecipeRegisterSchema);
-		this.recipes.grower[validConfig.input] = [validConfig.output, validConfig.chance];
+		this.#recipes.grower[validConfig.input] = [validConfig.output, validConfig.chance];
 	}
 
 	unregisterGrowerRecipe(/** @type {GrowerRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, growerRecipeUnregisterSchema);
-		if (!this.recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister unknown grower recipe with id "${validConfig.input}"!`);
-		delete this.recipes.grower[validConfig.input];
+		if (!this.#recipes.grower[validConfig.input]) return log("error", "corelib", `Could not unregister unknown grower recipe with id "${validConfig.input}"!`);
+		delete this.#recipes.grower[validConfig.input];
 	}
 
 	registerShakerRecipe(/** @type {ShakerRecipeRegisterConfig} */ config) {
 		const validConfig = validateInput(config, shakerRecipeRegisterSchema);
-		this.recipes.shaker[validConfig.input] = [validConfig.outputAbove, validConfig.outputBelow];
+		this.#recipes.shaker[validConfig.input] = [validConfig.outputAbove, validConfig.outputBelow];
 	}
 
 	unregisterShakerRecipe(/** @type {ShakerRecipeUnregisterConfig} */ config) {
 		const validConfig = validateInput(config, shakerRecipeUnregisterSchema);
-		if (!this.recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister unknown shaker recipe with id "${validConfig.input}"!`);
-		delete this.recipes.shaker[validConfig.input];
+		if (!this.#recipes.shaker[validConfig.input]) return log("error", "corelib", `Could not unregister unknown shaker recipe with id "${validConfig.input}"!`);
+		delete this.#recipes.shaker[validConfig.input];
 	}
 
 	registerConveyorBeltIgnores(/** @type {string} */ id) {
-		this.otherFeatures.conveyorBeltIgnores.push(id);
+		this.#otherFeatures.conveyorBeltIgnores.push(id);
 	}
 
 	unregisterConveyorBeltIgnores(/** @type {string} */ id) {
-		const index = this.otherFeatures.conveyorBeltIgnores.indexOf(id);
+		const index = this.#otherFeatures.conveyorBeltIgnores.indexOf(id);
 		if (index == -1) return log("error", "corelib", `Could not unregister unknown conveyorBeltIgnore with id "${id}"!`);
-		this.otherFeatures.conveyorBeltIgnores.splice(index, 1);
+		this.#otherFeatures.conveyorBeltIgnores.splice(index, 1);
 	}
 
 	applyPatches() {
@@ -224,7 +239,7 @@ class ElementsModule {
 			from: `c=((i={})[n.RJ.Water]=[[n.RJ.Sand,n.RJ.WetSand],[n.RJ.Spore,n.RJ.WetSpore],[n.RJ.Lava,n.RJ.Steam],[n.RJ.Flame,n.RJ.Steam]],i[n.RJ.Sand]=[[n.RJ.Water,n.RJ.WetSand]],i[n.RJ.Spore]=[[n.RJ.Water,n.RJ.WetSpore]],i[n.RJ.Lava]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Flame]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Sandium]=[[n.RJ.Petalium,n.RJ.Gloom]],i[n.RJ.Petalium]=[[n.RJ.Sandium,n.RJ.Gloom]],i)`,
 			to:
 				`c=((i={}),` +
-				Object.entries(this.recipes.basic)
+				Object.entries(this.#recipes.basic)
 					.map(([inputTop, recipe]) => `i[n.RJ.${inputTop}]=[` + recipe.map((v) => `[${prependJoin("n.RJ.", v)}]`).join(",") + `]`)
 					.join(",") +
 				`,i)`,
@@ -244,7 +259,7 @@ class ElementsModule {
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
 			to: `pressRecipes=(function(){
 					var press={};
-					${Object.entries(this.recipes.press)
+					${Object.entries(this.#recipes.press)
 						.map(([input, recipe]) => `press[n.RJ.${input}]=[${recipe[0]},[${recipe[1].map(([output, chance]) => `[n.RJ.${output},${chance}]`).join(",")}]]`)
 						.join(",")};
 					return press;
@@ -274,7 +289,7 @@ class ElementsModule {
 			type: "replace",
 			from: `c=function(e,t){if(t.type!==o.RJ.WetSpore)return!1;var r=(0,l.TR)(e,t.x,t.y+1);return!(!r||r.type!==o.ev.Grower||((0,u.Jx)(e,t.x,t.y,(0,s.n)(o.RJ.Seed,t.x,t.y)),0))`,
 			to: `c=function(x,y,t,buildingAtPos,cellBelow,e){
-				const growerRecipes = {${Object.entries(this.recipes.grower)
+				const growerRecipes = {${Object.entries(this.#recipes.grower)
 					.map(([input, [output, chance]]) => `[o.RJ.${input}]: {output: o.RJ.${output}, chance:${chance}}`)
 					.join(",")}}
 				if (!growerRecipes[t?.type]) return false;
@@ -291,7 +306,7 @@ class ElementsModule {
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:shakerRecipes", {
 			type: "replace",
 			from: `if(1===g&&[n.ev.ShakerLeft,n.ev.ShakerRight].includes(v)&&t.type===n.RJ.WetSand)(0,l.h)(e,t);`,
-			to: `const shakerRecipes = {${Object.entries(this.recipes.shaker)
+			to: `const shakerRecipes = {${Object.entries(this.#recipes.shaker)
 				.map(
 					([input, [outputAbove, outputBelow]]) =>
 						`[n.RJ.${input}]: {outputsAbove: [${outputAbove.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`).join(",")}], outputsBelow:[${outputBelow
@@ -335,10 +350,11 @@ class ElementsModule {
 		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:conveyorBeltIgnores", {
 			type: "replace",
 			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,
-			to: `d=[${prependJoin("a.RJ.", this.otherFeatures.conveyorBeltIgnores)}`,
+			to: `d=[${prependJoin("a.RJ.", this.#otherFeatures.conveyorBeltIgnores)}`,
 		});
 		//all the following patches improve the movement of particles too colide with all recipe blocks
 		//used chatgpt for this cuz i don't wanna learn regex, STUPID CHATBOTS CHANGING CODE
+		//it basicly replaces all the spots where the grower and press are called with another function
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:solidMovementTweaks", {
 			type: "regex",
 			pattern: "R=i\\.Both,F=\\(0,o\\.Ol\\)\\(g\\);if\\(p\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!S\\(e,t,g\\)\\)&&!\\(0,f\\.v\\)\\(e,t,g\\)\\)",

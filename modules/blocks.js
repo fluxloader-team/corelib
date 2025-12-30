@@ -104,8 +104,16 @@ const blockVariantSchema = {
 	},
 };
 
+/**
+ * @typedef {object} GetBlockDataConfig
+ * @property {string} blockId The block id of the block you want
+ */
+const getBlockDataSchema = {
+	blockId: { type: "string" },
+};
+
 class BlocksModule {
-	registry = corelib.enums.createRegistry({
+	#registry = corelib.enums.createRegistry({
 		name: "Block",
 		intIdStart: 99,
 		bundleMap: {
@@ -115,6 +123,12 @@ class BlocksModule {
 		},
 	});
 
+	getBlockData(/** @type {GetBlockDataConfig} */ config) {
+		const validConfig = validateInput(config, getBlockDataSchema);
+		let blockData = this.#registry.entries?.[validConfig.blockId];
+		if (!blockData) return log("error", "corelib", `Could not find block with id: ${validConfig.blockId}`);
+		return blockData;
+	}
 	register(/** @type {BlockConfig} */ config) {
 		const validConfig = validateInput(config, blockSchema);
 
@@ -125,47 +139,47 @@ class BlocksModule {
 			corelib.schedules.register(`block-tick-${validConfig.id}`, validConfig.tickInterval);
 		}
 
-		this.registry.register(validConfig.id, entry);
+		this.#registry.register(validConfig.id, entry);
 	}
 
 	registerVariant(/** @type {BlockVariantConfig} */ config) {
 		const validConfig = validateInput(config, blockVariantSchema);
 
-		if (!this.registry.entries.hasOwnProperty(validConfig.parentId)) {
+		if (!this.#registry.entries.hasOwnProperty(validConfig.parentId)) {
 			return log("error", "corelib", `Parent block name: "${validConfig.parentId}" for variant "${validConfig.parentId}${validConfig.suffix}" not found!`);
 		}
 
 		let id = validConfig.parentId + validConfig.suffix;
-		let parentEntry = this.registry.entries[validConfig.parentId];
+		let parentEntry = this.#registry.entries[validConfig.parentId];
 		let fullImagePath = this.getFullImagePath(parentEntry.sourceMod, validConfig.imagePath);
 		let entry = { isVariant: true, fullImagePath, ...validConfig };
 		entry.id = id;
 
-		if (this.registry.register(id, entry)) {
+		if (this.#registry.register(id, entry)) {
 			parentEntry.variants.push(entry);
 		}
 	}
 
 	unregister(/** @type {string} */ id) {
 		// manually check here since we don't unregister until we unregister variants
-		if (!this.registry.entries[id]) {
+		if (!this.#registry.entries[id]) {
 			return log("error", "corelib", `Block with id "${id}" does not exist!`);
 		}
-		if (this.registry.entries[id].isVariant) {
+		if (this.#registry.entries[id].isVariant) {
 			return log("error", "corelib", `Block with id "${id}" is a variant and cannot be unregistered directly! Please unregister the parent block instead.`);
 		}
 
-		const data = this.registry.entries[id];
+		const data = this.#registry.entries[id];
 
 		if (data.tickInterval != null) {
 			corelib.schedules.unregister(`block-tick-${data.id}`);
 		}
 
 		for (let variant of data.variants) {
-			this.registry.unregister(variant.id);
+			this.#registry.unregister(variant.id);
 		}
 
-		this.registry.unregister(id);
+		this.#registry.unregister(id);
 	}
 
 	getFullImagePath(sourceMod, imagePath) {
@@ -180,14 +194,14 @@ class BlocksModule {
 	}
 
 	getEntries() {
-		return this.registry.entries;
+		return this.#registry.entries;
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading block module patches");
 
 		const reduceBlocks = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => !b.isVariant)
 				.reduce((acc, b) => acc + f(b), "");
 
@@ -196,17 +210,17 @@ class BlocksModule {
 		const reduceBlocksAndVariants = (f) => reduceBlocks((b) => f(b) + reduceBlockVariants(b, (v) => f(v)));
 
 		const reduceBlocksWithConfig = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => !b.isVariant && b.hasConfigMenu)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		const reduceBlocksWithHover = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((b) => b.hasHoverUI)
 				.reduce((acc, v) => acc + f(v.id), "");
 
 		let reduceBlocksWithTicking = (f) =>
-			Object.values(this.registry.entries)
+			Object.values(this.#registry.entries)
 				.filter((t) => t.tickInterval != null)
 				.reduce((acc, t) => acc + f(t.id), "");
 

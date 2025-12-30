@@ -75,20 +75,20 @@ class EnumDataRegistry {
 }
 
 class EnumsModule {
-	registry = new DataRegistry("enums");
+	#registry = new DataRegistry("enums");
 	#enumMapping = {};
 
 	createRegistry(inputData /* moduleEnumSchema */) {
 		const data = validateInput(inputData, moduleEnumSchema);
 		const registry = new EnumDataRegistry(data.name, data.intIdStart, data.bundleMap);
-		this.registry.register(data.name, registry);
+		this.#registry.register(data.name, registry);
 		return registry;
 	}
 
 	updateEnumMapping(newEnumMapping) {
 		// For each module enum registry we have locally
-		for (let moduleName in this.registry.entries) {
-			let enumRegistry = this.registry.entries[moduleName];
+		for (let moduleName in this.#registry.entries) {
+			let enumRegistry = this.#registry.entries[moduleName];
 			newEnumMapping[moduleName] ??= {};
 			let moduleEnumMapping = newEnumMapping[moduleName];
 
@@ -117,7 +117,7 @@ class EnumsModule {
 
 		// loop through bundles here
 		for (let moduleName in this.#enumMapping) {
-			let moduleRegistry = this.registry.entries[moduleName];
+			let moduleRegistry = this.#registry.entries[moduleName];
 			let moduleMapping = this.#enumMapping[moduleName];
 
 			// example output: _[_["Schedule"]=19]="Schedule";

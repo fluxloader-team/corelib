@@ -32,9 +32,15 @@ const techSchema = {
 		},
 	},
 };
-
+/**
+ * @typedef {object} GetTechDataConfig
+ * @property {string} techId The tech id of the tech you want
+ */
+const getTechDataSchema = {
+	techId: { type: "string" },
+};
 class TechModule {
-	registry = corelib.enums.createRegistry({
+	#registry = corelib.enums.createRegistry({
 		name: "Tech",
 		intIdStart: 38,
 		bundleMap: { main: "w", sim: "b", manager: "R" },
@@ -69,6 +75,12 @@ class TechModule {
 		}
 	}
 
+	getTechData(/** @type {GetTechDataConfig} */ config) {
+		const validConfig = validateInput(config, getTechDataSchema);
+		let techData = this.#registry.entries[validConfig.tech];
+		if (!techData) return log("error", "corelib", `Could not find tech with id: ${validConfig.techId}`);
+		return techData;
+	}
 	register(/** @type {TechConfig} */ config) {
 		const validConfig = validateInput(config, techSchema);
 
@@ -76,17 +88,17 @@ class TechModule {
 
 		const entry = { ...validConfig };
 
-		this.registry.register(validConfig.id, entry);
+		this.#registry.register(validConfig.id, entry);
 	}
 
 	unregister(/** @type {string} */ id) {
-		this.registry.unregister(id);
+		this.#registry.unregister(id);
 	}
 
 	applyPatches() {
 		log("info", "corelib", "Loading technology module patches");
 
-		let techList = Object.values(this.#baseTechs).concat(Object.values(this.registry.entries));
+		let techList = Object.values(this.#baseTechs).concat(Object.values(this.#registry.entries));
 
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];

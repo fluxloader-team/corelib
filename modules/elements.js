@@ -346,8 +346,14 @@ class ElementsModule {
 		});
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:slushyMovementTweaks", {
 			type: "regex",
-			pattern: "S=\\(0,o\\.OA\\)\\(g\\)([\\s\\S]*?)F=\\(0,o\\.Ol\\)\\(g\\);if\\(S\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!m\\(e,t,g\\)\\)&&!\\(\\(0,f\\.v\\)\\(e,t,g\\)\\|\\|M&&\\(0,x\\.\\$\\)\\(e,t\\)\\)\\)",
+			pattern:
+				"S=\\(0,o\\.OA\\)\\(g\\)([\\s\\S]*?)F=\\(0,o\\.Ol\\)\\(g\\);if\\(S\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!m\\(e,t,g\\)\\)&&!\\(\\(0,f\\.v\\)\\(e,t,g\\)\\|\\|M&&\\(0,x\\.\\$\\)\\(e,t\\)\\)\\)",
 			replace: `S=(0,o.OA)(g)$1F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||S||M||(0,o.W)(g,a.vZ.Block))$2if((!g||M||!m(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
+		});
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:wispMovementTweaks", {
+			type: "regex",
+			pattern: "z=\\(0,o\\.Ol\\)\\(R\\);if\\(F\\|\\|J\\|\\|\\(0,o\\.W\\)\\(R,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)\\(0,f\\.v\\)\\(e,t,R\\)\\)([\\s\\S]*?)else",
+			replace: `z=(0,o.Ol)(R),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,R))||F||J||(0,o.W)(R,a.vZ.Block))$1(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),R))if(true)`,
 		});
 	}
 }

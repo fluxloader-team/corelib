@@ -114,7 +114,7 @@ const growerRecipeUnregisterSchema = {
 	input: { type: "string" },
 };
 
-class ElementsModule {
+class RecipesModule {
 	#recipes = { basic: {}, press: {}, grower: {}, shaker: {} };
 	#otherFeatures = { conveyorBeltIgnores: [] };
 
@@ -221,11 +221,11 @@ class ElementsModule {
 	}
 
 	applyPatches() {
-		log("info", "corelib", "Loading element module patches");
+		log("info", "corelib", "Loading recipe module patches");
 
 		const prependJoin = (prefix, array) => array.map((v) => prefix + v).join(", ");
 
-		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:basicReactionsList", {
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:recipes:basicReactionsList", {
 			type: "replace",
 			from: `c=((i={})[n.RJ.Water]=[[n.RJ.Sand,n.RJ.WetSand],[n.RJ.Spore,n.RJ.WetSpore],[n.RJ.Lava,n.RJ.Steam],[n.RJ.Flame,n.RJ.Steam]],i[n.RJ.Sand]=[[n.RJ.Water,n.RJ.WetSand]],i[n.RJ.Spore]=[[n.RJ.Water,n.RJ.WetSpore]],i[n.RJ.Lava]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Flame]=[[n.RJ.Water,n.RJ.Steam]],i[n.RJ.Sandium]=[[n.RJ.Petalium,n.RJ.Gloom]],i[n.RJ.Petalium]=[[n.RJ.Sandium,n.RJ.Gloom]],i)`,
 			to:
@@ -237,7 +237,7 @@ class ElementsModule {
 		});
 
 		// Remove hardcoded top / bottom seperation and add in custom logic using our recipes
-		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:basicReactionsFunctionChange", {
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:recipes:basicReactionsFunctionChange", {
 			type: "replace",
 			from: `[t.type,r.type].includes(n.RJ.Spore)?(0,a.Jx)(e,r.x,r.y,n.vZ.Empty)` + `:[t.type,r.type].includes(n.RJ.Lava)?(0,a.Jx)(e,r.x,r.y,(0,o.n)(n.RJ.Lava,r.x,r.y))` + `:(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[1],r.x,r.y))`,
 			to: `i[2]?(0,a.Jx)(e,r.x,r.y,(0,o.n)(i[2],r.x,r.y))
@@ -245,7 +245,7 @@ class ElementsModule {
 		});
 
 		// Overwrite the very hardcoded existing code to use our recipes instead
-		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:elements:Press", {
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:recipes:Press", {
 			type: "replace",
 			from: `s=function(e,t,r){return!(r!==n.vZ.VelocitySoaker||t.type!==n.RJ.BurntSlag||t.velocity.y<200||!h(e,t.x,t.y,n.RJ.Spore)||((0,l.Nz)(e,t),h(e,t.x,t.y,n.RJ.Gold),e.environment.postMessage([n.dD.PlaySound,[{id:"coin",opts:{volume:.2,fadeOut:a.A.getRandomFloatBetween(.1,2),playbackRate:a.A.getRandomFloatBetween(.5,1.5)},modulateDistance:{x:t.x*i.A.cellSize,y:t.y*i.A.cellSize}}]]),0))}`,
 			to: `pressRecipes=(function(){
@@ -365,4 +365,4 @@ class ElementsModule {
 	}
 }
 
-globalThis.ElementsModule = ElementsModule;
+globalThis.RecipesModule = RecipesModule;

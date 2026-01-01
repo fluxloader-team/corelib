@@ -40,6 +40,11 @@ class ItemsModule {
 		},
 	});
 
+	getItem(itemId) {
+		let itemData = this.#registry.entries?.[itemId];
+		if (!itemData) return log("error", "corelib", `Could not find item with id: ${itemId}`);
+		return itemData;
+	}
 	register(/** @type {ItemConfig} */ config) {
 		const validConfig = validateInput(config, itemSchema);
 

@@ -6,7 +6,7 @@ const config = fluxloaderAPI.modConfig.get("corelib");
 /** @typedef {import('./modules/upgrades.js')} */
 /** @typedef {import('./modules/schedules.js')} */
 /** @typedef {import('./modules/events.js')} */
-/** @typedef {import('./modules/elements.js')} */
+/** @typedef {import('./modules/recipes.js')} */
 /** @typedef {import('./modules/enums.js')} */
 
 includeVMScript("modules/blocks.js");
@@ -15,7 +15,7 @@ includeVMScript("modules/tech.js");
 includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
 includeVMScript("modules/schedules.js");
-includeVMScript("modules/elements.js");
+includeVMScript("modules/recipes.js");
 includeVMScript("modules/enums.js");
 
 class CoreLib {
@@ -40,7 +40,7 @@ class CoreLib {
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
-		this.elements = new ElementsModule();
+		this.recipes = new RecipesModule();
 	}
 
 	setupInternals() {
@@ -70,7 +70,7 @@ class CoreLib {
 		this.items.applyPatches();
 		this.events.applyPatches();
 		this.schedules.applyPatches();
-		this.elements.applyPatches();
+		this.recipes.applyPatches();
 		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");

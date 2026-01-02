@@ -304,7 +304,7 @@ class RecipesModule {
 					([input, [outputAbove, outputBelow]]) =>
 						`[n.RJ.${input}]: {outputsAbove: [${outputAbove.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`).join(",")}], outputsBelow:[${outputBelow
 							.map(([output, chance]) => `{output: n.RJ.${output}, chance:${chance}}`)
-							.join(",")}]}`
+							.join(",")}]}`,
 				)
 				.join(",")}
 				};

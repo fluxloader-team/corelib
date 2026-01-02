@@ -1,6 +1,17 @@
 /** @typedef {import('../entry.electron.js')} */
 
-elementSchema = {
+/**
+ * @typedef {object} ElementRegisterConfig
+ * @property {string} id
+ * @property {string} name
+ * @property {[string]} interactsWithHoverText
+ * @property {Array<[number, number, number, number]>} colors
+ * @property {number} density
+ * @property {string} matterType
+ * @property {boolean} [addToFilterList=true]
+ */
+
+elementRegisterSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
 	interactsWithHoverText: { type: "array", default: [""] },
@@ -35,7 +46,18 @@ elementSchema = {
 	addToFilterList: { type: "boolean", default: true },
 };
 
-soilSchema = {
+/**
+ * @typedef {object} SoilRegisterConfig
+ * @property {string} id
+ * @property {string} name
+ * @property {Array<[string]>} interactsWithHoverText
+ * @property {[number,number,number]} colorHSL
+ * @property {number} [hp=1]
+ * @property {string} outputElement
+ * @property {number} [chanceForOutput=1]
+ */
+
+soilRegisterSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
 	interactsWithHoverText: {
@@ -86,16 +108,16 @@ class ElementsModule {
 	elementRegistry = {};
 	soilRegistry = {};
 
-	registerElement(inputData) {
-		const data = validateInput(inputData, elementSchema, true).data;
-		data.numericHash = cyrb53(data.id);
-		this.elementRegistry[data.id] = data;
+	registerElement(/** @type {ElementRegisterConfig} */ config) {
+		const validConfig = validateInput(config, elementRegisterSchema);
+		validConfig.numericHash = cyrb53(validConfig.id);
+		this.elementRegistry[validConfig.id] = validConfig;
 	}
 
-	registerSoil(inputData) {
-		const data = validateInput(inputData, soilSchema, true).data;
-		data.numericHash = cyrb53(data.id);
-		this.soilRegistry[data.id] = data;
+	registerSoil(/** @type {SoilRegisterConfig} */ config) {
+		const validConfig = validateInput(config, soilRegisterSchema);
+		validConfig.numericHash = cyrb53(validConfig.id);
+		this.soilRegistry[validConfig.id] = validConfig;
 	}
 
 	applyPatches() {
@@ -173,9 +195,9 @@ class ElementsModule {
 				reduceElements(
 					(e) =>
 						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
-							e.colorHSL
+							e.colorHSL,
 						)}},`,
-					this.soilRegistry
+					this.soilRegistry,
 				),
 			token: "~",
 		}));

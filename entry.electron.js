@@ -8,6 +8,7 @@ const config = fluxloaderAPI.modConfig.get("corelib");
 /** @typedef {import('./modules/events.js')} */
 /** @typedef {import('./modules/recipes.js')} */
 /** @typedef {import('./modules/enums.js')} */
+/** @typedef {import('./modules/elements.js')} */
 
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
@@ -17,6 +18,7 @@ includeVMScript("modules/events.js");
 includeVMScript("modules/schedules.js");
 includeVMScript("modules/recipes.js");
 includeVMScript("modules/enums.js");
+includeVMScript("modules/elements.js");
 
 class CoreLib {
 	/** @type {EnumsModule} */ enums;
@@ -25,7 +27,9 @@ class CoreLib {
 	/** @type {UpgradesModule} */ upgrades;
 	/** @type {ItemsModule} */ items;
 	/** @type {EventsModule} */ events;
+	/** @type {RecipesModule} */ recipes;
 	/** @type {SchedulesModule} */ schedules;
+	/** @type {ElementsModule} */ elements;
 
 	init() {
 		this.initModules();
@@ -41,6 +45,7 @@ class CoreLib {
 		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
 		this.recipes = new RecipesModule();
+		this.elements = new ElementsModule();
 	}
 
 	setupInternals() {
@@ -62,6 +67,15 @@ class CoreLib {
 	}
 
 	async applyPatches() {
+		//for testing purposes only
+		corelib.elements.registerElement({
+			id: "testium",
+			name: "Testium",
+			colors: [[1, 1, 1, 1]],
+			density: 2,
+			matterType: "Solid",
+		});
+
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
 		this.blocks.applyPatches();
@@ -72,6 +86,7 @@ class CoreLib {
 		this.schedules.applyPatches();
 		this.recipes.applyPatches();
 		this.enums.applyPatches();
+		this.elements.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}
@@ -111,13 +126,12 @@ a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L,r},
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});
-		
+
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:exposeTryPlace", {
 			type: "replace",
 			from: `421:(e,t,r)=>{r.d(t,{v:()=>s})`,
 			to: `421:(e,t,r)=>{r.d(t,{v:()=>s,trySpawnAroundPos:()=>h})`,
 		});
-		
 	}
 }
 
@@ -237,7 +251,7 @@ function validateInput(parameters, schema, throwOnFail = true) {
 		throw new Error(
 			`Input handling failed: ${Object.values(result.errors)
 				.map((e) => e.message)
-				.join("; ")}`
+				.join("; ")}`,
 		);
 	}
 

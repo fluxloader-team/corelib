@@ -187,7 +187,7 @@ class ElementsModule {
 			expectedMatches: 3,
 		}));
 
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Jl", "t", "n"], "js/515.bundle.js": ["i", "n.vZ", "n.RJ"] }, `corelib:elements:soilRegistry`, (l0, l1, l2) => ({
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Jl", "t", "n", "K"], "js/515.bundle.js": ["i", "n.vZ", "n.RJ", "a.A"] }, `corelib:elements:soilRegistry`, (l0, l1, l2, l3) => ({
 			type: "replace",
 			from: `${l0}[${l1}.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:${l2}.Basalt,chance:1},colorHSL:[0,100,15]},`,
 			to:
@@ -196,7 +196,7 @@ class ElementsModule {
 					(e) =>
 						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
 							e.colorHSL,
-						)}},`,
+						)},background:{model:"rgb",fg:${l3}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]}),bg:${l3}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]})}},`,
 					this.soilRegistry,
 				),
 			token: "~",

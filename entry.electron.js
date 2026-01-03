@@ -6,6 +6,7 @@ const config = fluxloaderAPI.modConfig.get("corelib");
 /** @typedef {import('./modules/upgrades.js')} */
 /** @typedef {import('./modules/schedules.js')} */
 /** @typedef {import('./modules/events.js')} */
+/** @typedef {import('./modules/colorIdFix.js')} */
 /** @typedef {import('./modules/recipes.js')} */
 /** @typedef {import('./modules/enums.js')} */
 /** @typedef {import('./modules/elements.js')} */
@@ -15,6 +16,7 @@ includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
 includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
+includeVMScript("modules/colorIdFix.js");
 includeVMScript("modules/schedules.js");
 includeVMScript("modules/recipes.js");
 includeVMScript("modules/enums.js");
@@ -27,6 +29,7 @@ class CoreLib {
 	/** @type {UpgradesModule} */ upgrades;
 	/** @type {ItemsModule} */ items;
 	/** @type {EventsModule} */ events;
+	/** @type {ColorIdFixModule} */ colorIdFix;
 	/** @type {RecipesModule} */ recipes;
 	/** @type {SchedulesModule} */ schedules;
 	/** @type {ElementsModule} */ elements;
@@ -43,6 +46,7 @@ class CoreLib {
 		this.upgrades = new UpgradesModule();
 		this.items = new ItemsModule();
 		this.events = new EventsModule();
+		this.colorIdFix = new ColorIdFixModule();
 		this.schedules = new SchedulesModule();
 		this.recipes = new RecipesModule();
 		this.elements = new ElementsModule();
@@ -67,15 +71,6 @@ class CoreLib {
 	}
 
 	async applyPatches() {
-		//for testing purposes only
-		corelib.elements.registerElement({
-			id: "testium",
-			name: "Testium",
-			colors: [[1, 1, 1, 1]],
-			density: 2,
-			matterType: "Solid",
-		});
-
 		log("debug", "corelib", "Loading all corelib patches");
 		this.applyCorePatches();
 		this.blocks.applyPatches();
@@ -83,6 +78,7 @@ class CoreLib {
 		this.upgrades.applyPatches();
 		this.items.applyPatches();
 		this.events.applyPatches();
+		this.colorIdFix.applyPatches();
 		this.schedules.applyPatches();
 		this.recipes.applyPatches();
 		this.enums.applyPatches();

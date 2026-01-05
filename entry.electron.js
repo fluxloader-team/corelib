@@ -38,7 +38,6 @@ class CoreLib {
 		this.tech = new TechModule();
 		this.upgrades = new UpgradesModule();
 		this.items = new ItemsModule();
-		this.events = new EventsModule();
 		this.schedules = new SchedulesModule();
 		this.elements = new ElementsModule();
 	}
@@ -68,7 +67,7 @@ class CoreLib {
 		this.tech.applyPatches();
 		this.upgrades.applyPatches();
 		this.items.applyPatches();
-		this.events.applyPatches();
+		applyCorelibEventsPatches();
 		this.schedules.applyPatches();
 		this.elements.applyPatches();
 		this.enums.applyPatches();

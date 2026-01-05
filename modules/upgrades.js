@@ -132,9 +132,9 @@ class UpgradesModule {
 		}
 	}
 
-	getUpgrade(tabId, categoryId, upgradeId) {
-		let upgradeData = this.#upgrades?.[tabId]?.items[categoryId]?.upgrades[upgradeId];
-		if (!upgradeData) return log("error", "corelib", `Could not find upgrade with tabId: ${tabId} categoryId: ${categoryId} upgradeId: ${upgradeId}`);
+	getUpgrade(/** @type {string} */ tabID, /** @type {string} */ categoryID, /** @type {string} */ upgradeID) {
+		let upgradeData = this.#upgrades?.[tabID]?.items[categoryID]?.upgrades[upgradeID];
+		if (!upgradeData) return log("error", "corelib", `Could not find upgrade with tabId: ${tabID} categoryId: ${categoryID} upgradeId: ${upgradeID}`);
 		return upgradeData;
 	}
 

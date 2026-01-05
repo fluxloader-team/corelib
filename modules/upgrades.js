@@ -133,10 +133,11 @@ class UpgradesModule {
 	}
 
 	getUpgrade(tabId, categoryId, upgradeId) {
-		let upgradeData = this.#upgrades?.[tabId]?.[categoryId]?.[upgradeId];
+		let upgradeData = this.#upgrades?.[tabId]?.items[categoryId]?.upgrades[upgradeId];
 		if (!upgradeData) return log("error", "corelib", `Could not find upgrade with tabId: ${tabId} categoryId: ${categoryId} upgradeId: ${upgradeId}`);
 		return upgradeData;
 	}
+
 	registerTab(/** @type {TabConfig} */ config) {
 		const validConfig = validateInput(config, tabSchema);
 

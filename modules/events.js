@@ -1,6 +1,6 @@
 /** @typedef {import('../entry.electron.js')} */
 
-globalThis.applyCorelibEventsPatches = function() {
+globalThis.applyCorelibEventsPatches = function () {
 	log("info", "corelib", "Loading event patches");
 
 	// Code to send batched events at once
@@ -26,4 +26,4 @@ globalThis.applyCorelibEventsPatches = function() {
 		to: `corelib.events.processFogReveal(f,v),~`,
 		token: `~`,
 	});
-}
+};

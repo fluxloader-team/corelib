@@ -118,7 +118,7 @@ class BlocksModule {
 		if (!blockData) return log("error", "corelib", `Could not find block with id: ${blockID}`);
 		return blockData;
 	}
-	
+
 	register(/** @type {BlockConfig} */ config) {
 		const validConfig = validateInput(config, blockSchema);
 

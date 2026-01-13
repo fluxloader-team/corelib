@@ -66,14 +66,13 @@ class CoreLib {
 
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
-		globalThis.applyEventPatches();
-		globalThis.applyColorIdFixPatches();
+		applyCorelibEventsPatches();
+		applyCorelibColorIdFixPatches();
 		this.applyCorePatches();
 		this.blocks.applyPatches();
 		this.tech.applyPatches();
 		this.upgrades.applyPatches();
 		this.items.applyPatches();
-		applyCorelibEventsPatches();
 		this.schedules.applyPatches();
 		this.recipes.applyPatches();
 		this.enums.applyPatches();
@@ -243,7 +242,7 @@ function validateInput(parameters, schema, throwOnFail = true) {
 		throw new Error(
 			`Input handling failed: ${Object.values(result.errors)
 				.map((e) => e.message)
-				.join("; ")}`
+				.join("; ")}`,
 		);
 	}
 

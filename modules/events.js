@@ -1,4 +1,3 @@
-
 globalThis.applyCorelibEventsPatches = function () {
 	log("info", "corelib", "Loading event patches");
 

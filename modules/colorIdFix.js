@@ -1,5 +1,5 @@
 //this is all ported directly from leetom's magical ll-elements (including comments)
-globalThis.applyColorIdFixPatches = function () {
+globalThis.applyCorelibColorIdFixPatches = function () {
 	// patch the overflow (1 byte per colorId) by using a 16 byte (ushort) instead
 	// Fist patch the alloc size
 	fluxloaderAPI.setPatch("js/bundle.js", "corelib:colorIdFix:patchAllocatedSize", {
@@ -73,7 +73,7 @@ globalThis.applyColorIdFixPatches = function () {
                             float tileValueLow = tileLow * 255.0;
                             float tileValueHigh = tileHigh * 255.0 * 256.0;
                             return tileValueLow + tileValueHigh;
-                        }`
+                        }`,
 		).slice(1, -1)}\\nfloat getTileValueOld(vec2 coord, sampler2D texture)`,
 	});
 	// have the wall tilemap use old func instead of the new one, as that aren't changed

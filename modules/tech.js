@@ -69,11 +69,12 @@ class TechModule {
 		}
 	}
 
-	getTech(techId) {
+	getTech(/** @type {string} */ id) {
 		let techData = this.#registry.entries[tech];
-		if (!techData) return log("error", "corelib", `Could not find tech with id: ${techId}`);
+		if (!techData) return log("error", "corelib", `Could not find tech with id: ${id}`);
 		return techData;
 	}
+
 	register(/** @type {TechConfig} */ config) {
 		const validConfig = validateInput(config, techSchema);
 

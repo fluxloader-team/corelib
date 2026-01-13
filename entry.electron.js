@@ -73,6 +73,7 @@ class CoreLib {
 		this.tech.applyPatches();
 		this.upgrades.applyPatches();
 		this.items.applyPatches();
+		applyCorelibEventsPatches();
 		this.schedules.applyPatches();
 		this.recipes.applyPatches();
 		this.enums.applyPatches();
@@ -153,7 +154,7 @@ class DataRegistry {
 }
 
 function validateInput(parameters, schema, throwOnFail = true) {
-	// args should be an object of any:any (should match schema keys, and have valid values)
+	// parameters should be an object of any:any (should match schema keys, and have valid values)
 	// schema should be an object which maps keys of arguments to expected data
 	// - schema items without `default` will be assumed to be required parameters
 	// - type is a basic `typeof` check to ensure inputs pass basic type checks
@@ -197,6 +198,7 @@ function validateInput(parameters, schema, throwOnFail = true) {
 		if (data.type && !skipNullType) {
 			// Generic error if we don't know the type
 			let error = `Parameter '${parameter}' was expected to be of type ${data.type}, but was not`;
+			// Minimal extra type checking (on top of basic `typeof`)
 			switch (data.type) {
 				case "array":
 					result.success = Array.isArray(value);

@@ -113,11 +113,12 @@ class BlocksModule {
 		},
 	});
 
-	getBlock(blockId) {
-		let blockData = this.#registry.entries?.[blockId];
-		if (!blockData) return log("error", "corelib", `Could not find block with id: ${blockId}`);
+	getBlock(/** @type {string} */ blockID) {
+		let blockData = this.#registry.entries?.[blockID];
+		if (!blockData) return log("error", "corelib", `Could not find block with id: ${blockID}`);
 		return blockData;
 	}
+
 	register(/** @type {BlockConfig} */ config) {
 		const validConfig = validateInput(config, blockSchema);
 

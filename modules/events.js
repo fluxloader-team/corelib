@@ -1,6 +1,6 @@
 
-globalThis.applyEventPatches = function () {
-	log("info", "corelib", "Loading event module patches");
+globalThis.applyCorelibEventsPatches = function () {
+	log("info", "corelib", "Loading event patches");
 
 	// Code to send batched events at once
 	fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:event-send-batches", {
@@ -25,4 +25,4 @@ globalThis.applyEventPatches = function () {
 		to: `corelib.events.processFogReveal(f,v),~`,
 		token: `~`,
 	});
-}
+};

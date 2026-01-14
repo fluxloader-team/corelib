@@ -121,17 +121,17 @@ class ElementsModule {
 			return Object.values(registry).reduce((acc, e) => acc + string(e), "");
 		};
 
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (l0, l1, l2) => ({
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (registry, elementIds, matterTypes) => ({
 			type: "replace",
-			from: `${l0}[${l1}.Basalt]={name:"Cinder",interactions:["🔥"],density:50,matterType:${l2}.Solid},`,
-			to: `~` + reduceElements((e) => `${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${l2}.${e.matterType}},`, this.elementRegistry.entries),
+			from: `${registry}[${elementIds}.Basalt]={name:"Cinder",interactions:["🔥"],density:50,matterType:${matterTypes}.Solid},`,
+			to: `~` + reduceElements((e) => `${registry}[${elementIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${matterTypes}.${e.matterType}},`, this.elementRegistry.entries),
 			token: "~",
 		}));
 		// Why did lantto do this, it seems useless
-		fluxloaderAPI.addMappedPatch({ "js/bundle.js": ["o", "n", "k", "r"], "js/336.bundle.js": ["s", "n.RJ", "B", "e"], "js/546.bundle.js": ["s", "a.RJ", "B", "e"] }, (l0, l1, l2, l3) => ({
+		fluxloaderAPI.addMappedPatch({ "js/bundle.js": ["o", "n", "k", "r"], "js/336.bundle.js": ["s", "n.RJ", "B", "e"], "js/546.bundle.js": ["s", "a.RJ", "B", "e"] }, (l0, elementIds, colorSmth, gameInstanceState) => ({
 			type: "replace",
-			from: `[0]:${l0}.type===${l1}.Basalt?(${l2}=${l3}.session.colors.scheme.element[${l1}.Basalt])`,
-			to: `~` + reduceElements((e) => `[0]:${l0}.type===${l1}.${e.id}?(${l2}=${l3}.session.colors.scheme.element[${l1}.${e.id}])`, this.elementRegistry.entries),
+			from: `[0]:${l0}.type===${elementIds}.Basalt?(${colorSmth}=${gameInstanceState}.session.colors.scheme.element[${elementIds}.Basalt])`,
+			to: `~` + reduceElements((e) => `[0]:${l0}.type===${elementIds}.${e.id}?(${colorSmth}=${gameInstanceState}.session.colors.scheme.element[${elementIds}.${e.id}])`, this.elementRegistry.entries),
 			token: "~",
 		}));
 		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:filterlist`, {
@@ -169,16 +169,16 @@ class ElementsModule {
 			expectedMatches: 3,
 		}));
 
-		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Jl", "t", "n", "K"], "js/515.bundle.js": ["i", "n.vZ", "n.RJ", "a.A"] }, `corelib:elements:soilRegistry`, (l0, l1, l2, l3) => ({
+		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Jl", "t", "n", "K"], "js/515.bundle.js": ["i", "n.vZ", "n.RJ", "a.A"] }, `corelib:elements:soilRegistry`, (registry, soilIds, elementIds, utilFuncts) => ({
 			type: "replace",
-			from: `${l0}[${l1}.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:${l2}.Basalt,chance:1},colorHSL:[0,100,15]},`,
+			from: `${registry}[${soilIds}.Obsidian]={name:"Scoria",interactions:["⛏️","💥"],hp:40,output:{elementType:${elementIds}.Basalt,chance:1},colorHSL:[0,100,15]},`,
 			to:
 				`~` +
 				reduceElements(
 					(e) =>
-						`${l0}[${l1}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${l2}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
+						`${registry}[${soilIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${elementIds}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
 							e.colorHSL,
-						)},background:{model:"rgb",fg:${l3}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]}),bg:${l3}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]})}},`,
+						)},background:{model:"rgb",fg:${utilFuncts}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]}),bg:${utilFuncts}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]})}},`,
 					this.soilRegistry.entries,
 				),
 			token: "~",

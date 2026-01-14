@@ -75,7 +75,7 @@ soilRegisterSchema = {
 		},
 	},
 	hp: { type: "number", default: 1 },
-	outputElement: { type: "string" },
+	outputElement: { type: "string", default: "false" },
 	chanceForOutput: { type: "number", default: 1 },
 	onlyRocketBreakable: { type: "boolean", default: false },
 };
@@ -202,6 +202,17 @@ class ElementsModule {
 					return `,n.vZ.${e.id}`;
 				}, this.soilRegistry.entries) +
 				"].includes(d)&&!i.fromRocketExplosion",
+		});
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:noShovelHighlightForUnbreakable`, {
+			type: "replace",
+			from: `S!==t.Crackstone`,
+			to:
+				"![t.Crackstone" +
+				reduceElements((e) => {
+					if (!e.onlyRocketBreakable) return "";
+					return `,t.${e.id}`;
+				}, this.soilRegistry.entries) +
+				"].includes(S)",
 		});
 		if (saveHasNewStorageType) {
 			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {

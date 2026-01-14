@@ -55,6 +55,8 @@ class CoreLib {
 			let data = {};
 			data.schedules = corelib.schedules.getEntries();
 			data.blocks = corelib.blocks.getEntries();
+			data.soils = corelib.elements.getSoilEntries();
+			data.element = corelib.elements.getElementEntries();
 			data.enumMapping = corelib.enums.getMapping();
 			return data;
 		});
@@ -75,8 +77,8 @@ class CoreLib {
 		this.items.applyPatches();
 		this.schedules.applyPatches();
 		this.recipes.applyPatches();
-		this.enums.applyPatches();
 		this.elements.applyPatches();
+		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
 		fluxloaderAPI.events.trigger("cl:patches-applied");
 	}

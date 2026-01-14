@@ -38,7 +38,6 @@ class CoreLib {
 		this.setupEvents();
 		this.setupHooks();
 		this.setupInternals();
-		console.log(globalThis.corelib.exposed);
 	}
 
 	/**@private*/

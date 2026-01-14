@@ -55,6 +55,7 @@ elementRegisterSchema = {
  * @property {number} [hp=1]
  * @property {string} outputElement
  * @property {number} [chanceForOutput=1]
+ * @property {boolean} [onlyRocketBreakable=false]
  */
 
 soilRegisterSchema = {
@@ -76,6 +77,7 @@ soilRegisterSchema = {
 	hp: { type: "number", default: 1 },
 	outputElement: { type: "string" },
 	chanceForOutput: { type: "number", default: 1 },
+	onlyRocketBreakable: { type: "boolean", default: false },
 };
 
 const saveHasNewStorageType = false;
@@ -124,7 +126,12 @@ class ElementsModule {
 		fluxloaderAPI.setMappedPatch({ "js/bundle.js": ["Mh", "n", "h"], "js/336.bundle.js": ["a", "i.RJ", "i.es"], "js/546.bundle.js": ["r", "o.RJ", "o.es"] }, `corelib:elements:elementRegistry`, (registry, elementIds, matterTypes) => ({
 			type: "replace",
 			from: `${registry}[${elementIds}.Basalt]={name:"Cinder",interactions:["🔥"],density:50,matterType:${matterTypes}.Solid},`,
-			to: `~` + reduceElements((e) => `${registry}[${elementIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${matterTypes}.${e.matterType}},`, this.elementRegistry.entries),
+			to:
+				`~` +
+				reduceElements(
+					(e) => `${registry}[${elementIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${matterTypes}.${e.matterType}},`,
+					this.elementRegistry.entries,
+				),
 			token: "~",
 		}));
 		// Why did lantto do this, it seems useless
@@ -176,13 +183,26 @@ class ElementsModule {
 				`~` +
 				reduceElements(
 					(e) =>
-						`${registry}[${soilIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${elementIds}.${e.outputElement},chance:${e.chanceForOutput}},colorHSL:${JSON.stringify(
-							e.colorHSL,
-						)},background:{model:"rgb",fg:${utilFuncts}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]}),bg:${utilFuncts}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]})}},`,
+						`${registry}[${soilIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},hp:${e.hp},output:{elementType:${elementIds}.${e.outputElement},chance:${
+							e.chanceForOutput
+						}},colorHSL:${JSON.stringify(e.colorHSL)},background:{model:"rgb",fg:${utilFuncts}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${e.colorHSL[2]}),bg:${utilFuncts}.HSLToRGBA(${e.colorHSL[0]},${e.colorHSL[1]},${
+							e.colorHSL[2]
+						})}},`,
 					this.soilRegistry.entries,
 				),
 			token: "~",
 		}));
+		fluxloaderAPI.setPatch("js/336.bundle.js", `corelib:elements:onlyRocketBreakable`, {
+			type: "replace",
+			from: `d===n.vZ.Crackstone&&!i.fromRocketExplosion`,
+			to:
+				"[n.vZ.Crackstone" +
+				reduceElements((e) => {
+					if (!e.onlyRocketBreakable) return "";
+					return `,n.vZ.${e.id}`;
+				}, this.soilRegistry.entries) +
+				"].includes(d)&&!i.fromRocketExplosion",
+		});
 		if (saveHasNewStorageType) {
 			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {
 				type: "replace",

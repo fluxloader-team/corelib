@@ -10,7 +10,6 @@
  * @property {string} matterType
  * @property {boolean} [addToFilterList=true]
  */
-
 elementRegisterSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
@@ -57,7 +56,6 @@ elementRegisterSchema = {
  * @property {number} [chanceForOutput=1]
  * @property {boolean} [onlyRocketBreakable=false]
  */
-
 soilRegisterSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
@@ -92,6 +90,7 @@ class ElementsModule {
 			manager: "a",
 		},
 	});
+
 	soilRegistry = corelib.enums.createRegistry({
 		name: "Soil",
 		intIdStart: 31,
@@ -111,12 +110,15 @@ class ElementsModule {
 		const validConfig = validateInput(config, soilRegisterSchema);
 		this.soilRegistry.register(validConfig.id, validConfig);
 	}
+
 	getElementEntries() {
 		return this.elementRegistry.entries;
 	}
+
 	getSoilEntries() {
 		return this.soilRegistry.entries;
 	}
+
 	applyPatches() {
 		log("info", "corelib", "Loading element module patches");
 		const reduceElements = (string, registry) => {
@@ -134,6 +136,7 @@ class ElementsModule {
 				),
 			token: "~",
 		}));
+
 		// Why did lantto do this, it seems useless
 		fluxloaderAPI.addMappedPatch({ "js/bundle.js": ["o", "n", "k", "r"], "js/336.bundle.js": ["s", "n.RJ", "B", "e"], "js/546.bundle.js": ["s", "a.RJ", "B", "e"] }, (l0, elementIds, colorSmth, gameInstanceState) => ({
 			type: "replace",
@@ -141,6 +144,7 @@ class ElementsModule {
 			to: `~` + reduceElements((e) => `[0]:${l0}.type===${elementIds}.${e.id}?(${colorSmth}=${gameInstanceState}.session.colors.scheme.element[${elementIds}.${e.id}])`, this.elementRegistry.entries),
 			token: "~",
 		}));
+
 		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:filterlist`, {
 			type: "replace",
 			from: `,n.Basalt`,
@@ -152,6 +156,7 @@ class ElementsModule {
 				}, this.elementRegistry.entries),
 			token: "~",
 		});
+		
 		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:particleColors`, {
 			type: "replace",
 			from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,
@@ -159,9 +164,8 @@ class ElementsModule {
 			token: "~",
 		});
 
-		//soils
-
-		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:soils-BreaksWithoutIt`, {
+		// Soils
+		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:soilsBreaksWithoutIt`, {
 			type: "replace",
 			from: `n,t.Crackstone`,
 			to: `~` + reduceElements((e) => `,t.${e.id}`, this.soilRegistry.entries),
@@ -169,7 +173,7 @@ class ElementsModule {
 			expectedMatches: 2,
 		});
 
-		fluxloaderAPI.setMappedPatch({ "js/336.bundle.js": [], "js/546.bundle.js": [] }, `corelib:elements:soils-repeated3Times`, () => ({
+		fluxloaderAPI.setMappedPatch({ "js/336.bundle.js": [], "js/546.bundle.js": [] }, `corelib:elements:soilsRepeated3Times`, () => ({
 			type: "regex",
 			pattern: `,(\\w+).vZ.Crackstone`,
 			replace: `,\$1.vZ.Crackstone` + reduceElements((e) => `,\$1.vZ.${e.id}`, this.soilRegistry.entries),
@@ -192,6 +196,7 @@ class ElementsModule {
 				),
 			token: "~",
 		}));
+
 		fluxloaderAPI.setPatch("js/336.bundle.js", `corelib:elements:onlyRocketBreakable`, {
 			type: "replace",
 			from: `d===n.vZ.Crackstone&&!i.fromRocketExplosion`,
@@ -203,6 +208,7 @@ class ElementsModule {
 				}, this.soilRegistry.entries) +
 				"].includes(d)&&!i.fromRocketExplosion",
 		});
+
 		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:noShovelHighlightForUnbreakable`, {
 			type: "replace",
 			from: `S!==t.Crackstone`,
@@ -214,6 +220,7 @@ class ElementsModule {
 				}, this.soilRegistry.entries) +
 				"].includes(S)",
 		});
+
 		if (saveHasNewStorageType) {
 			fluxloaderAPI.setPatch("js/bundle.js", "corelib:readNegitiveValuesInSavedata", {
 				type: "replace",

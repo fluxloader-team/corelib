@@ -5,18 +5,20 @@ const config = fluxloaderAPI.modConfig.get("corelib");
 /** @typedef {import('./modules/tech.js')} */
 /** @typedef {import('./modules/upgrades.js')} */
 /** @typedef {import('./modules/schedules.js')} */
-/** @typedef {import('./modules/events.js')} */
-/** @typedef {import('./modules/elements.js')} */
+/** @typedef {import('./modules/recipes.js')} */
 /** @typedef {import('./modules/enums.js')} */
+/** @typedef {import('./modules/elements.js')} */
 
 includeVMScript("modules/blocks.js");
 includeVMScript("modules/items.js");
 includeVMScript("modules/tech.js");
 includeVMScript("modules/upgrades.js");
 includeVMScript("modules/events.js");
+includeVMScript("modules/colorIdFix.js");
 includeVMScript("modules/schedules.js");
-includeVMScript("modules/elements.js");
+includeVMScript("modules/recipes.js");
 includeVMScript("modules/enums.js");
+includeVMScript("modules/elements.js");
 
 class CoreLib {
 	/** @type {EnumsModule} */ enums;
@@ -24,8 +26,9 @@ class CoreLib {
 	/** @type {TechModule} */ tech;
 	/** @type {UpgradesModule} */ upgrades;
 	/** @type {ItemsModule} */ items;
-	/** @type {EventsModule} */ events;
+	/** @type {RecipesModule} */ recipes;
 	/** @type {SchedulesModule} */ schedules;
+	/** @type {ElementsModule} */ elements;
 
 	init() {
 		this.initModules();
@@ -39,6 +42,7 @@ class CoreLib {
 		this.upgrades = new UpgradesModule();
 		this.items = new ItemsModule();
 		this.schedules = new SchedulesModule();
+		this.recipes = new RecipesModule();
 		this.elements = new ElementsModule();
 	}
 
@@ -51,6 +55,8 @@ class CoreLib {
 			let data = {};
 			data.schedules = corelib.schedules.getEntries();
 			data.blocks = corelib.blocks.getEntries();
+			data.soils = corelib.elements.getSoilEntries();
+			data.element = corelib.elements.getElementEntries();
 			data.enumMapping = corelib.enums.getMapping();
 			return data;
 		});
@@ -62,13 +68,15 @@ class CoreLib {
 
 	async applyPatches() {
 		log("debug", "corelib", "Loading all corelib patches");
+		applyCorelibEventsPatches();
+		applyCorelibColorIdFixPatches();
 		this.applyCorePatches();
 		this.blocks.applyPatches();
 		this.tech.applyPatches();
 		this.upgrades.applyPatches();
 		this.items.applyPatches();
-		applyCorelibEventsPatches();
 		this.schedules.applyPatches();
+		this.recipes.applyPatches();
 		this.elements.applyPatches();
 		this.enums.applyPatches();
 		log("debug", "corelib", "Finished loading patches");
@@ -110,6 +118,7 @@ a,n,o,i,l,s,d,u,c,v,h,p,f,g,A,b,R,w,M,k,C,T,F,B,z,D,J,P,L,r},
 fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			token: `~`,
 		});
+
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:exposeTryPlace", {
 			type: "replace",
 			from: `421:(e,t,r)=>{r.d(t,{v:()=>s})`,

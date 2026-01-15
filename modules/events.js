@@ -1,5 +1,3 @@
-/** @typedef {import('../entry.electron.js')} */
-
 globalThis.applyCorelibEventsPatches = function () {
 	log("info", "corelib", "Loading event patches");
 

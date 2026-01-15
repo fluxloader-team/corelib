@@ -93,8 +93,7 @@ class CoreLib {
 				if (typeof param == "string" && param.includes("db_load")) {
 					let url = param.substring(8); // "db_load="
 					let results = await window.electron.load(url);
-					let data = results.data;
-					let enumMapping = data?.corelib?.enumMapping ?? {};
+					let enumMapping = results?.corelib?.enumMapping ?? {};
 					await fluxloaderAPI.invokeElectronIPC("corelib:updateEnumMapping", enumMapping);
 				}
 

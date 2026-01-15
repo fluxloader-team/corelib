@@ -137,7 +137,7 @@ class TechModule {
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:setLineCSS", {
 			type: "replace",
 			from: 'i_({},t.id===w.Guns1&&t.status!==S.Unknown&&t.status!==S.Visible?{width:"545px",marginLeft:"-63px"}:{})',
-			to: "i_({},t.status!==S.Unknown&&t.status!==S.Visible?corelib.hooks.getLineStyle(t):{})",
+			to: "i_({},t.status!==S.Unknown?corelib.hooks.getLineStyle(t):{})",
 		});
 
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:UIScrollImprovements1", {
@@ -154,11 +154,6 @@ class TechModule {
 			type: "replace",
 			from: `{className:"flex-grow overflow-auto"}`,
 			to: `{className:"flex-grow overflow-auto relative"}`,
-		});
-		fluxloaderAPI.setPatch("js/bundle.js", "corelib:tech:UIScrollImprovements4", {
-			type: "replace",
-			from: `{className:"flex justify-end"},`,
-			to: `{className:"flex"},`,
 		});
 		// Make the connector coming off any node half the length
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:techUI-shortenConnector", {

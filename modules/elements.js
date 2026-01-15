@@ -156,7 +156,7 @@ class ElementsModule {
 				}, this.elementRegistry.entries),
 			token: "~",
 		});
-		
+
 		fluxloaderAPI.setPatch("js/bundle.js", `corelib:elements:particleColors`, {
 			type: "replace",
 			from: `e[n.Basalt]=[pu(0,100,20),pu(3,100,22),pu(7,100,24),pu(10,100,26)]`,

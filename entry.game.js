@@ -72,7 +72,6 @@ class CoreLib {
 				tutorialStages: corelib.exposed.raw.b,
 				authorizationZoneLimits: corelib.exposed.raw.P,
 				scenes: corelib.exposed.raw.z,
-				getCellAtPos: corelib.exposed.raw.Bd,
 			};
 
 			corelib.exposed.utils = {
@@ -178,9 +177,6 @@ class CoreLib {
 		};
 
 		this.utils = {
-			getCellAtPos(x, y) {
-				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstance.state.store, x, y);
-			},
 			getBlockNameFromNumber(id) {
 				return corelib.exposed.named.blocks[id] != undefined ? corelib.exposed.named.blocks[id] : null;
 			},

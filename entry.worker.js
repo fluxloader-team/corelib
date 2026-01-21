@@ -174,7 +174,7 @@ class CoreLib {
 		};
 		corelib.utils = {
 			getCellAtPos: (x, y) => {
-				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState, x, y);
+				return corelib.exposed.named.getCellAtPos(fluxloaderAPI.gameInstanceState.store, x, y);
 			},
 			getStructureAtPos: (x, y) => {
 				return corelib.exposed.named.getStructureAtPos(fluxloaderAPI.gameInstanceState, x, y);

@@ -348,21 +348,26 @@ class RecipesModule {
 		//all the following patches improve the movement of particles too colide with all recipe blocks
 		//used chatgpt for this cuz i don't wanna learn regex, STUPID CHATBOTS CHANGING CODE
 		//it basicly replaces all the spots where the grower and press are called with another function
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:gasMovementTweaks", {
+			type: "replace",
+			from: `if(!(h.y<0)){var c=(0,l.tT)(o,h.x,h.y);`,
+			to: `if(!(h.y<0)){var c=(0,l.tT)(o,h.x,h.y);if((0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(h.x,h.y),c))return;`,
+		});
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:solidMovementTweaks", {
 			type: "regex",
 			pattern: "R=i\\.Both,F=\\(0,o\\.Ol\\)\\(g\\);if\\(p\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!S\\(e,t,g\\)\\)&&!\\(0,f\\.v\\)\\(e,t,g\\)\\)",
-			replace: `R=i.Both,F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||p||M||(0,o.W)(g,a.vZ.Block))$1if((!g||M||!S(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
+			replace: `R=i.Both,F=(0,o.Ol)(g),collidingBlock=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((collidingBlock&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,collidingBlock,g))||p||M||(0,o.W)(g,a.vZ.Block))$1if((!g||M||!S(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
 		});
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:slushyMovementTweaks", {
 			type: "regex",
 			pattern:
 				"S=\\(0,o\\.OA\\)\\(g\\)([\\s\\S]*?)F=\\(0,o\\.Ol\\)\\(g\\);if\\(S\\|\\|M\\|\\|\\(0,o\\.W\\)\\(g,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)if\\(\\(!g\\|\\|M\\|\\|!m\\(e,t,g\\)\\)&&!\\(\\(0,f\\.v\\)\\(e,t,g\\)\\|\\|M&&\\(0,x\\.\\$\\)\\(e,t\\)\\)\\)",
-			replace: `S=(0,o.OA)(g)$1F=(0,o.Ol)(g),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,g))||S||M||(0,o.W)(g,a.vZ.Block))$2if((!g||M||!m(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
+			replace: `S=(0,o.OA)(g)$1F=(0,o.Ol)(g),collidingBlock=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((collidingBlock&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,collidingBlock,g))||S||M||(0,o.W)(g,a.vZ.Block))$2if((!g||M||!m(e,t,g))&&!(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),g))`,
 		});
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:wispMovementTweaks", {
 			type: "regex",
 			pattern: "z=\\(0,o\\.Ol\\)\\(R\\);if\\(F\\|\\|J\\|\\|\\(0,o\\.W\\)\\(R,a\\.vZ\\.Block\\)\\)([\\s\\S]*?)\\(0,f\\.v\\)\\(e,t,R\\)\\)([\\s\\S]*?)else",
-			replace: `z=(0,o.Ol)(R),blockBelow=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((blockBelow&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,blockBelow,R))||F||J||(0,o.W)(R,a.vZ.Block))$1(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),R))if(true)`,
+			replace: `z=(0,o.Ol)(R),collidingBlock=(0,corelib.utils.getStructureAtPos)(t.x,t.y+1);if((collidingBlock&&(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,collidingBlock,R))||F||J||(0,o.W)(R,a.vZ.Block))$1(0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),R))if(true)`,
 		});
 	}
 }

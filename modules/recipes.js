@@ -59,8 +59,8 @@ const pressRecipeUnregisterSchema = {
 /**
  * @typedef {object} ShakerRecipeRegisterConfig
  * @property {string} input The element to input
- * @property {Array<[string, number]>} [outputAbove=[[]]] An array of arrays, each containing the output element and the chance (0-1) to produce it above the shaker
- * @property {Array<[string, number]>} [outputBelow=[[]]] An array of arrays, each containing the output element and the chance (0-1) to produce it below the shaker
+ * @property {Array<[string, number]>} [outputAbove=[]] An array of arrays, each containing the output element and the chance (0-1) to produce it above the shaker
+ * @property {Array<[string, number]>} [outputBelow=[]] An array of arrays, each containing the output element and the chance (0-1) to produce it below the shaker
  */
 const shakerRecipeRegisterSchema = {
 	input: { type: "string" },
@@ -72,7 +72,7 @@ const shakerRecipeRegisterSchema = {
 				message: `Parameter 'outputAboveShaker' must be an array of arrays with the output in the first and the chance in the second`,
 			};
 		},
-		default: [[]],
+		default: [],
 	},
 	outputBelow: {
 		type: "array",
@@ -82,7 +82,7 @@ const shakerRecipeRegisterSchema = {
 				message: `Parameter 'outputBelowShaker' must be an array of arrays with the output in the first and the chance in the second`,
 			};
 		},
-		default: [[]],
+		default: [],
 	},
 };
 

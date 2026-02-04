@@ -59,8 +59,8 @@ const pressRecipeUnregisterSchema = {
 /**
  * @typedef {object} ShakerRecipeRegisterConfig
  * @property {string} input The element to input
- * @property {Array<[string, number]>} [outputAbove=[[]]] An array of arrays, each containing the output element and the chance (0-1) to produce it above the shaker
- * @property {Array<[string, number]>} [outputBelow=[[]]] An array of arrays, each containing the output element and the chance (0-1) to produce it below the shaker
+ * @property {Array<[string, number]>} [outputAbove=[]] An array of arrays, each containing the output element and the chance (0-1) to produce it above the shaker
+ * @property {Array<[string, number]>} [outputBelow=[]] An array of arrays, each containing the output element and the chance (0-1) to produce it below the shaker
  */
 const shakerRecipeRegisterSchema = {
 	input: { type: "string" },
@@ -72,7 +72,7 @@ const shakerRecipeRegisterSchema = {
 				message: `Parameter 'outputAboveShaker' must be an array of arrays with the output in the first and the chance in the second`,
 			};
 		},
-		default: [[]],
+		default: [],
 	},
 	outputBelow: {
 		type: "array",
@@ -82,7 +82,7 @@ const shakerRecipeRegisterSchema = {
 				message: `Parameter 'outputBelowShaker' must be an array of arrays with the output in the first and the chance in the second`,
 			};
 		},
-		default: [[]],
+		default: [],
 	},
 };
 
@@ -116,7 +116,7 @@ const growerRecipeUnregisterSchema = {
 
 class RecipesModule {
 	#recipes = { basic: {}, press: {}, grower: {}, shaker: {} };
-	#otherFeatures = { conveyorBeltIgnores: [] };
+	#otherFeatures = { conveyorBeltIgnores: [], growerAllows: [], shakerAllows: [] };
 
 	constructor() {
 		this.registerBasicRecipe({ inputTop: "Sand", inputBottom: "Water", outputTop: "WetSand", outputBottom: "WetSand" });
@@ -137,6 +137,9 @@ class RecipesModule {
 		this.registerConveyorBeltIgnores("Steam");
 		this.registerConveyorBeltIgnores("Lava");
 		this.registerConveyorBeltIgnores("Fire");
+		this.registerGrowerAllows("Gold");
+		this.registerGrowerAllows("Petalium");
+		this.registerShakerAllows("Gold");
 		this.registerGrowerRecipe({ input: "WetSpore", output: "Seed" });
 		this.registerShakerRecipe({ input: "WetSand", outputAbove: [["Slag", 1]], outputBelow: [["Gold", 0.25]] });
 	}
@@ -220,6 +223,26 @@ class RecipesModule {
 		const index = this.#otherFeatures.conveyorBeltIgnores.indexOf(id);
 		if (index == -1) return log("error", "corelib", `Could not unregister unknown conveyorBeltIgnore with id "${id}"!`);
 		this.#otherFeatures.conveyorBeltIgnores.splice(index, 1);
+	}
+
+	registerGrowerAllows(/** @type {string} */ id) {
+		this.#otherFeatures.growerAllows.push(id);
+	}
+
+	unregisterGrowerAllows(/** @type {string} */ id) {
+		const index = this.#otherFeatures.growerAllows.indexOf(id);
+		if (index == -1) return log("error", "corelib", `Could not unregister unknown growerAllows with id "${id}"!`);
+		this.#otherFeatures.growerAllows.splice(index, 1);
+	}
+
+	registerShakerAllows(/** @type {string} */ id) {
+		this.#otherFeatures.shakerAllows.push(id);
+	}
+
+	unregisterShakerAllows(/** @type {string} */ id) {
+		const index = this.#otherFeatures.shakerAllows.indexOf(id);
+		if (index == -1) return log("error", "corelib", `Could not unregister unknown shakerAllows with id "${id}"!`);
+		this.#otherFeatures.shakerAllows.splice(index, 1);
 	}
 
 	applyPatches() {
@@ -345,6 +368,17 @@ class RecipesModule {
 			from: `d=[a.RJ.Water,a.RJ.Steam,a.RJ.Lava`,
 			to: `d=[${prependJoin("a.RJ.", this.#otherFeatures.conveyorBeltIgnores)}`,
 		});
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:shakerAllows", {
+			type: "replace",
+			from: `elementType:n.Gold,mode:"allow"})`,
+			to: `elementType:[${prependJoin("n.", this.#otherFeatures.shakerAllows)}],mode:"allow"})`,
+		});
+		fluxloaderAPI.setPatch("js/bundle.js", "corelib:growerAllows", {
+			type: "replace",
+			from: `h.filter={elementType:[n.Gold,n.Petalium]`,
+			to: `h.filter={elementType:[${prependJoin("n.", this.#otherFeatures.growerAllows)}]`,
+		});
+
 		//all the following patches improve the movement of particles too colide with all recipe blocks
 		//used chatgpt for this cuz i don't wanna learn regex, STUPID CHATBOTS CHANGING CODE
 		//it basicly replaces all the spots where the grower and press are called with another function

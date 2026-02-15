@@ -382,6 +382,11 @@ class RecipesModule {
 		//all the following patches improve the movement of particles too colide with all recipe blocks
 		//used chatgpt for this cuz i don't wanna learn regex, STUPID CHATBOTS CHANGING CODE
 		//it basicly replaces all the spots where the grower and press are called with another function
+		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:liquidMovementTweaks", {
+			type: "replace",
+			from: `;if(t.threshold.y+=t.velocity.y*r`,
+			to: `;if((0,corelib.simulation.doBlockRecipes)(t.x,t.y,t,(0,corelib.utils.getStructureAtPos)(t.x,t.y+1),(0,l.tT)(e.store,t.x,t.y+1)))return;if(t.threshold.y+=t.velocity.y*r`,
+		});
 		fluxloaderAPI.setPatch("js/515.bundle.js", "corelib:gasMovementTweaks", {
 			type: "replace",
 			from: `if(!(h.y<0)){var c=(0,l.tT)(o,h.x,h.y);`,

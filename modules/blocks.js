@@ -19,6 +19,7 @@
  * @property {boolean} [hasConfigMenu=false] Whether a config menu should open when the block is selected
  * @property {boolean} [hasHoverUI=false] If the block has a UI when hovered on
  * @property {boolean} [unlockedByDefault=false] If the block is avaliable by default
+ * @property {boolean} [placeableAnywhere=false] If the block can be placed over things (like the launchers, filters, etc). This also negate shape
  * @property {number} [tickInterval=null] Interval in ms that the block ticks
  * @property {ShapeConfig} shape Shape of the block
  * @property {number[]} [angles=[]] Angles that the block can be dragged and placed at
@@ -36,12 +37,14 @@ const blockSchema = {
 	hasHoverUI: { type: "boolean", default: false },
 	unlockedByDefault: { type: "boolean", default: false },
 	tickInterval: { type: "number", default: null, nullable: true },
+	placeableAnywhere: { type: "boolean", default: "false"},
 	shape: {
 		type: "array",
 		verifier: (v) => {
 			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
 			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
+		default: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 	},
 	angles: {
 		type: "array",
@@ -311,7 +314,7 @@ class BlocksModule {
 				reduceBlocks(
 					(b) =>
 						`,${v1}[${v2}.${b.id}]={
-					shape:${v3}["${b.id}"],
+					${(!b.something ? `shape:${v3}["${b.id}"],` : ``)}
 					variants:[
 						{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
 						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +

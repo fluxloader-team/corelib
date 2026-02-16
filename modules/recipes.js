@@ -288,7 +288,7 @@ class RecipesModule {
 					for(const[outputId,chance] of outputs){
 						if(Math.random()<chance){
 							posY--;
-							h(e,t.x,t.y+posY,outputId);
+							if (!h(e,t.x,t.y+posY,outputId)) return;
 						}
 					}(0,l.Nz)(e,t);
 					if(outputs.some(([outputId,_])=>outputId===n.RJ.Gold)){

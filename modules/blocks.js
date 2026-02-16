@@ -37,14 +37,19 @@ const blockSchema = {
 	hasHoverUI: { type: "boolean", default: false },
 	unlockedByDefault: { type: "boolean", default: false },
 	tickInterval: { type: "number", default: null, nullable: true },
-	placeableAnywhere: { type: "boolean", default: "false"},
+	placeableAnywhere: { type: "boolean", default: "false" },
 	shape: {
 		type: "array",
 		verifier: (v) => {
 			const success = v.length === 4 && v.every((i) => i.length === 4 && i.every((j) => Number.isInteger(j)));
 			return { success, message: `Parameter 'shape' must be a 4x4 matrix of integers` };
 		},
-		default: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+		default: [
+			[0, 0, 0, 0],
+			[0, 0, 0, 0],
+			[0, 0, 0, 0],
+			[0, 0, 0, 0],
+		],
 	},
 	angles: {
 		type: "array",

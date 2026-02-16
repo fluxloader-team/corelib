@@ -314,7 +314,7 @@ class BlocksModule {
 				reduceBlocks(
 					(b) =>
 						`,${v1}[${v2}.${b.id}]={
-					${(!b.something ? `shape:${v3}["${b.id}"],` : ``)}
+					${!b.placeableAnywhere ? `shape:${v3}["${b.id}"],` : ``}
 					variants:[
 						{id:${v2}.${b.id},angles:[${b.angles.join(",")}]}` +
 						reduceBlockVariants(b, (v) => `,{id:${v2}.${v.id},angles:[${v.angles.join(",")}]}`) +

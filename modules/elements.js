@@ -9,6 +9,7 @@
  * @property {number} density
  * @property {string} matterType
  * @property {boolean} [addToFilterList=true]
+ * @property {object} extraProps
  */
 elementRegisterSchema = {
 	id: { type: "string" },
@@ -43,6 +44,7 @@ elementRegisterSchema = {
 		},
 	},
 	addToFilterList: { type: "boolean", default: true },
+	extraProps: { type: "object", default: null },
 };
 
 /**
@@ -131,7 +133,8 @@ class ElementsModule {
 			to:
 				`~` +
 				reduceElements(
-					(e) => `${registry}[${elementIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${matterTypes}.${e.matterType}},`,
+					(e) =>
+						`${registry}[${elementIds}.${e.id}]={name:"${e.name}",interactions:${JSON.stringify(e.interactsWithHoverText)},density:${e.density},matterType:${matterTypes}.${e.matterType}${e.extraProps ? `,getExtraProps: function () {return ${JSON.stringify(e.extraProps)}}` : ``}},`,
 					this.elementRegistry.entries,
 				),
 			token: "~",

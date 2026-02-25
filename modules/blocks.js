@@ -37,7 +37,7 @@ const blockSchema = {
 	hasHoverUI: { type: "boolean", default: false },
 	unlockedByDefault: { type: "boolean", default: false },
 	tickInterval: { type: "number", default: null, nullable: true },
-	placeableAnywhere: { type: "boolean", default: "false" },
+	placeableAnywhere: { type: "boolean", default: false },
 	shape: {
 		type: "array",
 		verifier: (v) => {

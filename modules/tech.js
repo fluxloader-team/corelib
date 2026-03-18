@@ -12,16 +12,16 @@
  * @property {string} name name of the tech
  * @property {string} description description of the tech
  * @property {TechUnlocks} [unlocks={}] what this tech unlocks
- * @property {string} [parent="Refining1"] id of the parent tech
+ * @property {string} [parent="null"] id of the parent tech
  * @property {number} cost cost of the tech
  */
 
 const techSchema = {
 	id: { type: "string" },
 	name: { type: "string" },
-	description: { type: "string" },
+	description: { type: "string", default: "" },
 	unlocks: { type: "object", default: {} }, // game accepts `structures[]` and/or `items[]`
-	parent: { type: "string", default: "Refining1" },
+	parent: { type: "string", default: null, nullable: true },
 	cost: {
 		type: "number",
 		verifier: (v) => {
@@ -39,7 +39,6 @@ class TechModule {
 		intIdStart: 38,
 		bundleMap: { main: "w", sim: "b", manager: "R" },
 	});
-	#baseTechs = {};
 
 	constructor() {
 		// Hardcoded from the base game - in the future this should be changed to read from the fluxloaderAPI
@@ -57,12 +56,13 @@ class TechModule {
 
 		// Recursively register tech from the base techs
 		const registerBaseTech = (tech, parent) => {
-			this.#baseTechs[tech.id] = tech;
 			for (const childTech of tech.children ?? []) {
 				registerBaseTech(childTech, tech.id);
 			}
-			tech.children = [];
+			tech.unavailable = undefined;
+			tech.children = undefined;
 			tech.parent = parent;
+			this.register(tech);
 		};
 		for (const tech of baseTechs) {
 			registerBaseTech(tech);
@@ -70,7 +70,7 @@ class TechModule {
 	}
 
 	getTech(/** @type {string} */ id) {
-		let techData = this.#registry.entries[tech];
+		let techData = this.#registry.entries[id];
 		if (!techData) return log("error", "corelib", `Could not find tech with id: ${id}`);
 		return techData;
 	}
@@ -89,20 +89,24 @@ class TechModule {
 		this.#registry.unregister(id);
 	}
 
+	unregisterAll() {
+		this.#registry.unregisterAll();
+	}
+
 	applyPatches() {
 		log("info", "corelib", "Loading technology module patches");
 
-		let techList = Object.values(this.#baseTechs).concat(Object.values(this.#registry.entries));
+		let allTech = Object.values(this.#registry.entries);
 
 		// Convert the big list of tech into a nested list structure
 		let nestedTechDefinitions = [];
-		techList.forEach((tech) => (tech.children = []));
-		for (const tech of techList) {
+		allTech.forEach((tech) => (tech.children = []));
+		for (const tech of allTech) {
 			tech.children ??= [];
 			if (!tech.parent) {
 				nestedTechDefinitions.push(tech);
 			} else {
-				let parent = techList.find((otherTech) => {
+				let parent = allTech.find((otherTech) => {
 					return otherTech.id == tech.parent;
 				});
 				if (parent) {

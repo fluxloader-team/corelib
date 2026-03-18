@@ -69,6 +69,10 @@ class EnumDataRegistry {
 		return true;
 	}
 
+	unregisterAll() {
+		this.entries = {};
+	}
+
 	getStringIds() {
 		return Object.keys(this.entries);
 	}

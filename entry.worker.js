@@ -169,7 +169,7 @@ class CoreLib {
 			},
 
 			doBlockRecipes: (x, y, element, collidingBlock, targetElement) => {
-				return this.blockRecipes?.[corelib.exposed.named.blocks[collidingBlock?.type]]?.(x, y, element, collidingBlock, targetElement);
+				return this.blockRecipes?.[corelib.exposed.named.blocks[collidingBlock?.type]]?.(x, y, element, collidingBlock, targetElement, fluxloaderAPI.gameInstanceState);
 			},
 		};
 		corelib.utils = {

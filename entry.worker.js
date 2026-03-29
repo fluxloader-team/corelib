@@ -116,7 +116,12 @@ class CoreLib {
 
 			this.batchData["cell-change"].push(data);
 
-			if (data.fromCellType && data.fromCellType !== 1) {
+
+			// corelib.exposed.named is initialised in cl:raw-api-setup
+			// This is called in 336.bundle.js just before self.onmessage is initialised
+			// Sometimes a message can be received and this code called before corelib.exposed.named is setup
+			// I suspect: tryTrigger() on cl:raw-api-setup, self.onmessage initialised, then setCell message received BEFORE corelib.exposed.named is setup (due to async)
+			if (data.fromCellType && data.fromCellType !== 1 && corelib?.exposed?.named?.soils != undefined) {
 				data.cellFromName = corelib.exposed.named.soils[data.fromCellType];
 				this.batchData["soil-dig"].push(data);
 			}

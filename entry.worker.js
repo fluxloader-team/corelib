@@ -116,7 +116,6 @@ class CoreLib {
 
 			this.batchData["cell-change"].push(data);
 
-
 			// corelib.exposed.named is initialised in cl:raw-api-setup
 			// This is called in 336.bundle.js just before self.onmessage is initialised
 			// Sometimes a message can be received and this code called before corelib.exposed.named is setup

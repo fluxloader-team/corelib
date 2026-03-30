@@ -239,7 +239,7 @@ class CoreLib {
 		});
 
 		for (let id of tickingBlockIds) {
-			// Listen for general 'corelib:schedules-block-tick-{ID}' and redirect to 'corelib:schedules-block-{ID}' for each block
+			// Listen for general 'corelib:schedules-block-tick-{id}' and redirect to 'corelib:block-{id}' for each block
 			fluxloaderAPI.events.registerEvent(`corelib:block-${id}`);
 			fluxloaderAPI.events.on(`corelib:schedule-block-tick-${id}`, () => {
 				if (!hasSceneLoaded) return;
@@ -256,7 +256,7 @@ class CoreLib {
 						continue;
 					}
 
-					fluxloaderAPI.events.trigger(`corelib:block-${id}`, block);
+					fluxloaderAPI.events.trigger(`corelib:block-${id}`, block, false);
 				}
 			});
 		}

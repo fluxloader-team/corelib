@@ -115,7 +115,7 @@ class UpgradesModule {
 		let baseUpgradesString = `[{name:"Tools",id:"tools",items:[{name:"Grabber",id:"grabber",upgrades:[{name:"Material Scanner",id:"scanner",description:"Shows more information about materials when hovering",maxLevel:2,costs:[100]},{name:"Hydro Sponge",id:"waterGrab",description:"Pick up water (above ground only)",maxLevel:2,costs:[200],oneOff:!0}]},{name:"Jetpack",id:"jetpack",upgrades:[{name:"Thrust Amplifier",id:"speed",description:"Increases flight and movement speed",maxLevel:3,costs:[500,1e3]}]},{name:"Flamethrower",id:"flamethrower",requirement:{item:l.Flamethrower},upgrades:[{name:"Extended Range",id:"range",description:"Increases the range of the flames (+25% per level)",maxLevel:3,costs:[800,1200]}]}]},{name:"Weapons",id:"weapons",items:[{name:"Shovel",id:"shovel",upgrades:[{name:"Quick Dig",id:"speed",description:"Reduces digging cooldown",maxLevel:4,costs:[500,500,500]}]},{name:"Gun",id:"gun",requirement:{item:l.Gun},upgrades:[{name:"Rapid Fire",id:"speed",description:"Increases firing rate",maxLevel:4,costs:[500,500,500]},{name:"Triple Burst",id:"bullets",description:"Increases bullets per shot (x3)",maxLevel:2,costs:[1e3],oneOff:!0}]},{name:"Rocket Launcher",id:"rocketLauncher",requirement:{item:l.RocketLauncher},upgrades:[{name:"Quick-Load System",id:"reload",description:"Reduces reload time",maxLevel:3,costs:[500,500]},{name:"Extended Magazine",id:"maxAmmo",description:"Increases max ammo",maxLevel:3,costs:[500,500]},{name:"Incendiary Warhead",id:"napalm",description:"Launches a napalm rocket that explodes into a fireball",maxLevel:2,costs:[1e3],oneOff:!0}]}]},{name:"Drones",id:"drones",requirement:{tech:w.Drones1},items:[{name:"Hauler",id:"hauler",requirement:{item:l.Hauler},upgrades:[{name:"Drone Fleet",id:"maxDrones",description:"Increases the maximum number of hauler drones (+2)",maxLevel:6,costs:[1e3,2e3,3e3,4e3,5e3]},{name:"Quantum Propulsion",id:"speed",description:"Increases drone movement speed (+25% per level)",maxLevel:4,costs:[1500,2e3,2500]}]},{name:"Digger",id:"digger",requirement:{item:l.Bouncer},upgrades:[{name:"Rapid Deployment",id:"cooldown",description:"Reduces the cooldown between launching diggers",maxLevel:4,costs:[1e3,1500,2e3]},{name:"Reinforced Hull",id:"hp",description:"Increases the number of bedrock hits before destruction",maxLevel:6,costs:[800,1200,1600,2e3,2500]}]}]}]`;
 
 		// Convert `w.var` -> `"var"` and `l.var` -> `"var"`
-		// Later when we evaluate it we update this
+		// Later when we patch this into the game we reverse this
 		baseUpgradesString = baseUpgradesString.replace(new RegExp(`w\\.([a-zA-Z0-9]+)`, "g"), `"$1"`);
 		baseUpgradesString = baseUpgradesString.replace(new RegExp(`l\\.([a-zA-Z0-9]+)`, "g"), `"$1"`);
 
@@ -176,8 +176,8 @@ class UpgradesModule {
 		}
 
 		if (validConfig.maxLevel !== validConfig.costs.length + 1) {
+			// Passive warning, let the user do this if they want to
 			log("warn", "corelib", `Max level of an upgrade should be one more than the number of costs`);
-			// Won't return.. just a slight warning for now ig
 		}
 
 		const entry = { ...validConfig };
@@ -222,10 +222,11 @@ class UpgradesModule {
 	applyPatches() {
 		log("info", "corelib", "Loading upgrades module patches");
 
+		// Extract out a nestedUpgradeDefinitions to replace Wu with
+		// And an updates object we use to populate the players state.store.upgrades
 		let nestedUpgradeDefinitions = [];
-
-		// Merged into game's upgrades data to add new upgrades even in old saves
 		let updates = {};
+
 		for (let tab of Object.values(this.#upgrades)) {
 			let newTab = { ...tab };
 			newTab.items = [];
@@ -238,13 +239,16 @@ class UpgradesModule {
 			}
 			nestedUpgradeDefinitions.push(newTab);
 		}
-		updates.shovel.momentum = { level: 1, availableLevel: 1 }; // Really lantto?
-		updates.digger.gravity = { level: 1, availableLevel: 1 }; // ANOTHER??
+
+		// These need to be included in the players tech list but not in the main list
+		if (updates.shovel) updates.shovel.momentum = { level: 1, availableLevel: 1 };
+		if (updates.digger) updates.digger.gravity = { level: 1, availableLevel: 1 };
 
 		// This is the inverse of what we do to the raw string in the constructor
 		let upgradeDefinitionString = JSON.stringify(nestedUpgradeDefinitions);
 		upgradeDefinitionString = upgradeDefinitionString.replace(new RegExp(`"tech":"([a-zA-Z0-9_]+)"`, "g"), `"tech":w.$1`);
 		upgradeDefinitionString = upgradeDefinitionString.replace(new RegExp(`"item":"([a-zA-Z0-9_]+)"`, "g"), `"item":l.$1`);
+
 		fluxloaderAPI.setPatch("js/bundle.js", "corelib:upgradeDefinitions", {
 			type: "regex",
 			pattern: /Wu=\[.+?\],Xu=/,

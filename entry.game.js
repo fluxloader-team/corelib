@@ -256,7 +256,7 @@ class CoreLib {
 						continue;
 					}
 
-					fluxloaderAPI.events.trigger(`corelib:block-${id}`, block);
+					fluxloaderAPI.events.trigger(`corelib:block-${id}`, block, false);
 				}
 			});
 		}

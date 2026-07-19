@@ -124,6 +124,12 @@ fluxloaderAPI.events.tryTrigger("cl:raw-api-setup");~`,
 			from: `421:(e,t,r)=>{r.d(t,{v:()=>s})`,
 			to: `421:(e,t,r)=>{r.d(t,{v:()=>s,trySpawnAroundPos:()=>h})`,
 		});
+
+		fluxloaderAPI.setPatch("js/336.bundle.js", "corelib:chanceOutputsWithDuration", {
+			type: "replace",
+			from: `((0,v.Nz)(e,t),0))`,
+			to: `(() => {(t?.output?.outputElement && (!t?.output?.chance || Math.random() < t?.output?.chance)) ? corelib.simulation.spawnParticle({x:t.x, y:t.y, id:t?.output?.outputElement}) : (0,v.Nz)(e,t)})()  ,0)`,
+		});
 	}
 }
 
